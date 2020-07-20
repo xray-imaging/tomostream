@@ -11,19 +11,23 @@ def getp(a):
 
 
 class OrthoRec(radonortho):
-    """Class for tomography reconstruction of orthogonal slices thorugh direct 
+    """Class for tomography reconstruction of orthogonal slices through direct 
     discreatization of line integrals in the Radon transform.
     Attribtues
     ----------
     ntheta : int
-        The number of projections.    
+        The number of projections in the buffer (for simultaneous reconstruction)
     n, nz : int
         The pixel width and height of the projection.
+    nthetapi: int
+        The total number of angles to cover the interval [0,pi]
     """
 
-    def __init__(self, ntheta, n, nz):
+    def __init__(self, ntheta, n, nz, nthetapi):
         """Create class for the tomo solver."""
-        super().__init__(ntheta, n, nz)
+        # total number of parts for final summation 
+        nparts = nthetapi//ntheta
+        super().__init__(ntheta, n, nz, nparts)
         self.init_filter('parzen')
         
         def signal_handler(sig, frame):  # Free gpu memory after SIGINT, SIGSTSTP
