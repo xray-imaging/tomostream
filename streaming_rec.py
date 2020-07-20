@@ -48,7 +48,7 @@ def streaming():
     # NEW: PV channel that contains projection and metadata (angle, flag: regular, flat or dark)
     chdata = pva.Channel('2bmbSP1:Pva1:Image')
     pvdata = chdata.get('')
-# init pva streaming pv for reconstrucion with coping dictionary from pvdata
+    # init pva streaming pv for reconstrucion with coping dictionary from pvdata
     pvdict = pvdata.getStructureDict()
     pvrec = pva.PvObject(pvdict)
 
@@ -77,24 +77,13 @@ def streaming():
     thetabuffer = np.zeros(ntheta, dtype='float32')
 
 
-	# Load angles
+	# load angles
     theta = chStreamThetaArray.get(
         '')['value'][:chStreamNumAngles.get('')['value']]
-
-    # the following is not needed, since the id is set to zero before acquiring pojections    
-    # find first id of the projection data, skipping ids for dark and flat fields
-    # flatmodeall = chStreamFlatFieldMode.get('')['value']
-    # flatmode = flatmodeall['choices'][flatmodeall['index']]
-    # darkmodeall = chStreamDarkFieldMode.get('')['value']
-    # darkmode = darkmodeall['choices'][darkmodeall['index']]
-
-    # firstid = chdata.get('')['uniqueId']
-    # if(flatmode == 'Start' or flatmode=='Both'):
-    # 	firstid += chStreamNumFlatFields.get('')['value']
-    # if(darkmode == 'Start' or darkmode=='Both'):
-    # 	firstid += chStreamNumDarkFields.get('')['value']
-    # print('first projection id', firstid)
-
+    # number of angles in the interval of size pi
+    nthetapi = np.where(theta-theta[0]>np.pi)
+    print('angles in the interval of the size pi: ', nthetapi)
+    
     nflat = 0
     ndark = 0
     nproj = 0
@@ -126,7 +115,7 @@ def streaming():
     chdata.monitor(addData, '')
 
     # create solver class on GPU
-    slv = OrthoRec(ntheta, n, nz)
+    slv = OrthoRec(ntheta, n, nz, nthetapi)
     # allocate memory for result slices
     recall = np.zeros([n, 3*n], dtype='float32')
 
