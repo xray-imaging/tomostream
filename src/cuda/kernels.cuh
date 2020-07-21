@@ -109,4 +109,5 @@ void __global__ sumparts(float *f, int ipart, int nparts, int n, int nz)
 		if(i==ipart) continue;
 		f[tx + ty * n + ipart * n * nz] += f[tx + ty * n + i * n * nz];
 	}
+	f[tx + ty * n + ipart * n * nz] /= nparts;
 }
