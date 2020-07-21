@@ -127,7 +127,7 @@ def streaming():
             flatBuffer[numFlat] = pv['value'][0]['ubyteValue']
             numFlat += 1
         if(frameType == 'DarkField'):
-            darkBuffer[ndark] = pv['value'][0]['ubyteValue']
+            darkBuffer[numDark] = pv['value'][0]['ubyteValue']
             numDark += 1
         if(frameType == 'Projection'):
             projBuffer[np.mod(numProj, bufferSize)] = pv['value'][0]['ubyteValue']
