@@ -16,7 +16,7 @@ class radonortho
 	
 	float2 *fg;
 	float *theta;
-	float *filter; 
+	float *filter; 	
 
 	cufftHandle plan_forward;
 	cufftHandle plan_inverse;
@@ -30,7 +30,8 @@ public:
 	size_t n;
 	size_t ntheta;
 	size_t nz;
-	radonortho(size_t ntheta, size_t n, size_t nz);
+	size_t nthetapi;
+	radonortho(size_t ntheta, size_t n, size_t nz, size_t nthetapi);
 	~radonortho();
 	void rec(size_t fx, size_t fy, size_t fz, size_t g, size_t theta, float center, int ix, int iy, int iz);
 	void set_filter(size_t filter);

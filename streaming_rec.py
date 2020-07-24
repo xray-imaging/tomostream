@@ -1,28 +1,22 @@
 import pvaccess as pva
-import numpy as np
 from orthorec import *
-
+import numpy as np
 import time
 from timing import tic, toc
-from rwlock import RWLock
 
-# global r/w lock variable for r/w from the projection buffer
-#mrwlock = RWLock()
+
+def readByChoice(ch):
+    allch = ch.get('')['value']
+    return allch['choices'][allch['index']]
 
 
 def streaming():
     """
-    Main computational function, take data from pvdata ('2bmbSP1:Pva1:Image'),
-    reconstruct orthogonal slices and write the result to pvrec ('AdImage')
+    Main computational function, take data from pvData ('2bmbSP1:Pva1:Image'),
+    reconstruct orthogonal slices and write the result to pvRec ('2bma:TomoScan:StreamReconstruction')
     """
 
     ##### init pvs ######
-    # init pvs for the streaming GUI
-
-    # orthoslices
-    chStreamX = pva.Channel('2bmS1:StreamX', pva.CA)
-    chStreamY = pva.Channel('2bmS1:StreamY', pva.CA)
-    chStreamZ = pva.Channel('2bmS1:StreamZ', pva.CA)
 
     # frame type
     chStreamFrameType = pva.Channel('2bma:TomoScan:FrameType', pva.CA)
@@ -34,141 +28,176 @@ def streaming():
     chStreamNumDarkFields = pva.Channel('2bma:TomoScan:NumDarkFields', pva.CA)
     # total number of flat fields
     chStreamNumFlatFields = pva.Channel('2bma:TomoScan:NumFlatFields', pva.CA)
-    # dark field mode
-    chStreamDarkFieldMode = pva.Channel('2bma:TomoScan:DarkFieldMode', pva.CA)
-    # flat field mode
-    chStreamFlatFieldMode = pva.Channel('2bma:TomoScan:FlatFieldMode', pva.CA)
 
-    # NEW: buffer size for for projections
-    #chStreamBS = pva.Channel('2bmS1:StreamBS', pva.CA)
-    # NEW: rotation center
-    #chStreamRC = pva.Channel('2bmS1:StreamRC', pva.CA)
+    # GUI PVs
+    # streaming status
+    chStreamStatus = pva.Channel('2bma:TomoScan:StreamStatus', pva.CA)
+    # buffer size for projections
+    chStreamBufferSize = pva.Channel('2bma:TomoScan:StreamBufferSize', pva.CA)
+    # binning for projection data
+    chStreamBinning = pva.Channel('2bma:TomoScan:StreamBinning', pva.CA)
+    # ring removal
+    chStreamRingRemoval = pva.Channel(
+        '2bma:TomoScan:StreamRingRemoval', pva.CA)
+    # Paganin filtering
+    chStreamPaganin = pva.Channel('2bma:TomoScan:StreamPaganin', pva.CA)
+    # parameter alpha for Paganin filtering
+    chStreamPaganinAlpha = pva.Channel(
+        '2bma:TomoScan:StreamPaganinAlpha', pva.CA)
+    # rotation center
+    chStreamCenter = pva.Channel('2bma:TomoScan:StreamCenter', pva.CA)
+    # filter type for reconstrution
+    chStreamFilterType = pva.Channel('2bma:TomoScan:StreamFilterType', pva.CA)
+    # orthoslices
+    chStreamOrthoX = pva.Channel('2bma:TomoScan:StreamOrthoX', pva.CA)
+    chStreamOrthoY = pva.Channel('2bma:TomoScan:StreamOrthoY', pva.CA)
+    chStreamOrthoZ = pva.Channel('2bma:TomoScan:StreamOrthoZ', pva.CA)
 
-    # init pva streaming pv for the detector
-    # NEW: PV channel that contains projection and metadata (angle, flag: regular, flat or dark)
-    chdata = pva.Channel('2bmbSP1:Pva1:Image')
-    pvdata = chdata.get('')
-# init pva streaming pv for reconstrucion with coping dictionary from pvdata
-    pvdict = pvdata.getStructureDict()
-    pvrec = pva.PvObject(pvdict)
+    # Try to read:
+    print('######TEST: READ PVS FROM GUI#######')
+    print('status', readByChoice(chStreamStatus))
+    print('bufferSize', chStreamBufferSize.get('')['value'])
+    print('binning', readByChoice(chStreamBinning))
+    print('ringRemoval', readByChoice(chStreamRingRemoval))
+    print('Paganin', readByChoice(chStreamPaganin))
+    print('Paganin alpha', chStreamPaganinAlpha.get('')['value'])
+    print('center', chStreamCenter.get('')['value'])
+    print('filter type', readByChoice(chStreamFilterType))
+    print('idx', chStreamOrthoX.get('')['value'])
+    print('idy', chStreamOrthoY.get('')['value'])
+    print('idz', chStreamOrthoZ.get('')['value'])
 
+    # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
+    chData = pva.Channel('2bmbSP1:Pva1:Image')
+    pvData = chData.get('')
+    # pva type flat and dark fields pv broadcasted from the detector machine
+    chFlatDark = pva.Channel('2bma:TomoScan:FlatDark')
+    pvFlatDark = chFlatDark.get('')
+
+    # pva type pv for reconstrucion
+    pvDict = pvData.getStructureDict()
+    pvRec = pva.PvObject(pvDict)
     # take dimensions
-    n = pvdata['dimension'][0]['size']
-    nz = pvdata['dimension'][1]['size']
-    # set dimensions for reconstruction
-    pvrec['dimension'] = [{'size': 3*n, 'fullSize': 3*n, 'binning': 1},
-                          {'size': n, 'fullSize': n, 'binning': 1}]
+    width = pvData['dimension'][0]['size']
+    height = pvData['dimension'][1]['size']
+    # set dimensions for reconstruction (assume width>=height)
+    pvRec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
+                          {'size': height, 'fullSize': height, 'binning': 1}]
 
     ##### run server for reconstruction pv #####
-    # NEW: replace AdImage by a new name for Reconstruction PV, e.g. 2bmS1:StreamREC
-    s = pva.PvaServer('AdImage', pvrec)
+    serverRec = pva.PvaServer('2bma:TomoScan:StreamReconstruction', pvRec)
 
-    ##### procedures before running fly #######
-
+    ##### init buffers #######
     # form circular buffer, whenever the angle goes higher than 180
     # than corresponding projection is replacing the first one
-    ntheta = 180  # chStreamBS.get('')['value']
-    nflatinit = chStreamNumFlatFields.get('')['value']
-    ndarkinit = chStreamNumDarkFields.get('')['value']
+    bufferSize = chStreamBufferSize.get('')['value']
+    # number of dark and flat fields
+    numFlat = chStreamNumFlatFields.get('')['value']
+    numDark = chStreamNumDarkFields.get('')['value']
 
-    databuffer = np.zeros([ntheta, nz*n], dtype='uint8')
-    flatbuffer = np.zeros([nflatinit, nz*n], dtype='uint8')
-    darkbuffer = np.zeros([ndarkinit, nz*n], dtype='uint8')
-    thetabuffer = np.zeros(ntheta, dtype='float32')
+    projBuffer = np.zeros([bufferSize, width*height], dtype='uint8')
+    flatBuffer = np.ones([numFlat, width*height], dtype='uint8')
+    darkBuffer = np.zeros([numDark, width*height], dtype='uint8')
+    thetaBuffer = np.zeros(bufferSize, dtype='float32')
 
-
-	# Load angles
+    # load angles
     theta = chStreamThetaArray.get(
         '')['value'][:chStreamNumAngles.get('')['value']]
+    # number of angles in the interval of size pi (to be used for 1 streaming reconstuction)
+    # at some point we can also use >1 rotations for 1 reconstruction, todo later
+    numThetaPi = int(np.where(theta-theta[0] > 180)[0][0])
+    print('number of angles in the interval of the size pi: ', numThetaPi)
 
-    # the following is not needed, since the id is set to zero before acquiring pojections    
-    # find first id of the projection data, skipping ids for dark and flat fields
-    # flatmodeall = chStreamFlatFieldMode.get('')['value']
-    # flatmode = flatmodeall['choices'][flatmodeall['index']]
-    # darkmodeall = chStreamDarkFieldMode.get('')['value']
-    # darkmode = darkmodeall['choices'][darkmodeall['index']]
+    # number of acquired projections
+    numProj = 0
 
-    # firstid = chdata.get('')['uniqueId']
-    # if(flatmode == 'Start' or flatmode=='Both'):
-    # 	firstid += chStreamNumFlatFields.get('')['value']
-    # if(darkmode == 'Start' or darkmode=='Both'):
-    # 	firstid += chStreamNumDarkFields.get('')['value']
-    # print('first projection id', firstid)
-
-    nflat = 0
-    ndark = 0
-    nproj = 0
-
-    # number of streamed images of each type
     def addData(pv):
         """ read data from the detector, 3 types: flat, dark, projection"""
-        nonlocal nflat
-        nonlocal ndark
-        nonlocal nproj
 
-        # with mrwlock.w_locked():
-        curid = pv['uniqueId']
-        ftypeall = chStreamFrameType.get('')['value']
-        ftype = ftypeall['choices'][ftypeall['index']]
-        if(ftype == 'FlatField'):
-            flatbuffer[nflat] = pv['value'][0]['ubyteValue']
-            nflat += 1
-        if(ftype == 'DarkField'):
-            darkbuffer[ndark] = pv['value'][0]['ubyteValue']
-            ndark += 1
-        if(ftype == 'Projection'):
-            databuffer[np.mod(nproj, ntheta)] = pv['value'][0]['ubyteValue']
-            thetabuffer[np.mod(nproj, ntheta)] = theta[curid-1]
-            nproj += 1
-        print('add:', ftype, 'id:', curid)
+        if(readByChoice(chStreamStatus) == 'Off'):
+            return
 
-    # start monitoring projection data
-    chdata.monitor(addData, '')
+        nonlocal numProj
+
+        curId = pv['uniqueId']
+        frameTypeAll = chStreamFrameType.get('')['value']
+        frameType = frameTypeAll['choices'][frameTypeAll['index']]
+        if(frameType == 'Projection'):
+            projBuffer[np.mod(numProj, bufferSize)
+                       ] = pv['value'][0]['ubyteValue']
+            thetaBuffer[np.mod(numProj, bufferSize)] = theta[curId-1]
+            numProj += 1
+            #print('id:', curId, 'type', frameType)
+
+    flgFlatDark = False  # flat and dark exist or not
+
+    def addFlatDark(pv):
+        """ read flat and dark fields from the manually running pv server on the detector machine"""
+        nonlocal flgFlatDark
+        if(pv['value'][0]):
+            flatBuffer[:] = pv['value'][0]['ubyteValue'][numDark *
+                                                         width*height:].reshape(numFlat, width*height)
+            darkBuffer[:] = pv['value'][0]['ubyteValue'][:numDark *
+                                                         width*height].reshape(numFlat, width*height)
+            flgFlatDark = True
+            print('new flat and dark fields acquired')
+
+    #### start monitoring projection data ####
+    chData.monitor(addData, '')
+    #### start monitoring dark and flat fields pv ####
+    chFlatDark.monitor(addFlatDark, '')
 
     # create solver class on GPU
-    slv = OrthoRec(ntheta, n, nz)
+    slv = OrthoRec(bufferSize, width, height, numThetaPi)
     # allocate memory for result slices
-    recall = np.zeros([n, 3*n], dtype='float32')
+    recAll = np.zeros([width, 3*width], dtype='float32')
 
     # wait until dark and flats are acquired
-    while(nproj == 0):
+    while(flgFlatDark == False):
         1
 
-    # init data as flat
-    databuffer[:] = flatbuffer[0]
-    # copy dark and flat to GPU
-    slv.set_flat(np.mean(flatbuffer[:nflat], axis=0))
-    slv.set_dark(np.mean(darkbuffer[:ndark], axis=0))
+    # init data as flat to avoid problems of taking -log of zeros
+    projBuffer[:] = flatBuffer[0]
+
+    # copy mean dark and flat to GPU
+    slv.setFlat(np.mean(flatBuffer, axis=0))
+    slv.setDark(np.mean(darkBuffer, axis=0))
 
     ##### streaming reconstruction ######
-    while(True):
+    while(1):
+        if(readByChoice(chStreamStatus) == 'Off'):
+            continue
         # with mrwlock.r_locked():  # lock buffer before reading
-        datap = databuffer.copy()
-        thetap = thetabuffer.copy()
+        projPart = projBuffer.copy()
+        thetaPart = thetaBuffer.copy()
 
-        # take 3 ortho slices ids
-        idx = chStreamX.get('')['value']
-        idy = chStreamY.get('')['value']
-        idz = chStreamZ.get('')['value']
+        ### take parameters from the GUI ###
+        binning = readByChoice(chStreamBinning)  # todo
+        ringRemoval = readByChoice(chStreamRingRemoval)  # todo
+        Paganin = readByChoice(chStreamPaganin)  # todo
+        PaganinAlpha = chStreamPaganinAlpha.get('')['value']  # todo
+        center = chStreamCenter.get('')['value']
+        filterType = readByChoice(chStreamFilterType)  # todo
 
-        # NEW: center
-        center = 1224  # chStreamC.get('')['value']
-        # print(thetap)
+        # 3 ortho slices ids
+        idX = chStreamOrthoX.get('')['value']
+        idY = chStreamOrthoY.get('')['value']
+        idZ = chStreamOrthoZ.get('')['value']
+
         # reconstruct on GPU
-        # tic()
-        recx, recy, recz = slv.rec_ortho(
-            datap, thetap*np.pi/180, center, idx, idy, idz)
-        #print('rec time:',toc(),'norm',np.linalg.norm(recx))
+        tic()
+        recX, recY, recZ = slv.recOrtho(
+            projPart, thetaPart*np.pi/180, center, idX, idY, idZ)
+        print('rec time:', toc())
 
         # concatenate (supposing nz<n)
-        recall[:nz, :n] = recx
-        recall[:nz, n:2*n] = recy
-        recall[:, 2*n:] = recz
+        recAll[:height, :width] = recX
+        recAll[:height, width:2*width] = recY
+        recAll[:, 2*width:] = recZ
         # write to pv
-        pvrec['value'] = ({'floatValue': recall.flatten()},)
+        pvRec['value'] = ({'floatValue': recAll.flatten()},)
         # reconstruction rate limit
         time.sleep(0.1)
-
 
 if __name__ == "__main__":
     streaming()
