@@ -25,9 +25,8 @@ class OrthoRec(radonortho):
 
     def __init__(self, ntheta, n, nz, nthetapi):
         """Create class for the tomo solver."""
-        # total number of parts for final summation 
-        nparts = int(nthetapi//ntheta)
-        super().__init__(ntheta, n, nz, nparts)
+        # total number of parts for final summation         
+        super().__init__(ntheta, n, nz, nthetapi)
         self._initFilter('parzen')
         
         def signal_handler(sig, frame):  # Free gpu memory after SIGINT, SIGSTSTP
