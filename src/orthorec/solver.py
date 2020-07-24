@@ -11,20 +11,23 @@ def getp(a):
 
 
 class OrthoRec(radonortho):
-    """Class for tomography reconstruction of orthogonal slices thorugh direct 
+    """Class for tomography reconstruction of orthogonal slices through direct 
     discreatization of line integrals in the Radon transform.
     Attribtues
     ----------
     ntheta : int
-        The number of projections.    
+        The number of projections in the buffer (for simultaneous reconstruction)
     n, nz : int
         The pixel width and height of the projection.
+    nthetapi: int
+        The total number of angles to cover the interval [0,pi]
     """
 
-    def __init__(self, ntheta, n, nz):
+    def __init__(self, ntheta, n, nz, nthetapi):
         """Create class for the tomo solver."""
-        super().__init__(ntheta, n, nz)
-        self.init_filter('parzen')
+        # total number of parts for final summation         
+        super().__init__(ntheta, n, nz, nthetapi)
+        self._initFilter('parzen')
         
         def signal_handler(sig, frame):  # Free gpu memory after SIGINT, SIGSTSTP
             print('free GPU')
@@ -43,17 +46,17 @@ class OrthoRec(radonortho):
         """Free GPU memory due at interruptions or with-block exit."""
         self.free()
 
-    def set_flat(self, flat):
+    def setFlat(self, flat):
         """Copy flat field to GPU for flat field correction"""
         flat = np.ascontiguousarray(flat.astype('float32'))
         super().set_flat(getp(flat))
 
-    def set_dark(self, dark):
+    def setDark(self, dark):
         """Copy dark field to GPU for dark field correction"""
         dark = np.ascontiguousarray(dark.astype('float32'))
         super().set_dark(getp(dark))
 
-    def rec_ortho(self, data, theta, center, ix, iy, iz):
+    def recOrtho(self, data, theta, center, ix, iy, iz):
         """Reconstruction of 3 ortho slices with respect to ix,iy,iz indeces"""
         recx = np.zeros([self.nz, self.n], dtype='float32')
         recy = np.zeros([self.nz, self.n], dtype='float32')
@@ -67,7 +70,7 @@ class OrthoRec(radonortho):
 
         return recx, recy, recz
 
-    def init_filter(self, filter='parzen', p=2):
+    def _initFilter(self, filter='parzen', p=2):
         """Instead of direct integral discretization in the frequency domain by using the rectangular rule, 
         i.e. \int_a^b |signa| h(\sigma) d\sigma = \sum_k |\sigma_k| h(\sigma_k), 
         use a higher order polynomials for approximation \int_a^b |sigma| h(\sigma) d\sigma = \sum_k w_k h(\sigma_k), where 
