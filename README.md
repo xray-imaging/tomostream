@@ -3,5 +3,8 @@
 ## Compilation 
 python setup.py install
 
-## Run test
-LD_LIBRARY_PATH=/usr/local-linux/cuda-10.1/lib64 python streaming_rec.py 
+## Run pv flat-dark field broadcasting server on the detector machine
+python flatdarkpv.py
+
+## Run reconstruction on a machine with GPU
+python streaming_rec.py 
