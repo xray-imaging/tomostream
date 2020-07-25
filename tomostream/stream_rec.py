@@ -13,7 +13,7 @@ def readByChoice(ch):
     return allch['choices'][allch['index']]
 
 
-def streaming():
+def streaming(args):
     """
     Main computational function, take data from pvData ('2bmbSP1:Pva1:Image'),
     reconstruct orthogonal slices and write the result to pvRec ('2bma:TomoScan:StreamReconstruction')
@@ -41,10 +41,10 @@ def streaming():
     return
 
     # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
-    chData = pva.Channel('2bmbSP1:Pva1:Image')
+    chData = ts_pvs['chData'] 
     pvData = chData.get('')
     # pva type flat and dark fields pv broadcasted from the detector machine
-    chFlatDark = pva.Channel('2bma:TomoScan:FlatDark')
+    chFlatDark = ts_pvs['chFlatDark']
     pvFlatDark = chFlatDark.get('')
 
     # pva type pv for reconstrucion
@@ -172,5 +172,3 @@ def streaming():
         # reconstruction rate limit
         time.sleep(0.1)
 
-if __name__ == "__main__":
-    streaming()

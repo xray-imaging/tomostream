@@ -10,14 +10,18 @@ $ python setup.py build -- -DEXTENSION_WRAPPER=swig
 For skbuild >= 0.10.0, the two dashes will not be required. See the top-level
 CMakeLists.txt for the curent list of build options.
 """
-from skbuild import setup
-from setuptools import find_packages
+# from skbuild import setup
+from setuptools import setup, find_packages
 
 setup(
-    name='orthorec',
+    name='tomostream',
+    version=open('VERSION').read().strip(),
     author='Viktor Nikitin',
-    version='0.1.0',
-    package_dir={"": "src"},
-    packages=find_packages('src'),
+    # package_dir={"": "src"},
+    url='https://github.com/xray-imaging/tomostream',
+    packages=find_packages(),
+    include_package_data = True,
+    scripts=['bin/tomostream'],
+    description='cli to run streaming analysis of tomographic data',
     zip_safe=False,
 )
