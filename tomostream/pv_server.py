@@ -45,7 +45,7 @@ def FlatDarkBroadcast(args):
         if(frameType == 'FlatField' or frameType == 'DarkField'):
             FlatDarkBuffer[numFlatDark] = pv['value'][0]['ubyteValue']
             numFlatDark += 1
-            log.info('id:', curId, 'type', frameType, 'num', numFlatDark)
+            log.info('id: %s type %s num %s', curId, frameType, numFlatDark)
 
     #### start monitoring projection data ####
     chData.monitor(addData, '')
