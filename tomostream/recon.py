@@ -1,8 +1,12 @@
 import pvaccess as pva
-from orthorec import *
+# from orthorec import *
 import numpy as np
 import time
-from timing import tic, toc
+
+from  tomostream import util
+from  tomostream import log
+from  tomostream import pv
+from  tomostream import solver
 
 
 def readByChoice(ch):
@@ -10,7 +14,7 @@ def readByChoice(ch):
     return allch['choices'][allch['index']]
 
 
-def streaming():
+def streaming(args):
     """
     Main computational function, take data from pvData ('2bmbSP1:Pva1:Image'),
     reconstruct orthogonal slices and write the result to pvRec ('2bma:TomoScan:StreamReconstruction')
@@ -18,60 +22,27 @@ def streaming():
 
     ##### init pvs ######
 
-    # frame type
-    chStreamFrameType = pva.Channel('2bma:TomoScan:FrameType', pva.CA)
-    # theta array
-    chStreamThetaArray = pva.Channel('2bma:PSOFly2:motorPos.AVAL', pva.CA)
-    # total number of fly scan angles
-    chStreamNumAngles = pva.Channel('2bma:TomoScan:NumAngles', pva.CA)
-    # total number of dark fields
-    chStreamNumDarkFields = pva.Channel('2bma:TomoScan:NumDarkFields', pva.CA)
-    # total number of flat fields
-    chStreamNumFlatFields = pva.Channel('2bma:TomoScan:NumFlatFields', pva.CA)
-
-    # GUI PVs
-    # streaming status
-    chStreamStatus = pva.Channel('2bma:TomoScan:StreamStatus', pva.CA)
-    # buffer size for projections
-    chStreamBufferSize = pva.Channel('2bma:TomoScan:StreamBufferSize', pva.CA)
-    # binning for projection data
-    chStreamBinning = pva.Channel('2bma:TomoScan:StreamBinning', pva.CA)
-    # ring removal
-    chStreamRingRemoval = pva.Channel(
-        '2bma:TomoScan:StreamRingRemoval', pva.CA)
-    # Paganin filtering
-    chStreamPaganin = pva.Channel('2bma:TomoScan:StreamPaganin', pva.CA)
-    # parameter alpha for Paganin filtering
-    chStreamPaganinAlpha = pva.Channel(
-        '2bma:TomoScan:StreamPaganinAlpha', pva.CA)
-    # rotation center
-    chStreamCenter = pva.Channel('2bma:TomoScan:StreamCenter', pva.CA)
-    # filter type for reconstrution
-    chStreamFilterType = pva.Channel('2bma:TomoScan:StreamFilterType', pva.CA)
-    # orthoslices
-    chStreamOrthoX = pva.Channel('2bma:TomoScan:StreamOrthoX', pva.CA)
-    chStreamOrthoY = pva.Channel('2bma:TomoScan:StreamOrthoY', pva.CA)
-    chStreamOrthoZ = pva.Channel('2bma:TomoScan:StreamOrthoZ', pva.CA)
+    ts_pvs = pv.init(args.tomoscan_prefix)
 
     # Try to read:
-    print('######TEST: READ PVS FROM GUI#######')
-    print('status', readByChoice(chStreamStatus))
-    print('bufferSize', chStreamBufferSize.get('')['value'])
-    print('binning', readByChoice(chStreamBinning))
-    print('ringRemoval', readByChoice(chStreamRingRemoval))
-    print('Paganin', readByChoice(chStreamPaganin))
-    print('Paganin alpha', chStreamPaganinAlpha.get('')['value'])
-    print('center', chStreamCenter.get('')['value'])
-    print('filter type', readByChoice(chStreamFilterType))
-    print('idx', chStreamOrthoX.get('')['value'])
-    print('idy', chStreamOrthoY.get('')['value'])
-    print('idz', chStreamOrthoZ.get('')['value'])
+    log.info('###### READ PVS FROM GUI #######')
+    log.info('status %s', readByChoice(ts_pvs['chStreamStatus']))
+    log.info('bufferSize %s', ts_pvs['chStreamBufferSize'].get('')['value'])
+    log.info('binning %s', readByChoice(ts_pvs['chStreamBinning']))
+    log.info('ringRemoval %s', readByChoice(ts_pvs['chStreamRingRemoval']))
+    log.info('Paganin %s', readByChoice(ts_pvs['chStreamPaganin']))
+    log.info('Paganin alpha %s', ts_pvs['chStreamPaganinAlpha'].get('')['value'])
+    log.info('center %s', ts_pvs['chStreamCenter'].get('')['value'])
+    log.info('filter type %s', readByChoice(ts_pvs['chStreamFilterType']))
+    log.info('ortho slice x %s', ts_pvs['chStreamOrthoX'].get('')['value'])
+    log.info('ortho slice idy %s', ts_pvs['chStreamOrthoY'].get('')['value'])
+    log.info('ortho slice idz %s', ts_pvs['chStreamOrthoZ'].get('')['value'])
 
     # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
-    chData = pva.Channel('2bmbSP1:Pva1:Image')
+    chData = ts_pvs['chData'] 
     pvData = chData.get('')
     # pva type flat and dark fields pv broadcasted from the detector machine
-    chFlatDark = pva.Channel('2bma:TomoScan:FlatDark')
+    chFlatDark = ts_pvs['chFlatDark']
     pvFlatDark = chFlatDark.get('')
 
     # pva type pv for reconstrucion
@@ -90,10 +61,10 @@ def streaming():
     ##### init buffers #######
     # form circular buffer, whenever the angle goes higher than 180
     # than corresponding projection is replacing the first one
-    bufferSize = chStreamBufferSize.get('')['value']
+    bufferSize = ts_pvs['chStreamBufferSize'].get('')['value']
     # number of dark and flat fields
-    numFlat = chStreamNumFlatFields.get('')['value']
-    numDark = chStreamNumDarkFields.get('')['value']
+    numFlat = ts_pvs['chStreamNumFlatFields'].get('')['value']
+    numDark = ts_pvs['chStreamNumDarkFields'].get('')['value']
 
     projBuffer = np.zeros([bufferSize, width*height], dtype='uint8')
     flatBuffer = np.ones([numFlat, width*height], dtype='uint8')
@@ -101,12 +72,12 @@ def streaming():
     thetaBuffer = np.zeros(bufferSize, dtype='float32')
 
     # load angles
-    theta = chStreamThetaArray.get(
-        '')['value'][:chStreamNumAngles.get('')['value']]
+    theta = ts_pvs['chStreamThetaArray'].get(
+        '')['value'][:ts_pvs['chStreamNumAngles'].get('')['value']]
     # number of angles in the interval of size pi (to be used for 1 streaming reconstuction)
     # at some point we can also use >1 rotations for 1 reconstruction, todo later
     numThetaPi = int(np.where(theta-theta[0] > 180)[0][0])
-    print('number of angles in the interval of the size pi: ', numThetaPi)
+    log.info('number of angles in the interval of the size pi: ', numThetaPi)
 
     # number of acquired projections
     numProj = 0
@@ -114,20 +85,20 @@ def streaming():
     def addData(pv):
         """ read data from the detector, 3 types: flat, dark, projection"""
 
-        if(readByChoice(chStreamStatus) == 'Off'):
+        if(readByChoice(ts_pvs['chStreamStatus']) == 'Off'):
             return
 
         nonlocal numProj
 
         curId = pv['uniqueId']
-        frameTypeAll = chStreamFrameType.get('')['value']
+        frameTypeAll = ts_pvs['chStreamFrameType'].get('')['value']
         frameType = frameTypeAll['choices'][frameTypeAll['index']]
         if(frameType == 'Projection'):
             projBuffer[np.mod(numProj, bufferSize)
                        ] = pv['value'][0]['ubyteValue']
             thetaBuffer[np.mod(numProj, bufferSize)] = theta[curId-1]
             numProj += 1
-            #print('id:', curId, 'type', frameType)
+            #log.info('id:', curId, 'type', frameType)
 
     flgFlatDark = False  # flat and dark exist or not
 
@@ -140,7 +111,7 @@ def streaming():
             darkBuffer[:] = pv['value'][0]['ubyteValue'][:numDark *
                                                          width*height].reshape(numFlat, width*height)
             flgFlatDark = True
-            print('new flat and dark fields acquired')
+            log.info('new flat and dark fields acquired')
 
     #### start monitoring projection data ####
     chData.monitor(addData, '')
@@ -148,7 +119,7 @@ def streaming():
     chFlatDark.monitor(addFlatDark, '')
 
     # create solver class on GPU
-    slv = OrthoRec(bufferSize, width, height, numThetaPi)
+    slv = solver.OrthoRec(bufferSize, width, height, numThetaPi)
     # allocate memory for result slices
     recAll = np.zeros([width, 3*width], dtype='float32')
 
@@ -165,30 +136,30 @@ def streaming():
 
     ##### streaming reconstruction ######
     while(1):
-        if(readByChoice(chStreamStatus) == 'Off'):
+        if(readByChoice(ts_pvs['chStreamStatus']) == 'Off'):
             continue
         # with mrwlock.r_locked():  # lock buffer before reading
         projPart = projBuffer.copy()
         thetaPart = thetaBuffer.copy()
 
         ### take parameters from the GUI ###
-        binning = readByChoice(chStreamBinning)  # todo
-        ringRemoval = readByChoice(chStreamRingRemoval)  # todo
-        Paganin = readByChoice(chStreamPaganin)  # todo
-        PaganinAlpha = chStreamPaganinAlpha.get('')['value']  # todo
-        center = chStreamCenter.get('')['value']
-        filterType = readByChoice(chStreamFilterType)  # todo
+        binning = readByChoice(ts_pvs['chStreamBinning'])  # todo
+        ringRemoval = readByChoice(ts_pvs['chStreamRingRemoval'])  # todo
+        Paganin = readByChoice(ts_pvs['chStreamPaganin'])  # todo
+        PaganinAlpha = ts_pvs['chStreamPaganinAlpha'].get('')['value']  # todo
+        center = ts_pvs['chStreamCenter'].get('')['value']
+        filterType = readByChoice(ts_pvs['chStreamFilterType'])  # todo
 
         # 3 ortho slices ids
-        idX = chStreamOrthoX.get('')['value']
-        idY = chStreamOrthoY.get('')['value']
-        idZ = chStreamOrthoZ.get('')['value']
+        idX = ts_pvs['chStreamOrthoX'].get('')['value']
+        idY = ts_pvs['chStreamOrthoY'].get('')['value']
+        idZ = ts_pvs['chStreamOrthoZ'].get('')['value']
 
         # reconstruct on GPU
-        tic()
+        util.tic()
         recX, recY, recZ = slv.recOrtho(
             projPart, thetaPart*np.pi/180, center, idX, idY, idZ)
-        print('rec time:', toc())
+        log.info('rec time:', util.toc())
 
         # concatenate (supposing nz<n)
         recAll[:height, :width] = recX
@@ -199,5 +170,3 @@ def streaming():
         # reconstruction rate limit
         time.sleep(0.1)
 
-if __name__ == "__main__":
-    streaming()

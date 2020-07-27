@@ -1,7 +1,7 @@
 """Module for tomography."""
 
 import numpy as np
-from orthorec.radonortho import radonortho
+# from orthorec.radonortho import radonortho
 from scipy import linalg
 import signal
 import sys
@@ -10,7 +10,8 @@ def getp(a):
     return a.__array_interface__['data'][0]
 
 
-class OrthoRec(radonortho):
+# class OrthoRec(radonortho):
+class OrthoRec():
     """Class for tomography reconstruction of orthogonal slices through direct 
     discreatization of line integrals in the Radon transform.
     Attribtues
