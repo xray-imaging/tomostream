@@ -11,7 +11,7 @@ Usage
 Using the tomostream-cli
 ------------------------
 
-On computer running `areadetector`_ run::
+On the computer running `areadetector`_ run::
 
     $ tomostream server
 
