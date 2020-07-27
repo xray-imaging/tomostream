@@ -25,21 +25,18 @@ def streaming(args):
     ts_pvs = pv.init(args.tomoscan_prefix)
 
     # Try to read:
-    log.info('######TEST: READ PVS FROM GUI#######')
-    log.info('status', readByChoice(ts_pvs['chStreamStatus']))
-    log.info('bufferSize', ts_pvs['chStreamBufferSize'].get('')['value'])
-    log.info('binning', readByChoice(ts_pvs['chStreamBinning']))
-    log.info('ringRemoval', readByChoice(ts_pvs['chStreamRingRemoval']))
-    log.info('Paganin', readByChoice(ts_pvs['chStreamPaganin']))
-    log.info('Paganin alpha', ts_pvs['chStreamPaganinAlpha'].get('')['value'])
-    log.info('center', ts_pvs['chStreamCenter'].get('')['value'])
-    log.info('filter type', readByChoice(ts_pvs['chStreamFilterType']))
-    log.info('idx', ts_pvs['chStreamOrthoX'].get('')['value'])
-    log.info('idy', ts_pvs['chStreamOrthoY'].get('')['value'])
-    log.info('idz', ts_pvs['chStreamOrthoZ'].get('')['value'])
-
-    # testing
-    return
+    log.info('###### READ PVS FROM GUI #######')
+    log.info('status %s', readByChoice(ts_pvs['chStreamStatus']))
+    log.info('bufferSize %s', ts_pvs['chStreamBufferSize'].get('')['value'])
+    log.info('binning %s', readByChoice(ts_pvs['chStreamBinning']))
+    log.info('ringRemoval %s', readByChoice(ts_pvs['chStreamRingRemoval']))
+    log.info('Paganin %s', readByChoice(ts_pvs['chStreamPaganin']))
+    log.info('Paganin alpha %s', ts_pvs['chStreamPaganinAlpha'].get('')['value'])
+    log.info('center %s', ts_pvs['chStreamCenter'].get('')['value'])
+    log.info('filter type %s', readByChoice(ts_pvs['chStreamFilterType']))
+    log.info('ortho slice x %s', ts_pvs['chStreamOrthoX'].get('')['value'])
+    log.info('ortho slice idy %s', ts_pvs['chStreamOrthoY'].get('')['value'])
+    log.info('ortho slice idz %s', ts_pvs['chStreamOrthoZ'].get('')['value'])
 
     # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
     chData = ts_pvs['chData'] 
