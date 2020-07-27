@@ -1,12 +1,12 @@
 ==========
-tomoStream 
+tomostream 
 ==========
 
 .. _tomoScan: https://tomoscan.readthedocs.io
 .. _tomoscan_stream_2bm: https://tomoscan.readthedocs.io/en/latest/api/tomoscan_stream_2bm.html
 .. _EPICS_NTNDA_Viewer: https://cars9.uchicago.edu/software/epics/areaDetectorViewers.html
 
-**tomoStream** is python commad-line-interface for supporting streaming analysis of tomographic data. tomoStream relies on `tomoScan`_ for 
+**tomostream** is python commad-line-interface for supporting streaming analysis of tomographic data. tomoStream relies on `tomoScan`_ for 
 tomography instrument control (for an example see `tomoscan_stream_2bm`_).
 
 It provides 3 main functionalities:
