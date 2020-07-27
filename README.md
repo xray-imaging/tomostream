@@ -1,12 +1,15 @@
-# orthorec
+# tomostream
+
+## Documentation
+https://tomostream.readthedocs.io/
 
 ## Compilation 
 python setup.py install
 
 ## 1) Run pv flat-dark field broadcasting server on the detector machine
-python flatdarkpv.py
+tomostream server
 
 ## 2) Run reconstruction on a machine with GPU
-python streaming_rec.py 
+tomosteam recon 
 
 ## 3) Run data acquisition at the beamline
