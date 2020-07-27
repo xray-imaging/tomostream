@@ -1,11 +1,12 @@
 import pvaccess as pva
-from orthorec import *
+# from orthorec import *
 import numpy as np
 import time
 
 from  tomostream import util
 from  tomostream import log
 from  tomostream import pv
+from  tomostream import solver
 
 
 def readByChoice(ch):
@@ -121,7 +122,7 @@ def streaming(args):
     chFlatDark.monitor(addFlatDark, '')
 
     # create solver class on GPU
-    slv = OrthoRec(bufferSize, width, height, numThetaPi)
+    slv = solver.OrthoRec(bufferSize, width, height, numThetaPi)
     # allocate memory for result slices
     recAll = np.zeros([width, 3*width], dtype='float32')
 
