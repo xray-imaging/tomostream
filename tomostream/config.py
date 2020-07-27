@@ -11,11 +11,8 @@ These PVs are not saved in the tomostream configuration file.
 
 import os
 import sys
-import shutil
-import pathlib
 import argparse
 import configparser
-import h5py
 import numpy as np
 
 from collections import OrderedDict
