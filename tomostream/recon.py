@@ -33,8 +33,9 @@ def testPVs(tsPVs):
 
 def streaming(args):
     """
-    Main computational function, take data from pvData ('2bmbSP1:Pva1:Image'),
-    reconstruct orthogonal slices and write the result to pvRec ('2bma:TomoScan:StreamReconstruction')
+    Main computational function, take data from pvData (raw images from the detector i.e. '2bmbSP1:Pva1:Image'),
+    reconstruct X-Y-Z orthogonal slices and write the result to pvRec as defined in args.recon_pva_name 
+    i.e. '2bma:TomoScan:StreamReconstruction')
     """
 
     ##### init pvs ######
@@ -57,7 +58,7 @@ def streaming(args):
                           {'size': height, 'fullSize': height, 'binning': 1}]
 
     ##### run server for reconstruction pv #####
-    serverRec = pva.PvaServer('2bma:TomoScan:StreamReconstruction', pvRec)
+    serverRec = pva.PvaServer(args.recon_pva_name, pvRec)
 
     ##### init buffers #######
     # form circular buffer, whenever the angle goes higher than 180
