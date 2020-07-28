@@ -65,7 +65,7 @@ extern "C" {
             //linear interpolation
             s0 = roundf(sp);
             ind = k * n * nz + tz * n + s0;
-            if ((s0 >= 0) & (s0 < n - 1))
+            if ((s0 >= 0) & (s0 < n - 1))            
                 f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
         }
         f[tx + ty * n] = f0;
@@ -82,6 +82,7 @@ orthoz_kernel = module.get_function('orthoz')
 def orthox(data, theta, center, ix):
     [ntheta, nz, n] = data.shape
     objx = cp.zeros([nz, n], dtype='float32')
+    theta=theta.astype('float32')    
     orthox_kernel((int(n/32+0.5), int(nz/32+0.5)), (32, 32),
                   (objx, data, theta, center, ix, n, nz, ntheta))
     return objx
