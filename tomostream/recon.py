@@ -137,7 +137,7 @@ def streaming(args):
         ringRemoval = readByChoice(tsPVs['chStreamRingRemoval'])  # todo
         Paganin = readByChoice(tsPVs['chStreamPaganin'])  # todo
         PaganinAlpha = tsPVs['chStreamPaganinAlpha'].get('')['value']  # todo
-        center = tsPVs['chStreamCenter'].get('')['value']
+        center = np.float32(tsPVs['chStreamCenter'].get('')['value'])
         filterType = readByChoice(tsPVs['chStreamFilterType'])  # todo
 
         # 3 ortho slices ids
