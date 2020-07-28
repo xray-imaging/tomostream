@@ -1,120 +1,78 @@
-"""Module for tomography."""
-
 import numpy as np
-# from orthorec.radonortho import radonortho
-from scipy import linalg
-import signal
-import sys
-
-def getp(a):
-    return a.__array_interface__['data'][0]
+import cupy as cp
+from cupyx.scipy.fft import rfft, irfft
+from cupyx.scipy.fftpack import get_fft_plan
+from .kernels import orthox, orthoy, orthoz
 
 
-# class OrthoRec(radonortho):
-class OrthoRec():
+class Solver():
     """Class for tomography reconstruction of orthogonal slices through direct 
     discreatization of line integrals in the Radon transform.
-    Attribtues
+    Attributes
     ----------
     ntheta : int
         The number of projections in the buffer (for simultaneous reconstruction)
     n, nz : int
         The pixel width and height of the projection.
-    nthetapi: int
-        The total number of angles to cover the interval [0,pi]
     """
 
-    def __init__(self, ntheta, n, nz, nthetapi):
-        """Create class for the tomo solver."""
-        # total number of parts for final summation         
-        super().__init__(ntheta, n, nz, nthetapi)
-        self._initFilter('parzen')
-        
-        def signal_handler(sig, frame):  # Free gpu memory after SIGINT, SIGSTSTP
-            print('free GPU')
-            self.free()
+    def __init__(self, ntheta, n, nz):
+        self.n = n
+        self.nz = nz
+        self.ntheta = ntheta
+        self.nthetapart = 64 # number of projections for simultatneous processing by a GPU
 
-            sys.exit(0)
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTSTP, signal_handler)
-        
+    def setFlat(self, data):
+        self.flat = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
 
-    def __enter__(self):
-        """Return self at start of a with-block."""
-        return self
+    def setDark(self, data):
+        self.dark = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
 
-    def __exit__(self, type, value, traceback):
-        """Free GPU memory due at interruptions or with-block exit."""
-        self.free()
+    def backProjection(self, data, theta, center, idx, idy, idz):
+        obj = cp.zeros([self.n, 3*self.n], dtype='float32')
+        obj[:self.nz, :self.n] = orthox(data, theta, center, idx)
+        obj[:self.nz, self.n:2*self.n] = orthoy(data, theta, center, idy)
+        obj[:self.n, 2*self.n:3*self.n] = orthoz(data, theta, center, idz)
+        return obj
 
-    def setFlat(self, flat):
-        """Copy flat field to GPU for flat field correction"""
-        flat = np.ascontiguousarray(flat.astype('float32'))
-        super().set_flat(getp(flat))
+    def fbpFilter(self, data):
+        freq = cp.fft.rfftfreq(self.n)
+        wfilter = freq * 4 * (1 - freq * 2)**3
+        for k in range(data.shape[0]):
+            data[k] = irfft(wfilter*rfft(data[k], overwrite_x=True,
+                                         axis=1), overwrite_x=True, axis=1)
+        return data
 
-    def setDark(self, dark):
-        """Copy dark field to GPU for dark field correction"""
-        dark = np.ascontiguousarray(dark.astype('float32'))
-        super().set_dark(getp(dark))
+    def stripeRemovalFilter(self, data):
+        # to implement
+        return data
 
-    def recOrtho(self, data, theta, center, ix, iy, iz):
-        """Reconstruction of 3 ortho slices with respect to ix,iy,iz indeces"""
-        recx = np.zeros([self.nz, self.n], dtype='float32')
-        recy = np.zeros([self.nz, self.n], dtype='float32')
-        recz = np.zeros([self.n, self.n], dtype='float32')
-        data = np.ascontiguousarray(data)
-        theta = np.ascontiguousarray(theta)
+    def darkFlatFieldCorrection(self, data):
+        data = (data-self.dark)/cp.maximum(self.flat-self.dark, 1e-6)
+        return data
 
-        # C++ wrapper, send pointers to GPU arrays
-        self.rec(getp(recx), getp(recy),
-                 getp(recz), getp(data), getp(theta), center, ix, iy, iz)
+    def minusLog(self, data):
+        data = -cp.log(cp.maximum(data, 1e-6))
+        return data
 
-        return recx, recy, recz
+    def reconPart(self, data, theta, center, idx, idy, idz):
+        data = self.darkFlatFieldCorrection(data)
+        data = self.minusLog(data)
+        data = self.stripeRemovalFilter(data)
+        data = self.fbpFilter(data)
+        rec = self.backProjection(data, theta, center, idx, idy, idz)
+        return rec
 
-    def _initFilter(self, filter='parzen', p=2):
-        """Instead of direct integral discretization in the frequency domain by using the rectangular rule, 
-        i.e. \int_a^b |signa| h(\sigma) d\sigma = \sum_k |\sigma_k| h(\sigma_k), 
-        use a higher order polynomials for approximation \int_a^b |sigma| h(\sigma) d\sigma = \sum_k w_k h(\sigma_k), where 
-        w_k are defined with the inverse Vandermonde matrix.
-        Attribtues
-        ----------
-        p : max polinomial order for approximation
-        """
-
-        ne = self.n//2+1  # size of the array in frequencies
-        t = np.arange(0, ne)/self.n
-        s = np.linspace(0, 1, p)
-
-        # Vandermonde matrix with extra line
-        v = np.vander(s, p+2, increasing=True)
-
-        # Inverse Vandermonde matrix for approximation
-        iv = linalg.inv(v[:, :-2])
-        # Integration over short intervals
-        u = np.diff(v[:, 1:]/np.arange(1, p+2), axis=0)
-
-        # Terms used after the change of coordinates (a,b)->(0,1)
-        w1 = np.matmul(u[:, 1:p+1], iv)  # x*pn(x) term
-        w2 = np.matmul(u[:, 0:p], iv)  # const*pn(x) term
-
-        # Compensation for overlapping short intervals
-        c = np.ones(ne-1)/(p-1)
-        c[0:p-1] = 1/np.arange(1, p)
-        c[ne-p-1:] = c[0:p][::-1]
-        w = np.zeros(ne)
-        for j in range(ne-p+1):
-            # Change coordinates, and constant and linear parts
-            wa = (t[j+p-1]-t[j])**2*w1+(t[j+p-1]-t[j])*t[j]*w2
-            for k in range(p-1):
-                w[j:j+p] += wa[k, :]*c[j+k]  # % Add to weights
-        # dont change high frequencies
-        w *= self.n
-        w[ne-2*p:] = 0.5/ne*np.arange(ne-2*p+1, ne+1)
-
-        if filter == 'parzen':
-            w = w * 4 * (1 - t * 2)**3
-        # add other filters...
-
-        w = np.ascontiguousarray(w.astype('float32'))
-        # set filter in the C++ code
-        self.set_filter(getp(w))
+    def recon(self, data, theta, center, idx, idy, idz):
+        for k in range(int(np.ceil(self.ntheta/self.nthetapart))):
+            ids = np.arange(k*self.nthetapart,
+                            min((k+1)*self.nthetapart, self.ntheta))
+            datagpu = cp.array(data[ids]).reshape(len(ids), self.nz, self.n)
+            thetagpu = cp.array(theta[ids])*np.pi/180
+            if(k == 0):
+                recgpu = self.reconPart(
+                    datagpu, thetagpu, center, idx, idy, idz)
+            else:
+                recgpu += self.reconPart(datagpu,
+                                         thetagpu, center, idx, idy, idz)
+        return recgpu.get()
