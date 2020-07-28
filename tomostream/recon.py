@@ -8,7 +8,7 @@ from tomostream import pv
 from tomostream import solver
 
 
-def read_by_choice(ch):
+def read_by_type(ch):
     """Read PV value from choices"""
     allch = ch.get('')['value']
     return allch['choices'][allch['index']]
@@ -17,15 +17,15 @@ def read_by_choice(ch):
 def show_pvs(ts_pvs):
     """Show PVs"""
     log.info('###### READ PVS FROM GUI #######')
-    log.info('status %s', read_by_choice(ts_pvs['chStreamStatus']))
+    log.info('status %s', read_by_type(ts_pvs['chStreamStatus']))
     log.info('buffer_size %s', ts_pvs['chStreamBufferSize'].get('')['value'])
-    log.info('binning %s', read_by_choice(ts_pvs['chStreamBinning']))
-    log.info('ring_removal %s', read_by_choice(ts_pvs['chStreamRingRemoval']))
-    log.info('paganin %s', read_by_choice(ts_pvs['chStreamPaganin']))
+    log.info('binning %s', read_by_type(ts_pvs['chStreamBinning']))
+    log.info('ring_removal %s', read_by_type(ts_pvs['chStreamRingRemoval']))
+    log.info('paganin %s', read_by_type(ts_pvs['chStreamPaganin']))
     log.info('paganin alpha %s',
              ts_pvs['chStreamPaganinAlpha'].get('')['value'])
     log.info('center %s', ts_pvs['chStreamCenter'].get('')['value'])
-    log.info('filter type %s', read_by_choice(ts_pvs['chStreamFilterType']))
+    log.info('filter type %s', read_by_type(ts_pvs['chStreamFilterType']))
     log.info('ortho slice x %s', ts_pvs['chStreamOrthoX'].get('')['value'])
     log.info('ortho slice idy %s', ts_pvs['chStreamOrthoY'].get('')['value'])
     log.info('ortho slice idz %s', ts_pvs['chStreamOrthoZ'].get('')['value'])
@@ -83,7 +83,7 @@ def streaming(args):
 
     def add_data(pv):
         """ read data from the detector, 3 types: flat, dark, projection"""
-        if(read_by_choice(ts_pvs['chStreamStatus']) == 'Off'):
+        if(read_by_type(ts_pvs['chStreamStatus']) == 'Off'):
             return
         nonlocal num_proj
         cur_id = pv['uniqueId']
@@ -128,18 +128,18 @@ def streaming(args):
 
     ##### streaming reconstruction ######
     while(1):
-        if(read_by_choice(ts_pvs['chStreamStatus']) == 'Off'):
+        if(read_by_type(ts_pvs['chStreamStatus']) == 'Off'):
             continue
         proj_part = proj_buffer.copy()
         theta_part = theta_buffer.copy()
 
         ### take parameters from the GUI ###
-        binning = read_by_choice(ts_pvs['chStreamBinning'])  # todo
-        ring_removal = read_by_choice(ts_pvs['chStreamRingRemoval'])  # todo
-        paganin = read_by_choice(ts_pvs['chStreamPaganin'])  # todo
+        binning = read_by_type(ts_pvs['chStreamBinning'])  # todo
+        ring_removal = read_by_type(ts_pvs['chStreamRingRemoval'])  # todo
+        paganin = read_by_type(ts_pvs['chStreamPaganin'])  # todo
         paganin_alpha = ts_pvs['chStreamPaganinAlpha'].get('')['value']  # todo
         center = np.float32(ts_pvs['chStreamCenter'].get('')['value'])
-        filter_type = read_by_choice(ts_pvs['chStreamFilterType'])  # todo
+        filter_type = read_by_type(ts_pvs['chStreamFilterType'])  # todo
 
         # 3 ortho slices ids
         idX = ts_pvs['chStreamOrthoX'].get('')['value']

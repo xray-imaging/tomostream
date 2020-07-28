@@ -26,7 +26,7 @@ class Solver():
         self.flat = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
 
     def setDark(self, data):
-        self.dark = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
+        self.dark = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)*0
 
     def backProjection(self, data, theta, center, idx, idy, idz):
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')

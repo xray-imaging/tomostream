@@ -5,6 +5,10 @@ import pvaccess as pva
 from  tomostream import pv
 from  tomostream import log
 
+def read_by_type(ch):
+    """Read PV value from choices"""
+    allch = ch.get('')['value']
+    return allch['choices'][allch['index']]
 
 def flat_dark_broadcast(args):
 
@@ -51,6 +55,9 @@ def flat_dark_broadcast(args):
     ch_data.monitor(add_data, '')
 
     while(1):
+        if(read_by_choice(ts_pvs['chStreamStatus']) == 'Off'):
+            num_flat_dark = 0
+            continue
         if(num_flat_dark == depth):  # flat and dark are collected
             log.info('start broadcasting flat and dark fields')
             num_flat_dark = 0  # reset counter
