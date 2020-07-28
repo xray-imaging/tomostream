@@ -32,5 +32,5 @@ def init(tomoscan_prefix):
     ts_pvs['chStreamOrthoZ'] = pva.Channel(tomoscan_prefix + 'StreamOrthoZ', pva.CA)
 
     ts_pvs['chFlatDark'] = pva.Channel(tomoscan_prefix + 'FlatDark')
-
+    ts_pvs['chCapture'] = pva.Channel(tfile_plugin_prefix + 'Capture')
     return ts_pvs

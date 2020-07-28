@@ -102,8 +102,6 @@ def orthoy(data, theta, center, iy):
 def orthoz(data, theta, center, iz):
     [ntheta, nz, n] = data.shape
     objz = cp.zeros([n, n], dtype='float32')
-    #data=data*0+1
-    #theta = cp.linspace(0,cp.pi,ntheta,endPoint=False).astype('float32')
     orthoz_kernel((int(n/32+0.5), int(n/32+0.5)), (32, 32),
                   (objz, data, theta, center, iz, n, nz, ntheta))
     return objz

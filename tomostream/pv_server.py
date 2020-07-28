@@ -40,8 +40,10 @@ def flat_dark_broadcast(args):
 
     def add_data(pv):
         """ read data from the detector, 2 types: flat, dark"""
-
         nonlocal num_flat_dark
+        if(read_by_type(ts_pvs['chStreamStatus']) == 'Off'):
+            num_flat_dark = 0
+            return
 
         cur_id = pv['uniqueId']
         frame_type_all = ts_pvs['chStreamFrameType'].get('')['value']
@@ -55,13 +57,11 @@ def flat_dark_broadcast(args):
     ch_data.monitor(add_data, '')
 
     while(1):
-        if(read_by_type(ts_pvs['chStreamStatus']) == 'Off'):
-            num_flat_dark = 0
-            continue
         if(num_flat_dark == depth):  # flat and dark are collected
             log.info('start broadcasting flat and dark fields')
             num_flat_dark = 0  # reset counter
             pv_flat_dark['value'] = ({'ubyteValue': flat_dark_buffer.flatten()},)
         # rate limit
         time.sleep(0.1)
+        log.info(ts_pvs['chCapture'].get('')['value'])
 
