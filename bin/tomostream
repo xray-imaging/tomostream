@@ -8,11 +8,6 @@ import argparse
 from datetime import datetime
 from tomostream import log
 from tomostream import config
-<<<<<<< HEAD
-=======
-from tomostream import pv_server
-from tomostream import recon
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
 
 def init(args):
     if not os.path.exists(str(args.config)):
@@ -24,17 +19,11 @@ def run_status(args):
     config.show_config(args)
 
 def run_server(args):
-<<<<<<< HEAD
     from tomostream import pv_server
     pv_server.FlatDarkBroadcast(args)
 
 def run_recon(args):
     from tomostream import recon
-=======
-    pv_server.FlatDarkBroadcast(args)
-
-def run_recon(args):
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
     recon.streaming(args)
 
 def main():

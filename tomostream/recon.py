@@ -2,7 +2,6 @@ import pvaccess as pva
 import numpy as np
 import time
 
-<<<<<<< HEAD
 from tomostream import util
 from tomostream import log
 from tomostream import pv
@@ -32,17 +31,6 @@ def testPVs(tsPVs):
     log.info('ortho slice idz %s', tsPVs['chStreamOrthoZ'].get('')['value'])
 
 
-=======
-from  tomostream import util
-from  tomostream import log
-from  tomostream import pv
-from  tomostream import solver
-
-def readByChoice(ch):
-    allch = ch.get('')['value']
-    return allch['choices'][allch['index']]
-
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
 def streaming(args):
     """
     Main computational function, take data from pvData ('2bmbSP1:Pva1:Image'),
@@ -50,7 +38,6 @@ def streaming(args):
     """
 
     ##### init pvs ######
-<<<<<<< HEAD
     tsPVs = pv.init(args.tomoscan_prefix)
     testPVs(tsPVs)
     # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
@@ -59,32 +46,6 @@ def streaming(args):
     # pva type flat and dark fields pv broadcasted from the detector machine
     chFlatDark = tsPVs['chFlatDark']
     pvFlatDark = chFlatDark.get('')
-=======
-
-    ts_pvs = pv.init(args.tomoscan_prefix)
-
-    # Try to read:
-    log.info('###### READ PVS FROM GUI #######')
-    log.info('status %s', readByChoice(ts_pvs['chStreamStatus']))
-    log.info('bufferSize %s', ts_pvs['chStreamBufferSize'].get('')['value'])
-    log.info('binning %s', readByChoice(ts_pvs['chStreamBinning']))
-    log.info('ringRemoval %s', readByChoice(ts_pvs['chStreamRingRemoval']))
-    log.info('Paganin %s', readByChoice(ts_pvs['chStreamPaganin']))
-    log.info('Paganin alpha %s', ts_pvs['chStreamPaganinAlpha'].get('')['value'])
-    log.info('center %s', ts_pvs['chStreamCenter'].get('')['value'])
-    log.info('filter type %s', readByChoice(ts_pvs['chStreamFilterType']))
-    log.info('ortho slice x %s', ts_pvs['chStreamOrthoX'].get('')['value'])
-    log.info('ortho slice idy %s', ts_pvs['chStreamOrthoY'].get('')['value'])
-    log.info('ortho slice idz %s', ts_pvs['chStreamOrthoZ'].get('')['value'])
-
-    # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
-    chData = ts_pvs['chData'] 
-    pvData = chData.get('')
-    # pva type flat and dark fields pv broadcasted from the detector machine
-    chFlatDark = ts_pvs['chFlatDark']
-    pvFlatDark = chFlatDark.get('')
-
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
     # pva type pv for reconstrucion
     pvDict = pvData.getStructureDict()
     pvRec = pva.PvObject(pvDict)
@@ -101,17 +62,10 @@ def streaming(args):
     ##### init buffers #######
     # form circular buffer, whenever the angle goes higher than 180
     # than corresponding projection is replacing the first one
-<<<<<<< HEAD
     bufferSize = tsPVs['chStreamBufferSize'].get('')['value']
     # number of dark and flat fields
     numFlat = tsPVs['chStreamNumFlatFields'].get('')['value']
     numDark = tsPVs['chStreamNumDarkFields'].get('')['value']
-=======
-    bufferSize = ts_pvs['chStreamBufferSize'].get('')['value']
-    # number of dark and flat fields
-    numFlat = ts_pvs['chStreamNumFlatFields'].get('')['value']
-    numDark = ts_pvs['chStreamNumDarkFields'].get('')['value']
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
 
     projBuffer = np.zeros([bufferSize, width*height], dtype='uint8')
     flatBuffer = np.ones([numFlat, width*height], dtype='uint8')
@@ -119,7 +73,6 @@ def streaming(args):
     thetaBuffer = np.zeros(bufferSize, dtype='float32')
 
     # load angles
-<<<<<<< HEAD
     theta = tsPVs['chStreamThetaArray'].get(
         '')['value'][:tsPVs['chStreamNumAngles'].get('')['value']]
 
@@ -134,40 +87,13 @@ def streaming(args):
         nonlocal numProj
         curId = pv['uniqueId']
         frameTypeAll = tsPVs['chStreamFrameType'].get('')['value']
-=======
-    theta = ts_pvs['chStreamThetaArray'].get(
-        '')['value'][:ts_pvs['chStreamNumAngles'].get('')['value']]
-    # number of angles in the interval of size pi (to be used for 1 streaming reconstuction)
-    # at some point we can also use >1 rotations for 1 reconstruction, todo later
-    numThetaPi = int(np.where(theta-theta[0] > 180)[0][0])
-    log.info('number of angles in the interval of the size pi: ', numThetaPi)
-
-    # number of acquired projections
-    numProj = 0
-
-    def addData(pv):
-        """ read data from the detector, 3 types: flat, dark, projection"""
-
-        if(readByChoice(ts_pvs['chStreamStatus']) == 'Off'):
-            return
-
-        nonlocal numProj
-        curId = pv['uniqueId']
-        frameTypeAll = ts_pvs['chStreamFrameType'].get('')['value']
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
         frameType = frameTypeAll['choices'][frameTypeAll['index']]
         if(frameType == 'Projection'):
             projBuffer[np.mod(numProj, bufferSize)
                        ] = pv['value'][0]['ubyteValue']
             thetaBuffer[np.mod(numProj, bufferSize)] = theta[curId-1]
             numProj += 1
-<<<<<<< HEAD
             log.info('id: %s type %s', curId, frameType)
-=======
-            #log.info('id:', curId, 'type', frameType)
-
-    flgFlatDark = False  # flat and dark exist or not
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
 
     def addFlatDark(pv):
         """ read flat and dark fields from the manually running pv server on the detector machine"""
@@ -180,7 +106,6 @@ def streaming(args):
             flgFlatDark = True
             log.info('new flat and dark fields acquired')
 
-<<<<<<< HEAD
     # start monitoring projection data
     chData.monitor(addData, '')
     # start monitoring dark and flat fields pv
@@ -188,15 +113,6 @@ def streaming(args):
 
     # create solver class on GPU
     slv = solver.Solver(bufferSize, width, height)
-=======
-    #### start monitoring projection data ####
-    chData.monitor(addData, '')
-    #### start monitoring dark and flat fields pv ####
-    chFlatDark.monitor(addFlatDark, '')
-
-    # create solver class on GPU
-    slv = solver.Recon(bufferSize, width, height, numThetaPi)
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
 
     # wait until dark and flats are acquired
     while(flgFlatDark == False):
@@ -211,19 +127,12 @@ def streaming(args):
 
     ##### streaming reconstruction ######
     while(1):
-<<<<<<< HEAD
         if(readByChoice(tsPVs['chStreamStatus']) == 'Off'):
             continue
-=======
-        if(readByChoice(ts_pvs['chStreamStatus']) == 'Off'):
-            continue
-        
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
         projPart = projBuffer.copy()
         thetaPart = thetaBuffer.copy()
 
         ### take parameters from the GUI ###
-<<<<<<< HEAD
         binning = readByChoice(tsPVs['chStreamBinning'])  # todo
         ringRemoval = readByChoice(tsPVs['chStreamRingRemoval'])  # todo
         Paganin = readByChoice(tsPVs['chStreamPaganin'])  # todo
@@ -235,34 +144,13 @@ def streaming(args):
         idX = tsPVs['chStreamOrthoX'].get('')['value']
         idY = tsPVs['chStreamOrthoY'].get('')['value']
         idZ = tsPVs['chStreamOrthoZ'].get('')['value']
-=======
-        binning = readByChoice(ts_pvs['chStreamBinning'])  # todo
-        ringRemoval = readByChoice(ts_pvs['chStreamRingRemoval'])  # todo
-        Paganin = readByChoice(ts_pvs['chStreamPaganin'])  # todo
-        PaganinAlpha = ts_pvs['chStreamPaganinAlpha'].get('')['value']  # todo
-        center = ts_pvs['chStreamCenter'].get('')['value']
-        filterType = readByChoice(ts_pvs['chStreamFilterType'])  # todo
-
-        # 3 ortho slices ids
-        idX = ts_pvs['chStreamOrthoX'].get('')['value']
-        idY = ts_pvs['chStreamOrthoY'].get('')['value']
-        idZ = ts_pvs['chStreamOrthoZ'].get('')['value']
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
 
         # reconstruct on GPU
         util.tic()
         rec = slv.recon(projPart, thetaPart, center, idX, idY, idZ)
-<<<<<<< HEAD
         log.info('rec time: %s', util.toc())
-=======
-        log.info('rec time:', util.toc())
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
 
         # write to pv
         pvRec['value'] = ({'floatValue': rec.flatten()},)
         # reconstruction rate limit
         time.sleep(0.1)
-<<<<<<< HEAD
-=======
-
->>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
