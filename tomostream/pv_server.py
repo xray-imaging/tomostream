@@ -55,7 +55,7 @@ def flat_dark_broadcast(args):
     ch_data.monitor(add_data, '')
 
     while(1):
-        if(read_by_choice(ts_pvs['chStreamStatus']) == 'Off'):
+        if(read_by_type(ts_pvs['chStreamStatus']) == 'Off'):
             num_flat_dark = 0
             continue
         if(num_flat_dark == depth):  # flat and dark are collected
