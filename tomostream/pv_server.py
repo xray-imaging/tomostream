@@ -6,55 +6,55 @@ from  tomostream import pv
 from  tomostream import log
 
 
-def FlatDarkBroadcast(args):
+def flat_dark_broadcast(args):
 
     ts_pvs = pv.init(args.tomoscan_prefix)
 
     # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
-    chData = ts_pvs['chData'] 
-    pvData = chData.get('')
+    ch_data = ts_pvs['chData'] 
+    pv_data = ch_data.get('')
     # pva type pv for reconstrucion
-    pvDict = pvData.getStructureDict()
-    pvFlatDark = pva.PvObject(pvDict)
+    pv_dict = pv_data.getStructureDict()
+    pv_flat_dark = pva.PvObject(pv_dict)
     # take dimensions
-    width = pvData['dimension'][0]['size']
-    height = pvData['dimension'][1]['size']
+    width = pv_data['dimension'][0]['size']
+    height = pv_data['dimension'][1]['size']
     depth = ts_pvs['chStreamNumFlatFields'].get(
         '')['value']+ts_pvs['chStreamNumDarkFields'].get('')['value']
 
-    pvFlatDark['dimension'] = [{'size': width, 'fullSize': width, 'binning': 1},
+    pv_flat_dark['dimension'] = [{'size': width, 'fullSize': width, 'binning': 1},
                                {'size': height, 'fullSize': height, 'binning': 1},
                                {'size': depth, 'fullSize': depth, 'binning': 1}]
 
     ##### run server for reconstruction pv #####
-    serverFlatDark = pva.PvaServer('2bma:TomoScan:FlatDark', pvFlatDark)
+    serverFlatDark = pva.PvaServer('2bma:TomoScan:FlatDark', pv_flat_dark)
 
     ##### init buffers #######
-    FlatDarkBuffer = np.zeros([depth, width*height], dtype='uint8')
+    flat_dark_buffer = np.zeros([depth, width*height], dtype='uint8')
 
-    numFlatDark = 0
+    num_flat_dark = 0
 
-    def addData(pv):
+    def add_data(pv):
         """ read data from the detector, 2 types: flat, dark"""
 
-        nonlocal numFlatDark
+        nonlocal num_flat_dark
 
-        curId = pv['uniqueId']
-        frameTypeAll = ts_pvs['chStreamFrameType'].get('')['value']
-        frameType = frameTypeAll['choices'][frameTypeAll['index']]
-        if(frameType == 'FlatField' or frameType == 'DarkField'):
-            FlatDarkBuffer[numFlatDark] = pv['value'][0]['ubyteValue']
-            numFlatDark += 1
-            log.info('id: %s type %s num %s', curId, frameType, numFlatDark)
+        cur_id = pv['uniqueId']
+        frame_type_all = ts_pvs['chStreamFrameType'].get('')['value']
+        frame_type = frame_type_all['choices'][frame_type_all['index']]
+        if(frame_type == 'FlatField' or frame_type == 'DarkField'):
+            flat_dark_buffer[num_flat_dark] = pv['value'][0]['ubyteValue']
+            num_flat_dark += 1
+            log.info('id: %s type %s num %s', cur_id, frame_type, num_flat_dark)
 
     #### start monitoring projection data ####
-    chData.monitor(addData, '')
+    ch_data.monitor(add_data, '')
 
     while(1):
-        if(numFlatDark == depth):  # flat and dark are collected
+        if(num_flat_dark == depth):  # flat and dark are collected
             log.info('start broadcasting flat and dark fields')
-            numFlatDark = 0  # reset counter
-            pvFlatDark['value'] = ({'ubyteValue': FlatDarkBuffer.flatten()},)
+            num_flat_dark = 0  # reset counter
+            pv_flat_dark['value'] = ({'ubyteValue': flat_dark_buffer.flatten()},)
         # rate limit
         time.sleep(0.1)
 
