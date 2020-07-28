@@ -14,7 +14,7 @@ def readByChoice(ch):
     return allch['choices'][allch['index']]
 
 
-def testPVs():
+def testPVs(tsPVs):
     """Test reading PVs"""
     log.info('###### READ PVS FROM GUI #######')
     log.info('status %s', readByChoice(tsPVs['chStreamStatus']))
@@ -39,7 +39,7 @@ def streaming(args):
 
     ##### init pvs ######
     tsPVs = pv.init(args.tomoscan_prefix)
-    testPVs()
+    testPVs(tsPVs)
     # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
     chData = tsPVs['chData']
     pvData = chData.get('')
