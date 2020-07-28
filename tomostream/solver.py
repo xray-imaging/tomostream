@@ -1,5 +1,6 @@
 import numpy as np
 import cupy as cp
+<<<<<<< HEAD
 from cupyx.scipy.fft import rfft, irfft
 from cupyx.scipy.fftpack import get_fft_plan
 from .kernels import orthox, orthoy, orthoz
@@ -9,11 +10,19 @@ class Solver():
     """Class for tomography reconstruction of orthogonal slices through direct 
     discreatization of line integrals in the Radon transform.
     Attributes
+=======
+
+class Recon():
+    """Class for tomography reconstruction of orthogonal slices through direct 
+    discreatization of line integrals in the Radon transform.
+    Attribtues
+>>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
     ----------
     ntheta : int
         The number of projections in the buffer (for simultaneous reconstruction)
     n, nz : int
         The pixel width and height of the projection.
+<<<<<<< HEAD
     """
 
     def __init__(self, ntheta, n, nz):
@@ -42,12 +51,55 @@ class Solver():
             data[k] = irfft(wfilter*rfft(data[k], overwrite_x=True,
                                          axis=1), overwrite_x=True, axis=1)
         return data
+=======
+    nthetapi: int
+        The total number of angles to cover the interval [0,pi]
+    """
+
+    def __init__(self, ntheta, n, nz, nthetapi):
+        self.n = n
+        self.nz = nz
+        self.ntheta = ntheta
+        self.nthetapi = nthetapi
+
+    def setFlat(self, data):
+        self.flat = cp.array(np.mean(data,axis=0))
+
+    def setDark(self, data):
+        self.dark = cp.array(np.mean(data,axis=0))
+
+    def backProjection(self, data, theta, center, idx, idy, idz):
+        objx = cp.zeros([self.nz, self.n], dtype='float32')
+        objy = cp.zeros([self.nz, self.n], dtype='float32')
+        objz = cp.zeros([self.n, self.n], dtype='float32')
+        for k in range(theta):
+            ctheta = cp.cos(theta[k])
+            stheta = cp.sin(theta[k])
+            s = x[idx]*ctheta - y*stheta + center
+            objx += data[k, :, s]
+            s = x*ctheta - y[idy]*stheta + center
+            objy += data[k, :, s]
+            s = x*ctheta - y*stheta + center
+            objz += data[k, idz, s]
+        obj = cp.zeros([self.n, 3*self.n], dtype='float32')
+        obj[:self.nz,:self.n] = objx
+        obj[:self.nz,:self.n] = objy
+        obj[:self.n,:self.n] = objz        
+        return obj
+
+    def fbpFilter(self, data):
+        freq = cp.fft.rfftfreq(self.n//2)
+        w = freq * 4 * (1 - freq * 2)**3
+        fdata = cp.fft.rifft(cp.fft.rfft(data, axis=2)*w, axis=2)
+        return fdata
+>>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
 
     def stripeRemovalFilter(self, data):
         # to implement
         return data
 
     def darkFlatFieldCorrection(self, data):
+<<<<<<< HEAD
         data = (data-self.dark)/cp.maximum(self.flat-self.dark, 1e-6)
         return data
 
@@ -75,4 +127,29 @@ class Solver():
             else:
                 recgpu += self.reconPart(datagpu,
                                          thetagpu, center, idx, idy, idz)
+=======
+        fdata = (data-dark)/cp.max(flat-dark, 1e-6)
+        return fdata
+
+    def minusLog(self, data):
+        fdata = -cp.log(cp.max(data, 1e-6))
+        return fdata
+
+    def reconPart(self, data, theta, center, idx, idy, idz):
+        fdata = self.darkFlatFieldCorrection(data)
+        fdata = self.minusLog(fdata)
+        fdata = self.stripeRemovalFilter(fdata)
+        fdata = self.fbpFilter(fdata)
+        rec = self.backProjection(fdata, theta, center, idx, idy, idz)
+        return rec
+
+    def recon(self, data, theta, center, idx, idy, idz):
+        for k in range(np.ceil(self.nthetapi//self.ntheta)):
+            datagpu = cp.array(data[k*ntheta:cp.max((k+1)*ntheta,nthetapi)])
+            thetagpu = cp.array(theta[k*ntheta:cp.max((k+1)*ntheta,nthetapi)])*np.pi/180
+            if(k == 0):
+                recgpu = reconPart(data, theta, center, idx, idy, idz)
+            else:
+                recgpu += reconPart(data, theta, center, idx, idy, idz)
+>>>>>>> 0912478e6c7a8f476b9465dda95c998c18e8ccef
         return recgpu.get()
