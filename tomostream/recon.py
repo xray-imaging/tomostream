@@ -110,7 +110,7 @@ def streaming(args):
     # start monitoring projection data
     ch_data.monitor(add_data, '')
     # start monitoring dark and flat fields pv
-    ch_flat_dark.monitor(addFlatDark, '')
+    ch_flat_dark.monitor(add_flat_dark, '')
 
     # create solver class on GPU
     slv = solver.Solver(buffer_size, width, height)
