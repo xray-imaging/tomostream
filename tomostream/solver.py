@@ -20,7 +20,7 @@ class Solver():
         self.n = n
         self.nz = nz
         self.ntheta = ntheta
-        self.nthetapart = 64 # number of projections for simultatneous processing by a GPU
+        self.nthetapart = 90  # number of projections for simultatneous processing by a GPU
 
     def setFlat(self, data):
         self.flat = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
@@ -37,7 +37,7 @@ class Solver():
 
     def fbpFilter(self, data):
         freq = cp.fft.rfftfreq(self.n)
-        wfilter = freq * 4 * (1 - freq * 2)**3
+        wfilter = freq * (1 - freq * 2)**3
         for k in range(data.shape[0]):
             data[k] = irfft(wfilter*rfft(data[k], overwrite_x=True,
                                          axis=1), overwrite_x=True, axis=1)
@@ -60,7 +60,8 @@ class Solver():
         data = self.minusLog(data)
         data = self.stripeRemovalFilter(data)
         data = self.fbpFilter(data)
-        rec = self.backProjection(data, theta, center, idx, idy, idz)
+        rec = self.backProjection(data.astype(
+            'float32'), theta, center, idx, idy, idz)
         return rec
 
     def recon(self, data, theta, center, idx, idy, idz):
@@ -75,4 +76,5 @@ class Solver():
             else:
                 recgpu += self.reconPart(datagpu,
                                          thetagpu, center, idx, idy, idz)
+        recgpu /= self.ntheta
         return recgpu.get()
