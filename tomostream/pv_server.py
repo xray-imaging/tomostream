@@ -55,13 +55,14 @@ def flat_dark_broadcast(args):
 
     #### start monitoring projection data ####
     ch_data.monitor(add_data, '')
-
+    k = 0
     while(1):
-        if(num_flat_dark == depth):  # flat and dark are collected
-            log.info('start broadcasting flat and dark fields')
-            num_flat_dark = 0  # reset counter
-            pv_flat_dark['value'] = ({'ubyteValue': flat_dark_buffer.flatten()},)
+        #if(num_flat_dark == depth):  # flat and dark are collected
+        #    log.info('start broadcasting flat and dark fields')
+        #    num_flat_dark = 0  # reset counter
+        #    pv_flat_dark['value'] = ({'ubyteValue': flat_dark_buffer.flatten()},)
         # rate limit
         time.sleep(0.1)
-        log.info(ts_pvs['chCapture'].get('')['value'])
+        log.info("%s %s %s",num_flat_dark,k,ts_pvs['chCapture'].get('')['value'])
+        k=k+1
 
