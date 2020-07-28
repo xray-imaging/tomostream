@@ -20,7 +20,7 @@ def run_status(args):
 
 def run_server(args):
     from tomostream import pv_server
-    pv_server.FlatDarkBroadcast(args)
+    pv_server.flat_dark_broadcast(args)
 
 def run_recon(args):
     from tomostream import recon

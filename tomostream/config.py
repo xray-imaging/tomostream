@@ -54,6 +54,10 @@ SECTIONS['tomostream'] = {
         'default': '2bma:TomoScan:',
         'type': str,
         'help': "The tomostream prefix, i.e.'13BMDPG1:TS:' or '2bma:TomoScan:' "},
+    'recon-pva-name':{
+        'default': '2bma:TomoScan:StreamReconstruction',
+        'type': str,
+        'help': "The name of the Pva where the X-Y-Z streaming reconstruction image will update. This PV name can be entered in the ImageJ  EPICS_NTNDA_Viewer plug-in for display."},
         }
 
 TOMOSTREAM_PARAMS = ('tomostream', )
