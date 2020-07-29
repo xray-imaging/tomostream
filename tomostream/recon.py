@@ -95,6 +95,9 @@ def streaming(args):
             theta_buffer[np.mod(num_proj, buffer_size)] = theta[cur_id-1]
             num_proj += 1
             log.info('id: %s type %s', cur_id, frame_type)
+            cur_idnew = pv['uniqueId']
+            #log.info("%s<->%s",cur_id,cur_idnew)
+        
 
     def add_flat_dark(pv):
         """ read flat and dark fields from the manually running pv server on the detector machine"""
