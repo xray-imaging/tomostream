@@ -143,13 +143,13 @@ def streaming(args):
         paganin_alpha = ts_pvs['chStreamPaganinAlpha'].get('')['value']  # todo
         center = np.float32(ts_pvs['chStreamCenter'].get('')['value'])
         filter_type = read_by_type(ts_pvs['chStreamFilterType'])  # todo
-
+        
         # 3 ortho slices ids
         idX = ts_pvs['chStreamOrthoX'].get('')['value']
         idY = ts_pvs['chStreamOrthoY'].get('')['value']
         idZ = ts_pvs['chStreamOrthoZ'].get('')['value']
 
-        # reconstruct on GPU
+        # reconstruct on GPU        
         util.tic()
         rec = slv.recon(proj_part, theta_part, center, idX, idY, idZ)
         log.info('rec time: %s', util.toc())

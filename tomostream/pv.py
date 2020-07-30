@@ -13,10 +13,6 @@ def init(tomoscan_prefix):
     file_plugin_prefix = chFilePluginPVPrefix.get('')['value']    
     pso_prefix = chPSOPVPrefix.get('')['value']
     
-    print(file_plugin_prefix)
-    print(camera_prefix)    
-    print(pso_prefix)
-
     ts_pvs['chStreamThetaArray'] = pva.Channel(pso_prefix +'motorPos.AVAL', pva.CA)
     ts_pvs['chData'] = pva.Channel(camera_prefix + 'Pva1:Image')
 
@@ -37,10 +33,10 @@ def init(tomoscan_prefix):
     ts_pvs['chStreamOrthoX'] = pva.Channel(tomoscan_prefix + 'StreamOrthoX', pva.CA)
     ts_pvs['chStreamOrthoY'] = pva.Channel(tomoscan_prefix + 'StreamOrthoY', pva.CA)
     ts_pvs['chStreamOrthoZ'] = pva.Channel(tomoscan_prefix + 'StreamOrthoZ', pva.CA)
-    ts_pvs['chCapture'] = pva.Channel(file_plugin_prefix + 'Capture', pva.CA)
+    ts_pvs['chCapture_RBV'] = pva.Channel(file_plugin_prefix + 'Capture_RBV', pva.CA)
     ts_pvs['chFullFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FullFileName_RBV', pva.CA)
-    ts_pvs['chNumCaptured_RBV'] = pva.Channel(file_plugin_prefix + 'NumCaptured_RBV', pva.CA)
-
+    ts_pvs['chFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FileName_RBV', pva.CA)    
+    ts_pvs['chNumCaptured_RBV'] = pva.Channel(file_plugin_prefix + 'NumCaptured_RBV', pva.CA)    
     ts_pvs['chFlatDark'] = pva.Channel(tomoscan_prefix + 'FlatDark')
 
     # mistery
