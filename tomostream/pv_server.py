@@ -36,17 +36,24 @@ def flat_dark_broadcast(args):
     dark_flat_capture = False
     proj_capture = False
 
-    def dark_flat_broadcast(pv):
-        """ wait until dark and flat fields are acquired, 
-            read them from the hdf5 file,
-            broadcast into PV
-        """
-        nonlocal dark_flat_capture
+    def capture_data(pv):
+        """ Monitoring capturing button for gettng dark and flat fields, or projections
 
-        if ((list(pv['value']) == [ord('t'), 0])):  # start acquiring data
-            log.info('capturing dark and flat')
-            dark_flat_capture = True
-        elif(dark_flat_capture):  # data acquired, start broadcasting
+        """
+        nonlocal proj_capture
+        nonlocal dark_flat_capture
+        if(pv['value']['index'] == 1  # capture button pressed,
+                and dark_flat_capture == False  # dark flat are not being acquired,
+                and proj_capture == False):  # check that the previous dataset is written into hdf5 file
+            # start acquiring flat and dark
+            if (list(ts_pvs['chFileName_RBV'].get()['value']) == [ord('t'), 0]):
+                log.info('capturing dark and flat')
+                dark_flat_capture = True
+            else:
+                log.info('start capturing projections')
+                proj_capture = True
+
+        elif(dark_flat_capture):  # capturing projection is finished
             log.info('read  dark flat from the hdf5 file and broadcast')
             file_name = "".join(map(chr, ts_pvs['chFullFileName_RBV'].get()[
                                 'value']))  # possible problems with non-utf8 symbols
@@ -66,23 +73,7 @@ def flat_dark_broadcast(args):
                 {'ubyteValue': flat_dark_buffer.flatten()},)
             dark_flat_capture = False
 
-    def capture_data(pv):
-        """ wait until data is captured,
-            dump dark and flat fields into the HDF5 file,
-            read unique ids of projections from the HDF5 file,
-            dump angles correspoding to these ids
-
-        """
-        nonlocal proj_capture
-        nonlocal dark_flat_capture
-        
-        if(pv['value']['index'] == 1  # capture button pressed,
-                and dark_flat_capture == False  # dark flat are not being acquired,
-                and proj_capture == False):  # check that the previous dataset is written into hdf5 file
-            log.info('start capturing projections')
-            proj_capture = True
-
-        elif(proj_capture):  # capturing finished
+        elif(proj_capture):  # capturing projection is finished
             file_name = "".join(map(chr, ts_pvs['chFullFileName_RBV'].get()[
                                 'value']))  # possible problems with non-utf8 symbols
             while(True):  # hdf5 file may be locked with writing acquired projections
@@ -98,15 +89,15 @@ def flat_dark_broadcast(args):
             unique_ids = hdf_file['/defaults/NDArrayUniqueId'][:]
             # take theta from PSOFly
             theta = ts_pvs['chStreamThetaArray'].get(
-                '')['value'][:ts_pvs['chStreamNumAngles'].get('')['value']]            
-            log.info('theta: %s',theta[unique_ids])
+                '')['value'][:ts_pvs['chStreamNumAngles'].get('')['value']]
+            log.info('theta: %s', theta[unique_ids])
             log.info('total: %s', len(unique_ids))
             dset = hdf_file.create_dataset(
                 '/exchange/theta', (len(unique_ids),), dtype='float32')
             dset[:] = theta[unique_ids]
 
             log.info('save flat and dark fields into hdf5 file %s', file_name)
-            
+
             hdf_file['/exchange/data_dark'].resize(num_dark, 0)
             hdf_file['/exchange/data_dark'][:] = flat_dark_buffer[:
                                                                   num_dark].reshape(num_dark, height, width)
@@ -115,8 +106,6 @@ def flat_dark_broadcast(args):
                 num_flat, height, width)
             proj_capture = False
 
-    # start monitoring dark flat fields filename change
-    ts_pvs['chFileName_RBV'].monitor(dark_flat_broadcast, '')
     # start monitoring capture button
     ts_pvs['chCapture_RBV'].monitor(capture_data, '')
 
