@@ -120,7 +120,7 @@ def streaming(args):
 
     # wait until dark and flats are acquired
     while(flag_flat_dark == False):
-        1
+        pass
 
     # init data as flat to avoid problems of taking -log of zeros
     proj_buffer[:] = flat_buffer[0]
@@ -149,7 +149,8 @@ def streaming(args):
         idY = ts_pvs['chStreamOrthoY'].get('')['value']
         idZ = ts_pvs['chStreamOrthoZ'].get('')['value']
 
-        # reconstruct on GPU        
+        # reconstruct on GPU
+        #print(theta_part)        
         util.tic()
         rec = slv.recon(proj_part, theta_part, center, idX, idY, idZ)
         log.info('rec time: %s', util.toc())
