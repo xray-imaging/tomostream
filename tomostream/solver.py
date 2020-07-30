@@ -23,10 +23,13 @@ class Solver():
         self.nthetapart = 90  # number of projections for simultatneous processing by a GPU
 
     def setFlat(self, data):
-        self.flat = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
-
+        self.flat = cp.array(np.mean(data, axis=0).astype('float32')).reshape(self.nz, self.n)
+        #print('norm flat',cp.linalg.norm(self.flat))
+        
     def setDark(self, data):
-        self.dark = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
+        self.dark = cp.array(np.mean(data, axis=0).astype('float32')).reshape(self.nz, self.n)
+        #print('norm dark',cp.linalg.norm(self.dark))
+        
 
     def backProjection(self, data, theta, center, idx, idy, idz):
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')
@@ -60,8 +63,8 @@ class Solver():
         data = self.minusLog(data)
         data = self.stripeRemovalFilter(data)
         data = self.fbpFilter(data)
-        rec = self.backProjection(data.astype(
-            'float32'), theta, center, idx, idy, idz)
+        rec = self.backProjection(data, theta, center, idx, idy, idz)
+        
         return rec
 
     def recon(self, data, theta, center, idx, idy, idz):

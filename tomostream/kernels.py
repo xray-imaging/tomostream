@@ -63,10 +63,13 @@ extern "C" {
         {
             sp = (tx - n / 2) * __cosf(theta[k]) - (ty - n / 2) * __sinf(theta[k]) + center; //polar coordinate
             //linear interpolation
+            if(sp<0) sp=0;
+            if(sp>=n-2) sp=n-2;
             s0 = roundf(sp);
+
             ind = k * n * nz + tz * n + s0;
-            if ((s0 >= 0) & (s0 < n - 1))            
-                f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
+            //if ((s0 >= 0) & (s0 < n - 1))            
+            f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
         }
         f[tx + ty * n] = f0;
     }
