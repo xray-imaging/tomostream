@@ -64,6 +64,7 @@ class Solver():
         data = self.stripeRemovalFilter(data)
         data = self.fbpFilter(data)
         rec = self.backProjection(data, theta, center, idx, idy, idz)
+        
         return rec
 
     def recon(self, data, theta, center, idx, idy, idz):

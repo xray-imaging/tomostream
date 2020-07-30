@@ -92,7 +92,7 @@ def streaming(args):
         if(frame_type == 'Projection'):
             proj_buffer[np.mod(num_proj, buffer_size)
                        ] = pv['value'][0]['ubyteValue']
-            theta_buffer[np.mod(num_proj, buffer_size)] = theta[cur_id-1]
+            theta_buffer[np.mod(num_proj, buffer_size)] = theta[cur_id]
             num_proj += 1
             log.info('id: %s type %s', cur_id, frame_type)
             cur_idnew = pv['uniqueId']
