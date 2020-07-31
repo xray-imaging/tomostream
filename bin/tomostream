@@ -20,11 +20,11 @@ def run_status(args):
 
 def run_server(args):
     from tomostream import pv_server
-    pv_server.flat_dark_broadcast(args)
+    pv_server.Server(args).run()
 
 def run_recon(args):
     from tomostream import recon
-    recon.streaming(args)
+    recon.Recon(args).run()
 
 def main():
     home = os.path.expanduser("~")

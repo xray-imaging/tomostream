@@ -21,13 +21,15 @@ class Solver():
         self.nz = nz
         self.ntheta = ntheta
         self.nthetapart = 90  # number of projections for simultatneous processing by a GPU
-
+        self.flat = cp.array(cp.ones([nz,n]),dtype='float32')
+        self.dark = cp.array(cp.zeros([nz,n]),dtype='float32')
+        
     def setFlat(self, data):
-        self.flat = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
-
+        self.flat = cp.array(np.mean(data, axis=0).astype('float32'))
+        
     def setDark(self, data):
-        self.dark = cp.array(np.mean(data, axis=0)).reshape(self.nz, self.n)
-
+        self.dark = cp.array(np.mean(data, axis=0).astype('float32'))
+        
     def backProjection(self, data, theta, center, idx, idy, idz):
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')
         obj[:self.nz, :self.n] = orthox(data, theta, center, idx)
@@ -56,12 +58,13 @@ class Solver():
         return data
 
     def reconPart(self, data, theta, center, idx, idy, idz):
+        
         data = self.darkFlatFieldCorrection(data)
         data = self.minusLog(data)
         data = self.stripeRemovalFilter(data)
         data = self.fbpFilter(data)
-        rec = self.backProjection(data.astype(
-            'float32'), theta, center, idx, idy, idz)
+        rec = self.backProjection(data, theta, center, idx, idy, idz)
+
         return rec
 
     def recon(self, data, theta, center, idx, idy, idz):
