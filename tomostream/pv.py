@@ -15,6 +15,7 @@ def init(tomoscan_prefix):
     
     ts_pvs['chStreamThetaArray'] = pva.Channel(pso_prefix +'motorPos.AVAL', pva.CA)
     ts_pvs['chData'] = pva.Channel(camera_prefix + 'Pva1:Image')
+    ts_pvs['chDataType_RBV'] = pva.Channel(camera_prefix + 'Pva1:DataType_RBV')
 
     ts_pvs['chStreamFrameType'] = pva.Channel(tomoscan_prefix + 'FrameType', pva.CA)
     ts_pvs['chStreamNumAngles'] = pva.Channel(tomoscan_prefix + 'NumAngles', pva.CA)
@@ -37,6 +38,7 @@ def init(tomoscan_prefix):
     ts_pvs['chFullFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FullFileName_RBV', pva.CA)
     ts_pvs['chFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FileName_RBV', pva.CA)    
     ts_pvs['chNumCaptured_RBV'] = pva.Channel(file_plugin_prefix + 'NumCaptured_RBV', pva.CA)    
+    
     ts_pvs['chFlatDark'] = pva.Channel(tomoscan_prefix + 'FlatDark')
 
     # mistery

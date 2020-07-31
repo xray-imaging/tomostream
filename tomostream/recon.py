@@ -7,155 +7,118 @@ from tomostream import log
 from tomostream import pv
 from tomostream import solver
 
+type_dict = {
+'uint8': 'ubyteValue',
+'float32': 'floatValue',
+# add others
+}
 
-def read_by_type(ch):
-    """Read PV value from choices"""
-    allch = ch.get('')['value']
-    return allch['choices'][allch['index']]
-
-
-def show_pvs(ts_pvs):
-    """Show PVs"""
-    log.info('###### READ PVS FROM GUI #######')
-    log.info('status %s', read_by_type(ts_pvs['chStreamStatus']))
-    log.info('buffer_size %s', ts_pvs['chStreamBufferSize'].get('')['value'])
-    log.info('binning %s', read_by_type(ts_pvs['chStreamBinning']))
-    log.info('ring_removal %s', read_by_type(ts_pvs['chStreamRingRemoval']))
-    log.info('paganin %s', read_by_type(ts_pvs['chStreamPaganin']))
-    log.info('paganin alpha %s',
-             ts_pvs['chStreamPaganinAlpha'].get('')['value'])
-    log.info('center %s', ts_pvs['chStreamCenter'].get('')['value'])
-    log.info('filter type %s', read_by_type(ts_pvs['chStreamFilterType']))
-    log.info('ortho slice x %s', ts_pvs['chStreamOrthoX'].get('')['value'])
-    log.info('ortho slice idy %s', ts_pvs['chStreamOrthoY'].get('')['value'])
-    log.info('ortho slice idz %s', ts_pvs['chStreamOrthoZ'].get('')['value'])
-
-
-def streaming(args):
-    """
-    Main computational function, take data from pv_data (raw images from the detector i.e. '2bmbSP1:Pva1:Image'),
-    reconstruct X-Y-Z orthogonal slices and write the result to pv_rec as defined in args.recon_pva_name 
-    i.e. '2bma:TomoScan:StreamReconstruction')
+class Recon():
+    """ Class for streaming reconstruction
     """
 
-    ##### init pvs ######
-    ts_pvs = pv.init(args.tomoscan_prefix)
-    show_pvs(ts_pvs)
-    # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
-    ch_data = ts_pvs['chData']
-    pv_data = ch_data.get('')
-    # pva type flat and dark fields pv broadcasted from the detector machine
-    ch_flat_dark = ts_pvs['chFlatDark']
-    pv_flat_dark = ch_flat_dark.get('')
-    # pva type pv for reconstrucion
-    pv_dict = pv_data.getStructureDict()
-    pv_rec = pva.PvObject(pv_dict)
-    # take dimensions
-    width = pv_data['dimension'][0]['size']
-    height = pv_data['dimension'][1]['size']
-    # set dimensions for reconstruction (assume width>=height)
-    pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
-                          {'size': height, 'fullSize': height, 'binning': 1}]
+    def __init__(self, args):
+        ts_pvs = pv.init(args.tomoscan_prefix)
+        # pva type pv that contains projection and metadata (angle, flag: regular, flat or dark)
+        ch_data = ts_pvs['chData']
+        pv_data = ch_data.get('')
+        # pva type flat and dark fields pv broadcasted from the detector machine
+        ch_flat_dark = ts_pvs['chFlatDark']
+        # pva type pv for reconstrucion
+        pv_dict = pv_data.getStructureDict()
+        self.pv_rec = pva.PvObject(pv_dict)
+        # take dimensions
+        width = pv_data['dimension'][0]['size']
+        height = pv_data['dimension'][1]['size']
+        datatype_list = ts_pvs['chDataType_RBV'].get('')['value']
+        self.datatype = datatype_list['choices'][datatype_list['index']].lower()
+        # set dimensions for reconstruction (assume width>=height)
+        self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
+                                {'size': height, 'fullSize': height, 'binning': 1}]
+        log.info('rec size %s %s',3*width,height)
+        ##### run server for reconstruction pv #####
+        log.info(args.recon_pva_name)
+        self.server_rec = pva.PvaServer(args.recon_pva_name, self.pv_rec)
 
-    ##### run server for reconstruction pv #####
-    server_rec = pva.PvaServer(args.recon_pva_name, pv_rec)
+        ##### init buffers #######
+        # form circular buffer, whenever the angle goes higher than 180
+        # than corresponding projection is replacing the first one
+        # number of dark and flat fields
+        buffer_size = ts_pvs['chStreamBufferSize'].get('')['value']
+        
+        print(self.datatype)
+        self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
+        self.theta_buffer = np.zeros(buffer_size, dtype='float32')
+        # load angles
+        self.theta = ts_pvs['chStreamThetaArray'].get(
+            '')['value'][:ts_pvs['chStreamNumAngles'].get('')['value']]
+        # create solver class on GPU
+        self.slv = solver.Solver(buffer_size, width, height)
+        self.ts_pvs = ts_pvs
+        #self.pv_rec = pv_rec        
+        self.width = width
+        self.height = height
+        self.buffer_size = buffer_size
+        self.num_proj = 0
 
-    ##### init buffers #######
-    # form circular buffer, whenever the angle goes higher than 180
-    # than corresponding projection is replacing the first one
-    buffer_size = ts_pvs['chStreamBufferSize'].get('')['value']
-    # number of dark and flat fields
-    num_flat_fields = ts_pvs['chStreamNumFlatFields'].get('')['value']
-    num_dark_fields = ts_pvs['chStreamNumDarkFields'].get('')['value']
+        # start monitoring projection data
+        ch_data.monitor(self.add_data, '')
+        # start monitoring dark and flat fields pv
+        ch_flat_dark.monitor(self.add_flat_dark, '')
 
-    proj_buffer = np.zeros([buffer_size, width*height], dtype='uint8')
-    flat_buffer = np.ones([num_flat_fields, width*height], dtype='uint8')
-    dark_buffer = np.zeros([num_dark_fields, width*height], dtype='uint8')
-    theta_buffer = np.zeros(buffer_size, dtype='float32')
-
-    # load angles
-    theta = ts_pvs['chStreamThetaArray'].get(
-        '')['value'][:ts_pvs['chStreamNumAngles'].get('')['value']]
-
-    ##### monitoring PV variables #####
-    num_proj = 0  # number of acquired projections
-    flag_flat_dark = False  # flat and dark exist or not
-
-    def add_data(pv):
-        """ read data from the detector, 3 types: flat, dark, projection"""
-        if(read_by_type(ts_pvs['chStreamStatus']) == 'Off'):
-            return
-        nonlocal num_proj
-        cur_id = pv['uniqueId']
-        frame_type_all = ts_pvs['chStreamFrameType'].get('')['value']
-        frame_type = frame_type_all['choices'][frame_type_all['index']]
-        if(frame_type == 'Projection'):
-            proj_buffer[np.mod(num_proj, buffer_size)
-                       ] = pv['value'][0]['ubyteValue']
-            theta_buffer[np.mod(num_proj, buffer_size)] = theta[cur_id]
-            num_proj += 1
-            log.info('id: %s type %s', cur_id, frame_type)
-            cur_idnew = pv['uniqueId']
-            #log.info("%s<->%s",cur_id,cur_idnew)
         
 
-    def add_flat_dark(pv):
+    def add_data(self, pv):
+        """ read data from the detector, 3 types: flat, dark, projection"""
+        if(self.ts_pvs['chStreamStatus'].get('')['value']['index']==1):            
+            cur_id = pv['uniqueId']
+            frame_type_all = self.ts_pvs['chStreamFrameType'].get('')['value']
+            frame_type = frame_type_all['choices'][frame_type_all['index']]
+            if(frame_type == 'Projection'):
+                self.proj_buffer[np.mod(self.num_proj, self.buffer_size)
+                                ] = pv['value'][0][type_dict[self.datatype]]
+                self.theta_buffer[np.mod(
+                    self.num_proj, self.buffer_size)] = self.theta[cur_id]
+                self.num_proj += 1
+                log.info('id: %s type %s', cur_id, frame_type)
+
+    def add_flat_dark(self, pv):
         """ read flat and dark fields from the manually running pv server on the detector machine"""
-        nonlocal flag_flat_dark
         if(pv['value'][0]):
-            flat_buffer[:] = pv['value'][0]['ubyteValue'][num_dark_fields *
-                                                         width*height:].reshape(num_flat_fields, width*height)
-            dark_buffer[:] = pv['value'][0]['ubyteValue'][:num_dark_fields *
-                                                         width*height].reshape(num_flat_fields, width*height)
-            flag_flat_dark = True
+            dark_flat = pv['value'][0]['floatValue']
+            num_flat_fields = self.ts_pvs['chStreamNumFlatFields'].get('')['value']
+            num_dark_fields = self.ts_pvs['chStreamNumDarkFields'].get('')['value']        
+            log.info("%s %s %s",num_dark_fields , self.width,self.height)
+            dark = dark_flat[:num_dark_fields * self.width*self.height]
+            flat = dark_flat[num_dark_fields * self.width*self.height:]
+            dark = dark.reshape(num_dark_fields, self.height, self.width)
+            flat = flat.reshape(num_flat_fields, self.height, self.width)
+            
+            self.slv.setDark(dark)
+            self.slv.setFlat(flat)
             log.info('new flat and dark fields acquired')
 
-    # start monitoring projection data
-    ch_data.monitor(add_data, '')
-    # start monitoring dark and flat fields pv
-    ch_flat_dark.monitor(add_flat_dark, '')
+    def run(self):        
+        ##### streaming reconstruction ######
+        while(True):
+            if(self.ts_pvs['chStreamStatus'].get('')['value']['index']==1):
+                proj_part = self.proj_buffer.copy()
+                theta_part = self.theta_buffer.copy()
 
-    # create solver class on GPU
-    slv = solver.Solver(buffer_size, width, height)
+                ### take parameters from the GUI ###
+                center = np.float32(self.ts_pvs['chStreamCenter'].get('')['value'])
 
-    # wait until dark and flats are acquired
-    while(flag_flat_dark == False):
-        pass
+                # 3 ortho slices ids
+                idX = self.ts_pvs['chStreamOrthoX'].get('')['value']
+                idY = self.ts_pvs['chStreamOrthoY'].get('')['value']
+                idZ = self.ts_pvs['chStreamOrthoZ'].get('')['value']
 
-    # init data as flat to avoid problems of taking -log of zeros
-    proj_buffer[:] = flat_buffer[0]
+                # reconstruct on GPU
+                util.tic()
+                rec = self.slv.recon(proj_part, theta_part, center, idX, idY, idZ)
+                log.info('rec time: %s', util.toc())
 
-    # copy mean dark and flat to GPU
-    slv.setFlat(flat_buffer)
-    slv.setDark(dark_buffer)
-
-    ##### streaming reconstruction ######
-    while(1):
-        if(read_by_type(ts_pvs['chStreamStatus']) == 'Off'):
-            continue
-        proj_part = proj_buffer.copy()
-        theta_part = theta_buffer.copy()
-
-        ### take parameters from the GUI ###
-        binning = read_by_type(ts_pvs['chStreamBinning'])  # todo
-        ring_removal = read_by_type(ts_pvs['chStreamRingRemoval'])  # todo
-        paganin = read_by_type(ts_pvs['chStreamPaganin'])  # todo
-        paganin_alpha = ts_pvs['chStreamPaganinAlpha'].get('')['value']  # todo
-        center = np.float32(ts_pvs['chStreamCenter'].get('')['value'])
-        filter_type = read_by_type(ts_pvs['chStreamFilterType'])  # todo
-        
-        # 3 ortho slices ids
-        idX = ts_pvs['chStreamOrthoX'].get('')['value']
-        idY = ts_pvs['chStreamOrthoY'].get('')['value']
-        idZ = ts_pvs['chStreamOrthoZ'].get('')['value']
-
-        # reconstruct on GPU
-        #print(theta_part)        
-        util.tic()
-        rec = slv.recon(proj_part, theta_part, center, idX, idY, idZ)
-        log.info('rec time: %s', util.toc())
-
-        # write to pv
-        pv_rec['value'] = ({'floatValue': rec.flatten()},)
-        # reconstruction rate limit
-        time.sleep(0.1)
+                # write to pv
+                self.pv_rec['value'] = ({'floatValue': rec.flatten()},)
+                # reconstruction rate limit
+                time.sleep(0.1)
