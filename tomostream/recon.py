@@ -66,10 +66,8 @@ class Recon():
         # start monitoring dark and flat fields pv
         ch_flat_dark.monitor(self.add_flat_dark, '')
 
-        
-
     def add_data(self, pv):
-        """ read data from the detector, 3 types: flat, dark, projection"""
+        """Read data from the detector, 3 types: flat, dark, projection"""
         if(self.ts_pvs['chStreamStatus'].get('')['value']['index']==1):            
             cur_id = pv['uniqueId']
             frame_type_all = self.ts_pvs['chStreamFrameType'].get('')['value']
@@ -83,7 +81,7 @@ class Recon():
                 log.info('id: %s type %s', cur_id, frame_type)
 
     def add_flat_dark(self, pv):
-        """ read flat and dark fields from the manually running pv server on the detector machine"""
+        """Read flat and dark fields from the manually running pv server on the detector machine"""
         if(pv['value'][0]):
             dark_flat = pv['value'][0]['floatValue']
             num_flat_fields = self.ts_pvs['chStreamNumFlatFields'].get('')['value']
@@ -98,17 +96,17 @@ class Recon():
             self.slv.setFlat(flat)
             log.info('new flat and dark fields acquired')
 
-    def run(self):        
-        ##### streaming reconstruction ######
+    def run(self, args):        
+        """Run streaming reconstruction"""
         while(True):
             if(self.ts_pvs['chStreamStatus'].get('')['value']['index']==1):
                 proj_part = self.proj_buffer.copy()
                 theta_part = self.theta_buffer.copy()
 
-                ### take parameters from the GUI ###
+                # read center from user interface
                 center = np.float32(self.ts_pvs['chStreamCenter'].get('')['value'])
 
-                # 3 ortho slices ids
+                # read X-Y-Z ortho slices indexes from user interface
                 idX = self.ts_pvs['chStreamOrthoX'].get('')['value']
                 idY = self.ts_pvs['chStreamOrthoY'].get('')['value']
                 idZ = self.ts_pvs['chStreamOrthoZ'].get('')['value']
@@ -118,7 +116,7 @@ class Recon():
                 rec = self.slv.recon(proj_part, theta_part, center, idX, idY, idZ)
                 log.info('rec time: %s', util.toc())
 
-                # write to pv
+                # update recon-pva
                 self.pv_rec['value'] = ({'floatValue': rec.flatten()},)
-                # reconstruction rate limit
-                time.sleep(0.1)
+                # reconstruction refresh rate
+                time.sleep(args.recon_refresh_rate)

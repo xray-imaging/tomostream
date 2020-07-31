@@ -1,14 +1,16 @@
-import numpy as np
 import cupy as cp
+import numpy as np
+
 from cupyx.scipy.fft import rfft, irfft
 from cupyx.scipy.fftpack import get_fft_plan
-from .kernels import orthox, orthoy, orthoz
 
+from tomostream import kernels
 
 class Solver():
     """Class for tomography reconstruction of orthogonal slices through direct 
     discreatization of line integrals in the Radon transform.
-    Attributes
+ 
+    Parameters
     ----------
     ntheta : int
         The number of projections in the buffer (for simultaneous reconstruction)
@@ -32,9 +34,9 @@ class Solver():
         
     def backProjection(self, data, theta, center, idx, idy, idz):
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')
-        obj[:self.nz, :self.n] = orthox(data, theta, center, idx)
-        obj[:self.nz, self.n:2*self.n] = orthoy(data, theta, center, idy)
-        obj[:self.n, 2*self.n:3*self.n] = orthoz(data, theta, center, idz)
+        obj[:self.nz, :self.n] = kernels.orthox(data, theta, center, idx)
+        obj[:self.nz, self.n:2*self.n] = kernels.orthoy(data, theta, center, idy)
+        obj[:self.n, 2*self.n:3*self.n] = kernels.orthoz(data, theta, center, idz)
         return obj
 
     def fbpFilter(self, data):

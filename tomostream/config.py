@@ -58,11 +58,19 @@ SECTIONS['tomostream'] = {
         'default': '2bma:TomoScan:StreamReconstruction',
         'type': str,
         'help': "The name of the Pva where the X-Y-Z streaming reconstruction image will update. This PV name can be entered in the ImageJ  EPICS_NTNDA_Viewer plug-in for display."},
+    'recon-refresh-rate':{
+        'default': 0.1,
+        'type': float,
+        'help': "Streaming reconstruction refresh rate (s)."},
+    'flatdark-pva-name':{
+        'default': '2bma:TomoScan:FlatDark',
+        'type': str,
+        'help': "The name of the Pva where the flat and dark streaming images will update."},
         }
 
 TOMOSTREAM_PARAMS = ('tomostream', )
 
-NICE_NAMES = ('General', 'Tomoscan')
+NICE_NAMES = ('General', 'Tomostream')
 
 def get_config_name():
     """Get the command line --config option."""
