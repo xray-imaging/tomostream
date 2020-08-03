@@ -132,7 +132,7 @@ class Solver():
 
     def recon_optimized(self, data, theta, ids, center, idx, idy, idz, dbg=False):                
         """ optimized reconstruction of the object, 
-         object from the whole set of projections in the interval of size pi 
+        object from the whole set of projections in the interval of size pi 
         is obtained by replacing the reconstruction part corresponding to  projections, 
         objpi=objpi+recon(data)-recon(dataold)"""
         
