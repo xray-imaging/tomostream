@@ -1,14 +1,18 @@
-import numpy as np
 import cupy as cp
+import numpy as np
+
 from cupyx.scipy.fft import rfft, irfft
 from cupyx.scipy.fftpack import get_fft_plan
-from .kernels import orthox, orthoy, orthoz
-from .util import tic,toc
+
+from tomostream import kernels
+from tomostream import util
+
 
 class Solver():
     """Class for tomography reconstruction of orthogonal slices through direct 
     discreatization of line integrals in the Radon transform.
-    Attributes
+ 
+    Parameters
     ----------
     ntheta : int
         The number of projections in the buffer (for simultaneous reconstruction)
@@ -44,9 +48,9 @@ class Solver():
         
     def backprojection(self, data, theta, center, idx, idy, idz):
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')
-        obj[:self.nz, :self.n] = orthox(data, theta, center, idx)
-        obj[:self.nz, self.n:2*self.n] = orthoy(data, theta, center, idy)
-        obj[:self.n, 2*self.n:3*self.n] = orthoz(data, theta, center, idz)
+        obj[:self.nz, :self.n] = kernels.orthox(data, theta, center, idx)
+        obj[:self.nz, self.n:2*self.n] = kernels.orthoy(data, theta, center, idy)
+        obj[:self.n, 2*self.n:3*self.n] = kernels.orthoz(data, theta, center, idz)
         return obj
 
     def fbp_filter(self, data):
@@ -74,22 +78,22 @@ class Solver():
     def recon_part_time(self, obj, data, theta, center, idx, idy, idz):
         """reconstruction with measuring times for each processing procedure"""
 
-        tic()
+        util.tic()
         data = self.darkflat_correction(data)
         cp.cuda.Stream.null.synchronize()
-        print('dark-flat correction time:',toc())
-        tic()                
+        print('dark-flat correction time:',util.toc())
+        util.tic()                
         data = self.minus_log(data)
         cp.cuda.Stream.null.synchronize()
-        print('minus log time:',toc())        
-        tic()                
+        print('minus log time:',util.toc())        
+        util.tic()                
         data = self.fbp_filter(data)
         cp.cuda.Stream.null.synchronize()
-        print('fbp fitler time:',toc())
-        tic()        
+        print('fbp fitler time:',util.toc())
+        util.tic()        
         obj += self.backprojection(data, theta*np.pi/180, center, idx, idy, idz)
         cp.cuda.Stream.null.synchronize()
-        print('backprojection time:',toc())        
+        print('backprojection time:',util.toc())        
         return obj
 
     def recon(self, data, theta, center, idx, idy, idz, dbg=False):    
@@ -103,7 +107,7 @@ class Solver():
                             min((k+1)*self.nthetapart, data.shape[0]))            
             if(dbg):
                 print('part ',k)            
-                tic()
+                util.tic()
                 datagpu = cp.array(data[ids]).astype('float32')            
                 thetagpu = cp.array(theta[ids]).astype('float32')
                 idxgpu = cp.array(idx[ids]).astype('int32')
@@ -112,7 +116,7 @@ class Solver():
                 centergpu = cp.array(center[ids]).astype('float32')
                 
                 cp.cuda.Stream.null.synchronize()
-                print('data copy time',toc())
+                print('data copy time',util.toc())
                 objgpu = self.recon_part_time(objgpu,
                     datagpu, thetagpu, centergpu, idxgpu, idygpu, idzgpu)
             else:

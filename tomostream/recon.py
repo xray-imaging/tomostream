@@ -67,10 +67,8 @@ class Recon():
         # start monitoring dark and flat fields pv
         ch_flat_dark.monitor(self.add_flat_dark, '')
 
-        
-
     def add_data(self, pv):
-        """ add projection data and corresponding angle to a circular buffer"""
+        """Add projection data and corresponding angle to a circular buffer"""
         if(self.ts_pvs['chStreamStatus'].get('')['value']['index']==1):            
             cur_id = pv['uniqueId']
             frame_type_all = self.ts_pvs['chStreamFrameType'].get('')['value']
@@ -89,7 +87,7 @@ class Recon():
                 log.info('id: %s type %s', cur_id, frame_type)
 
     def add_flat_dark(self, pv):
-        """ read flat and dark fields from the manually running pv server on the detector machine"""
+        """Read flat and dark fields from the manually running pv server on the detector machine"""
         if(pv['value'][0]):
             dark_flat = pv['value'][0]['floatValue']
             num_flat_fields = self.ts_pvs['chStreamNumFlatFields'].get('')['value']
@@ -104,8 +102,8 @@ class Recon():
             self.slv.set_flat(flat)
             log.info('new flat and dark fields acquired')
 
-    def run(self):        
-        ##### streaming reconstruction ######
+    def run(self, args):        
+        """Run streaming reconstruction"""
         id_start = 0
         while(True):
             if(self.ts_pvs['chStreamStatus'].get('')['value']['index']==1):
