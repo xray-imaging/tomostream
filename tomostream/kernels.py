@@ -80,6 +80,7 @@ orthoz_kernel = module.get_function('orthoz')
 
 
 def orthox(data, theta, center, ix):
+    """Reconstruct the ortho slice in x-direction on GPU"""
     [ntheta, nz, n] = data.shape
     objx = cp.zeros([nz, n], dtype='float32')
     orthox_kernel((int(n/32+0.5), int(nz/32+0.5)), (32, 32),
@@ -88,6 +89,7 @@ def orthox(data, theta, center, ix):
 
 
 def orthoy(data, theta, center, iy):
+    """Reconstruct the ortho slice in y-direction on GPU"""    
     [ntheta, nz, n] = data.shape
     objy = cp.zeros([nz, n], dtype='float32')
     orthoy_kernel((int(n/32+0.5), int(nz/32+0.5)), (32, 32),
@@ -96,6 +98,7 @@ def orthoy(data, theta, center, iy):
 
 
 def orthoz(data, theta, center, iz):
+    """Reconstruct the ortho slice in z-direction on GPU"""        
     [ntheta, nz, n] = data.shape
     objz = cp.zeros([n, n], dtype='float32')
     orthoz_kernel((int(n/32+0.5), int(n/32+0.5)), (32, 32),
