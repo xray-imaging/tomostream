@@ -1,7 +1,7 @@
 API reference
 =============
 
-.. rubric:: **tomoscan Modules:**
+.. rubric:: **tomostream Modules:**
 
 .. toctree::
 
@@ -9,7 +9,7 @@ API reference
    api/recon
    api/solver
 
-.. automodule:: tomoscan
+.. automodule:: tomostream
    :members:
    :undoc-members:
    :show-inheritance: 
