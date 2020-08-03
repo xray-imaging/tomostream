@@ -7,7 +7,7 @@ from tomostream import pv
 from tomostream import log
 
 class Server():
-    def __init__(self,args):
+    def __init__(self, args):
         self.ts_pvs = pv.init(args.tomoscan_prefix)    
         self.dark_flat_capture = False
         self.proj_capture = False
@@ -15,9 +15,8 @@ class Server():
         # start monitoring capture button
         self.ts_pvs['chCapture_RBV'].monitor(self.capture_data, '')
 
-    def capture_data(self,pv):
-        """ Monitoring capture button for gettng dark and flat fields, or projections
-
+    def capture_data(self, args, pv): # why pass pv here? 
+        """Monitoring capture button for gettng dark and flat fields, or projections
         """
         if(self.ts_pvs['chStreamStatus'].get()['value']['index']==0):
             return
@@ -77,7 +76,7 @@ class Server():
                                          {'size': dark.shape[0]+flat.shape[0], 'fullSize': dark.shape[0]+flat.shape[0], 'binning': 1}]            
             # run server for broadcasting flat and dark fiels for streaming
             self.serverFlatDark = pva.PvaServer(
-                '2bma:TomoScan:FlatDark', pv_flat_dark)
+                args.flatdark_pva_name, pv_flat_dark)
 
             pv_flat_dark['value'] = (
                 {'floatValue': flat_dark_buffer.flatten()},)
@@ -115,5 +114,6 @@ class Server():
             self.proj_capture = False
     
     def run(self):
+        """Run PV server"""
         while(True):
             pass
