@@ -30,6 +30,7 @@ class Solver():
         self.wfilter = cp.tile(cp.fft.rfftfreq(self.n) * (1 - cp.fft.rfftfreq(self.n) * 2)**3,[nz,1])
         self.planr2c = get_fft_plan(cp.zeros([nz,n],dtype='float32'), value_type='R2C', axes=1)
         self.planc2r = get_fft_plan(cp.zeros([nz,n],dtype='float32'), value_type='C2R', axes=1)        
+        
         # data storages for reconstruction 
         self.datapi = np.zeros([ntheta,nz*n],dtype='uint8')
         self.objpi = np.zeros([n,3*n],dtype='float32')
@@ -156,8 +157,6 @@ class Solver():
         objold = self.recon(dataold, thetaold, centerold, idxold, idyold, idzold, dbg)                    
 
         self.objpi += (obj-objold)/self.ntheta
-
-
         # reset
         self.datapi[ids] = data            
         self.thetapi[ids] = theta                    
