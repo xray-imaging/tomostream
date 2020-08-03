@@ -44,11 +44,12 @@ class Recon():
         # form circular buffer, whenever the angle goes higher than 180
         # than corresponding projection is replacing the first one
         # number of dark and flat fields
-        buffer_size = ts_pvs['chStreamBufferSize'].get('')['value']
+        buffer_size = 360#ts_pvs['chStreamBufferSize'].get('')['value']
         
-        print(self.datatype)
         self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
         self.theta_buffer = np.zeros(buffer_size, dtype='float32')
+        self.ids_buffer = np.zeros(buffer_size, dtype='int32')
+        
         # load angles
         self.theta = ts_pvs['chStreamThetaArray'].get(
             '')['value'][:ts_pvs['chStreamNumAngles'].get('')['value']]
@@ -67,16 +68,21 @@ class Recon():
         ch_flat_dark.monitor(self.add_flat_dark, '')
 
     def add_data(self, pv):
-        """Read data from the detector, 3 types: flat, dark, projection"""
+        """Add projection data and corresponding angle to a circular buffer"""
         if(self.ts_pvs['chStreamStatus'].get('')['value']['index']==1):            
             cur_id = pv['uniqueId']
             frame_type_all = self.ts_pvs['chStreamFrameType'].get('')['value']
             frame_type = frame_type_all['choices'][frame_type_all['index']]
             if(frame_type == 'Projection'):
+                # write projection to a buffer
                 self.proj_buffer[np.mod(self.num_proj, self.buffer_size)
                                 ] = pv['value'][0][type_dict[self.datatype]]
+                # write theta to a buffer                
                 self.theta_buffer[np.mod(
                     self.num_proj, self.buffer_size)] = self.theta[cur_id]
+                # write position in the projection buffer                                
+                self.ids_buffer[np.mod(
+                    self.num_proj, self.buffer_size)] = np.mod(self.num_proj, self.buffer_size)                
                 self.num_proj += 1
                 log.info('id: %s type %s', cur_id, frame_type)
 
@@ -92,31 +98,41 @@ class Recon():
             dark = dark.reshape(num_dark_fields, self.height, self.width)
             flat = flat.reshape(num_flat_fields, self.height, self.width)
             
-            self.slv.setDark(dark)
-            self.slv.setFlat(flat)
+            self.slv.set_dark(dark)
+            self.slv.set_flat(flat)
             log.info('new flat and dark fields acquired')
 
     def run(self, args):        
         """Run streaming reconstruction"""
+        id_start = 0
         while(True):
             if(self.ts_pvs['chStreamStatus'].get('')['value']['index']==1):
-                proj_part = self.proj_buffer.copy()
-                theta_part = self.theta_buffer.copy()
+                # take positions of new projections in the buffer
+                ids = np.mod(np.arange(id_start,self.num_proj),self.buffer_size)
+                id_start = self.num_proj
 
-                # read center from user interface
+                if(len(ids)==0): # if no new data in the buffer then continue
+                    continue                
+                if(len(ids)>self.buffer_size): # if the buffer was overfilled, take it all
+                    ids = np.arange(self.buffer_size)
+                
+                # make copies of what should be processed                
+                proj_part = self.proj_buffer[ids].copy()
+                theta_part = self.theta_buffer[ids].copy()
+                ids_part = self.ids_buffer[ids].copy()
+                
+                ### take parameters from the GUI ###
                 center = np.float32(self.ts_pvs['chStreamCenter'].get('')['value'])
-
-                # read X-Y-Z ortho slices indexes from user interface
                 idX = self.ts_pvs['chStreamOrthoX'].get('')['value']
                 idY = self.ts_pvs['chStreamOrthoY'].get('')['value']
                 idZ = self.ts_pvs['chStreamOrthoZ'].get('')['value']
-
+                log.info('center %s: idx, idy,idz: %s %s %s',center,idX,idY,idZ)
                 # reconstruct on GPU
                 util.tic()
-                rec = self.slv.recon(proj_part, theta_part, center, idX, idY, idZ)
+                rec = self.slv.recon_optimized(proj_part, theta_part, ids_part, center, idX, idY, idZ)
                 log.info('rec time: %s', util.toc())
 
-                # update recon-pva
+                # write to pv
                 self.pv_rec['value'] = ({'floatValue': rec.flatten()},)
-                # reconstruction refresh rate
-                time.sleep(args.recon_refresh_rate)
+                # reconstruction rate limit
+                time.sleep(0.1)
