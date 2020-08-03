@@ -3,7 +3,7 @@ import cupy as cp
 from cupyx.scipy.fft import rfft, irfft
 from cupyx.scipy.fftpack import get_fft_plan
 from .kernels import orthox, orthoy, orthoz
-
+from .util import tic,toc
 
 class Solver():
     """Class for tomography reconstruction of orthogonal slices through direct 
@@ -23,61 +23,147 @@ class Solver():
         self.nthetapart = 90  # number of projections for simultatneous processing by a GPU
         self.flat = cp.array(cp.ones([nz,n]),dtype='float32')
         self.dark = cp.array(cp.zeros([nz,n]),dtype='float32')
+        self.wfilter = cp.tile(cp.fft.rfftfreq(self.n) * (1 - cp.fft.rfftfreq(self.n) * 2)**3,[nz,1])
+        self.planr2c = get_fft_plan(cp.zeros([nz,n],dtype='float32'), value_type='R2C', axes=1)
+        self.planc2r = get_fft_plan(cp.zeros([nz,n],dtype='float32'), value_type='C2R', axes=1)        
+        # data storages for reconstruction 
+        self.datapi = np.zeros([ntheta,nz*n],dtype='uint8')
+        self.objpi = np.zeros([n,3*n],dtype='float32')
+        self.thetapi = np.zeros([ntheta],dtype='float32')
+        self.idxpi = np.zeros([ntheta],dtype='int32')
+        self.idypi = np.zeros([ntheta],dtype='int32')
+        self.idzpi = np.zeros([ntheta],dtype='int32')
+        self.centerpi = np.zeros([ntheta],dtype='float32')+n//2
         
-    def setFlat(self, data):
+        
+    def set_flat(self, data):
         self.flat = cp.array(np.mean(data, axis=0).astype('float32'))
         
-    def setDark(self, data):
+    def set_dark(self, data):
         self.dark = cp.array(np.mean(data, axis=0).astype('float32'))
         
-    def backProjection(self, data, theta, center, idx, idy, idz):
+    def backprojection(self, data, theta, center, idx, idy, idz):
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')
         obj[:self.nz, :self.n] = orthox(data, theta, center, idx)
         obj[:self.nz, self.n:2*self.n] = orthoy(data, theta, center, idy)
         obj[:self.n, 2*self.n:3*self.n] = orthoz(data, theta, center, idz)
         return obj
 
-    def fbpFilter(self, data):
-        freq = cp.fft.rfftfreq(self.n)
-        wfilter = freq * (1 - freq * 2)**3
+    def fbp_filter(self, data):
         for k in range(data.shape[0]):
-            data[k] = irfft(wfilter*rfft(data[k], overwrite_x=True,
-                                         axis=1), overwrite_x=True, axis=1)
+            data[k] = irfft(self.wfilter*rfft(data[k],overwrite_x=True,axis=1),overwrite_x=True,axis=1)      
+        return data
+    
+    def darkflat_correction(self, data):
+        for k in range(data.shape[0]):        
+            data[k] = (data[k]-self.dark)/cp.maximum(self.flat-self.dark, 1e-6)
         return data
 
-    def stripeRemovalFilter(self, data):
-        # to implement
-        return data
-
-    def darkFlatFieldCorrection(self, data):
-        data = (data-self.dark)/cp.maximum(self.flat-self.dark, 1e-6)
-        return data
-
-    def minusLog(self, data):
+    def minus_log(self, data):
         data = -cp.log(cp.maximum(data, 1e-6))
         return data
 
-    def reconPart(self, data, theta, center, idx, idy, idz):
-        
-        data = self.darkFlatFieldCorrection(data)
-        data = self.minusLog(data)
-        data = self.stripeRemovalFilter(data)
-        data = self.fbpFilter(data)
-        rec = self.backProjection(data, theta, center, idx, idy, idz)
+    def recon_part(self, obj, data, theta, center, idx, idy, idz):
+        """reconstruction with several processing procedure on GPU"""        
+        data = self.darkflat_correction(data)
+        data = self.minus_log(data)
+        data = self.fbp_filter(data)
+        obj += self.backprojection(data, theta*np.pi/180, center, idx, idy, idz)
+        return obj
+    
+    def recon_part_time(self, obj, data, theta, center, idx, idy, idz):
+        """reconstruction with measuring times for each processing procedure"""
 
-        return rec
+        tic()
+        data = self.darkflat_correction(data)
+        cp.cuda.Stream.null.synchronize()
+        print('dark-flat correction time:',toc())
+        tic()                
+        data = self.minus_log(data)
+        cp.cuda.Stream.null.synchronize()
+        print('minus log time:',toc())        
+        tic()                
+        data = self.fbp_filter(data)
+        cp.cuda.Stream.null.synchronize()
+        print('fbp fitler time:',toc())
+        tic()        
+        obj += self.backprojection(data, theta*np.pi/180, center, idx, idy, idz)
+        cp.cuda.Stream.null.synchronize()
+        print('backprojection time:',toc())        
+        return obj
 
-    def recon(self, data, theta, center, idx, idy, idz):
-        for k in range(int(np.ceil(self.ntheta/self.nthetapart))):
+    def recon(self, data, theta, center, idx, idy, idz, dbg=False):    
+        # reshape data
+        data = data.reshape(data.shape[0],self.nz,self.n)        
+
+        objgpu = cp.zeros([self.n,3*self.n],dtype='float32')
+        # processing data by parts that fit to GPU mempry
+        for k in range(int(np.ceil(data.shape[0]/self.nthetapart))):
             ids = np.arange(k*self.nthetapart,
-                            min((k+1)*self.nthetapart, self.ntheta))
-            datagpu = cp.array(data[ids]).reshape(len(ids), self.nz, self.n)
-            thetagpu = cp.array(theta[ids])*np.pi/180
-            if(k == 0):
-                recgpu = self.reconPart(
-                    datagpu, thetagpu, center, idx, idy, idz)
+                            min((k+1)*self.nthetapart, data.shape[0]))            
+            if(dbg):
+                print('part ',k)            
+                tic()
+                datagpu = cp.array(data[ids]).astype('float32')            
+                thetagpu = cp.array(theta[ids]).astype('float32')
+                idxgpu = cp.array(idx[ids]).astype('int32')
+                idygpu = cp.array(idy[ids]).astype('int32')
+                idzgpu = cp.array(idz[ids]).astype('int32')
+                centergpu = cp.array(center[ids]).astype('float32')
+                
+                cp.cuda.Stream.null.synchronize()
+                print('data copy time',toc())
+                objgpu = self.recon_part_time(objgpu,
+                    datagpu, thetagpu, centergpu, idxgpu, idygpu, idzgpu)
             else:
-                recgpu += self.reconPart(datagpu,
-                                         thetagpu, center, idx, idy, idz)
-        recgpu /= self.ntheta
-        return recgpu.get()
+                datagpu = cp.array(data[ids]).astype('float32')            
+                thetagpu = cp.array(theta[ids]).astype('float32')                
+                idxgpu = cp.array(idx[ids]).astype('int32')
+                idygpu = cp.array(idy[ids]).astype('int32')
+                idzgpu = cp.array(idz[ids]).astype('int32')
+                centergpu = cp.array(center[ids]).astype('float32')                
+                objgpu = self.recon_part(objgpu,
+                    datagpu, thetagpu, centergpu, idxgpu, idygpu, idzgpu)            
+        return objgpu.get()
+
+    def recon_optimized(self, data, theta, ids, center, idx, idy, idz, dbg=False):                
+        """ optimized reconstruction of the object, 
+         object from the whole set of projections in the interval of size pi 
+        is obtained by replacing the reconstruction part corresponding to  projections, 
+        objpi=objpi+recon(data)-recon(dataold)"""
+        
+        idx = np.tile(idx,len(ids)).astype('int32')
+        idy = np.tile(idy,len(ids)).astype('int32')
+        idz = np.tile(idz,len(ids)).astype('int32')
+        center = np.tile(center,len(ids)).astype('float32')
+        
+        # new part
+        obj = self.recon(data, theta, center, idx, idy, idz, dbg)
+        
+        # swap 
+        dataold = self.datapi[ids]
+        thetaold = self.thetapi[ids]        
+        idxold = self.idxpi[ids]
+        idyold = self.idypi[ids]
+        idzold = self.idzpi[ids]
+        centerold = self.centerpi[ids]
+        
+        # subtracting part
+        objold = self.recon(dataold, thetaold, centerold, idxold, idyold, idzold, dbg)                    
+
+        self.objpi += (obj-objold)/self.ntheta
+
+
+        # reset
+        self.datapi[ids] = data            
+        self.thetapi[ids] = theta                    
+        self.idxpi[ids] = idx                    
+        self.idypi[ids] = idy                   
+        self.idzpi[ids] = idz
+        self.centerpi[ids] = center
+        
+        
+        return self.objpi
+
+    
+
