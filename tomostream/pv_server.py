@@ -19,10 +19,11 @@ class Server():
 
     def __init__(self, args):
         self.ts_pvs = pv.init(args.tomoscan_prefix)
-        self.dark_flat_capture = False # flag is True if dark and flat fields are being captured        
+        # flag is True if dark and flat fields are being captured
+        self.dark_flat_capture = False
         self.proj_capture = False  # flag is True if projections are being captured
         self.serverFlatDark = []  # server for broadcasting dark and flat fields
-
+        self.flatdark_pva_name = args.flatdark_pva_name
         # start monitoring capture button
         self.ts_pvs['chCapture_RBV'].monitor(self.capture_data, '')
 
@@ -94,11 +95,12 @@ class Server():
                                          {'size': dark.shape[0]+flat.shape[0], 'fullSize': dark.shape[0]+flat.shape[0], 'binning': 1}]
             # run server for broadcasting flat and dark fiels for streaming
             self.serverFlatDark = pva.PvaServer(
-                args.flatdark_pva_name, pv_flat_dark)
+                self.flatdark_pva_name, pv_flat_dark)
 
             pv_flat_dark['value'] = (
                 {'floatValue': flat_dark_buffer.flatten()},)
-
+            log.info('FlatDark PV: %s, size: %s %s %s', self.flatdark_pva_name,
+                     dark.shape[0]+flat.shape[0], dark.shape[1], dark.shape[2])
             self.dark_flat_capture = False
 
         elif(self.proj_capture):  # capturing projections is finished:
