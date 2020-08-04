@@ -46,7 +46,7 @@ class Recon():
 
         # form circular buffers, whenever the projection count goes higher than buffer_size
         # then corresponding projection is replacing the first one
-        self.buffer_size = ts_pvs['chStreamBufferSize'].get('')['value']
+        buffer_size = ts_pvs['chStreamBufferSize'].get('')['value']
         self.proj_buffer = np.zeros(
             [buffer_size, width*height], dtype=self.datatype)
         self.theta_buffer = np.zeros(buffer_size, dtype='float32')
@@ -63,6 +63,7 @@ class Recon():
         self.ts_pvs = ts_pvs
         self.width = width
         self.height = height
+        self.buffer_size = buffer_size
         self.num_proj = 0
 
         # start monitoring projection data
@@ -111,6 +112,11 @@ class Recon():
         and broadcasting the reconstruction result to a pv variable
         """
         id_start = 0  # start position in the circular buffer
+        center = self.ts_pvs['chStreamCenter'].get('')['value']
+        idx = self.ts_pvs['chStreamOrthoX'].get('')['value']
+        idy = self.ts_pvs['chStreamOrthoY'].get('')['value']
+        idz = self.ts_pvs['chStreamOrthoZ'].get('')['value']
+                
         while(True):
             # if streaming status is on
             if(self.ts_pvs['chStreamStatus'].get('')['value']['index'] == 1):
@@ -120,29 +126,37 @@ class Recon():
                 # update id_start to the projection part
                 id_start = self.num_proj
 
+                # take parameters from the GUI
+                center_new = self.ts_pvs['chStreamCenter'].get('')['value']
+                idx_new = self.ts_pvs['chStreamOrthoX'].get('')['value']
+                idy_new = self.ts_pvs['chStreamOrthoY'].get('')['value']
+                idz_new = self.ts_pvs['chStreamOrthoZ'].get('')['value']
+                if(len(ids) > self.buffer_size 
+                    or idx_new!=idx or idy_new!=idy or idz_new!=idz
+                    or center_new!=center):  
+                    # recompute if the buffer was overfilled, 
+                    # idx, idy, idz, or center changed in GUI
+                    ids = np.arange(self.buffer_size)
+                    idx = idx_new
+                    idy = idy_new
+                    idz = idz_new
+                    center = center_new
+
                 if(len(ids) == 0):  # if no new data in the buffer then continue
                     continue
-
-                if(len(ids) > self.buffer_size):  # if the buffer was overfilled, take it all
-                    ids = np.arange(self.buffer_size)
-
+                
+                log.info('center %s: idx, idy, idz: %s %s %s, ids: %s',
+                         center, idx_new, idy_new, idz_new, len(ids))
+                                
                 # make copies of what should be processed
                 proj_part = self.proj_buffer[ids].copy()
                 theta_part = self.theta_buffer[ids].copy()
                 ids_part = self.ids_buffer[ids].copy()
-
-                # take parameters from the GUI
-                center = self.ts_pvs['chStreamCenter'].get('')['value']
-                idX = self.ts_pvs['chStreamOrthoX'].get('')['value']
-                idY = self.ts_pvs['chStreamOrthoY'].get('')['value']
-                idZ = self.ts_pvs['chStreamOrthoZ'].get('')['value']
-                log.info('center %s: idx, idy,idz: %s %s %s',
-                         center, idX, idY, idZ)
-
+                
                 # reconstruct on GPU
                 util.tic()
                 rec = self.slv.recon_optimized(
-                    proj_part, theta_part, ids_part, center, idX, idY, idZ)
+                    proj_part, theta_part, ids_part, center, idx, idy, idz)
                 log.info('rec time: %s', util.toc())
 
                 # write to pv
