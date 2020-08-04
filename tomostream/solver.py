@@ -18,10 +18,12 @@ class Solver():
     """
 
     def __init__(self, ntheta, n, nz):
+        self.pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
+        cp.cuda.set_allocator(self.pool.malloc)
         self.n = n
         self.nz = nz
         self.ntheta = ntheta
-        self.nthetapart = 90  # number of projections for simultatneous processing by a GPU
+        self.nthetapart = 360  # number of projections for simultatneous processing by a GPU
 
         # GPU storage for dark anf flat fields
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
@@ -164,18 +166,17 @@ class Solver():
         idx = np.tile(idx, len(ids)).astype('int32')
         idy = np.tile(idy, len(ids)).astype('int32')
         idz = np.tile(idz, len(ids)).astype('int32')
-        center = np.tile(center, len(ids)).astype('float32')
+        center = np.tile(center, len(ids)).astype('float32')        
+        
+        if(len(ids)<=self.ntheta//2):
+            print('part')
+            # new part
+            obj = self.recon(data, theta, center, idx, idy, idz, dbg)            
+            # old part
+            objold = self.recon(self.datapi[ids], self.thetapi[ids], self.centerpi[ids],
+                            self.idxpi[ids], self.idypi[ids], self.idzpi[ids], dbg)            
+            self.objpi += (obj-objold)/self.ntheta            
 
-        # new part
-        obj = self.recon(data, theta, center, idx, idy, idz, dbg)
-
-        # swap
-        dataold = self.datapi[ids]
-        thetaold = self.thetapi[ids]
-        idxold = self.idxpi[ids]
-        idyold = self.idypi[ids]
-        idzold = self.idzpi[ids]
-        centerold = self.centerpi[ids]
         self.datapi[ids] = data
         self.thetapi[ids] = theta
         self.idxpi[ids] = idx
@@ -183,10 +184,9 @@ class Solver():
         self.idzpi[ids] = idz
         self.centerpi[ids] = center
 
-        # subtracting part
-        objold = self.recon(dataold, thetaold, centerold,
-                            idxold, idyold, idzold, dbg)
-
-        self.objpi += (obj-objold)/self.ntheta
+        if(len(ids)>self.ntheta//2):
+            print('all')
+            self.objpi = self.recon(self.datapi, self.thetapi, self.centerpi,
+                            self.idxpi, self.idypi, self.idzpi, dbg)/self.ntheta
 
         return self.objpi
