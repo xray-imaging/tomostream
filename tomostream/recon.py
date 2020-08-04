@@ -47,6 +47,12 @@ class Recon():
         # form circular buffers, whenever the projection count goes higher than buffer_size
         # then corresponding projection is replacing the first one
         buffer_size = ts_pvs['chStreamBufferSize'].get('')['value']
+        # read initial parameters from the GUI
+        center = ts_pvs['chStreamCenter'].get('')['value']
+        idx = ts_pvs['chStreamOrthoX'].get('')['value']
+        idy = ts_pvs['chStreamOrthoY'].get('')['value']
+        idz = ts_pvs['chStreamOrthoZ'].get('')['value']
+        
         self.proj_buffer = np.zeros(
             [buffer_size, width*height], dtype=self.datatype)
         self.theta_buffer = np.zeros(buffer_size, dtype='float32')
@@ -56,8 +62,9 @@ class Recon():
         self.theta = ts_pvs['chStreamThetaArray'].get(
             '')['value'][:ts_pvs['chStreamNumAngles'].get('')['value']]
 
+        
         # create solver class on GPU
-        self.slv = solver.Solver(buffer_size, width, height)
+        self.slv = solver.Solver(buffer_size, width, height, center, idx, idy, idz)
 
         # parameters needed in other class functions
         self.ts_pvs = ts_pvs

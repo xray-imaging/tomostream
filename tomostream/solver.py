@@ -17,14 +17,13 @@ class Solver():
         The pixel width and height of the projection.
     """
 
-    def __init__(self, ntheta, n, nz):
+    def __init__(self, ntheta, n, nz, center, idx, idy, idz):
         #self.pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
         # cp.cuda.set_allocator(self.pool.malloc)
         self.n = n
         self.nz = nz
         self.ntheta = ntheta
-        self.nthetapart = 180  # number of projections for simultatneous processing by a GPU
-
+        
         # GPU storage for dark anf flat fields
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
@@ -35,10 +34,10 @@ class Solver():
         self.data = cp.zeros([ntheta, nz, n], dtype='uint8')  # type???
         self.obj = cp.zeros([n, 3*n], dtype='float32')
         self.theta = cp.zeros([ntheta], dtype='float32')
-        self.idx = n//2
-        self.idy = n//2
-        self.idz = nz//2
-        self.center = n/2
+        self.center = center
+        self.idx = idx
+        self.idy = idy
+        self.idz = idz
 
     def set_flat(self, data):
         """Copy the average of flat fields to GPU"""
@@ -48,14 +47,15 @@ class Solver():
         """Copy the average of dark fields to GPU"""
         self.dark = cp.array(np.mean(data, axis=0).astype('float32'))
 
-    def backprojection(self, data, theta, center, idx, idy, idz):
+    def backprojection(self, data, theta):
         """Compute backprojection to orthogonal slices"""
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')
-        obj[:self.nz, :self.n] = kernels.orthox(data, theta, center, idx)
+        obj[:self.nz, :self.n] = kernels.orthox(data, theta, self.center, self.idx)
         obj[:self.nz, self.n:2 *
-            self.n] = kernels.orthoy(data, theta, center, idy)
+            self.n] = kernels.orthoy(data, theta, self.center, self.idy)
         obj[:self.n, 2*self.n:3 *
-            self.n] = kernels.orthoz(data, theta, center, idz)
+            self.n] = kernels.orthoz(data, theta, self.center, self.idz)
+        obj/=self.ntheta
         return obj
 
     def fbp_filter(self, data):
@@ -76,17 +76,16 @@ class Solver():
         data = -cp.log(cp.maximum(data, 1e-6))
         return data
 
-    def recon_part(self, data, theta, center, idx, idy, idz):
+    def recon(self, data, theta):
         """Reconstruction with the standard processing pipeline on GPU"""
         data = data.astype('float32')
         data = self.darkflat_correction(data)
         data = self.minus_log(data)
         data = self.fbp_filter(data)
-        obj = self.backprojection(data, theta *
-                                  np.pi/180, center, idx, idy, idz)
+        obj = self.backprojection(data, theta*np.pi/180)
         return obj
 
-    def recon_part_time(self, data, theta, center, idx, idy, idz):
+    def recon_time(self, data, theta, center):
         """Reconstruction with measuring times for each processing procedure"""
         data = data.astype('float32')
         util.tic()
@@ -104,8 +103,7 @@ class Solver():
         print('fbp fitler time:', util.toc())
         util.tic()
 
-        obj = self.backprojection(data, theta *
-                                  np.pi/180, center, idx, idy, idz)
+        obj = self.backprojection(data, theta*np.pi/180)
         cp.cuda.Stream.null.synchronize()
         print('backprojection time:', util.toc())
         return obj
@@ -134,26 +132,29 @@ class Solver():
         obj: np.array(n,3*n) 
             Concatenated reconstructions for X-Y-Z orthoslices
         """
-        data = cp.array(data.reshape(data.shape[0], self.nz, self.n))
-        theta = cp.array(theta)
-        recompute = (idx != self.idx or idy != self.idy or idz !=
-                     self.idz or center != self.center)
+        
+        # recompute only by replacing a part of the data in the buffer, or by using the whole buffer
+        recompute_part = not (idx != self.idx or idy != self.idy or idz !=
+                     self.idz or center != self.center or len(ids) > self.ntheta//2)
 
-        if(len(ids) <= self.ntheta//2 and (not recompute)):
+        if(recompute_part):
             print('part')
-            # new part
-            obj = self.recon_part(data, theta, center, idx, idy, idz)
             # old part
-            objold = self.recon_part(self.data[ids], self.theta[ids], self.center[ids],
-                                     self.idx[ids], self.idy[ids], self.idz[ids])
-            self.obj += (obj-objold)/self.ntheta
+            self.obj -= self.recon(self.data[ids], self.theta[ids])    
 
-        self.data[ids] = data
-        self.theta[ids] = theta
+        # update data in the buffer
+        self.data[ids] = cp.array(data.reshape(data.shape[0], self.nz, self.n))
+        self.theta[ids] = cp.array(theta.astype('float32'))        
+        self.idx = np.int32(idx)
+        self.idy = np.int32(idy)
+        self.idz = np.int32(idz)
+        self.center = np.float32(center)
 
-        if(len(ids) > self.ntheta//2 or recompute):
+        if(recompute_part):
+            # new part
+            self.obj += self.recon(self.data[ids], self.theta[ids])    
+        else:        
             print('all')
-            self.obj = self.recon_part(self.data, self.theta, self.center,
-                                       self.idx, self.idy, self.idz)/self.ntheta
+            self.obj = self.recon(self.data, self.theta)
 
         return self.obj.get()
