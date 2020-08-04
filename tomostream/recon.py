@@ -112,10 +112,6 @@ class Recon():
         and broadcasting the reconstruction result to a pv variable
         """
         id_start = 0  # start position in the circular buffer
-        center = self.ts_pvs['chStreamCenter'].get('')['value']
-        idx = self.ts_pvs['chStreamOrthoX'].get('')['value']
-        idy = self.ts_pvs['chStreamOrthoY'].get('')['value']
-        idz = self.ts_pvs['chStreamOrthoZ'].get('')['value']
                 
         while(True):
             # if streaming status is on
@@ -126,27 +122,21 @@ class Recon():
                 # update id_start to the projection part
                 id_start = self.num_proj
 
-                # take parameters from the GUI
-                center_new = self.ts_pvs['chStreamCenter'].get('')['value']
-                idx_new = self.ts_pvs['chStreamOrthoX'].get('')['value']
-                idy_new = self.ts_pvs['chStreamOrthoY'].get('')['value']
-                idz_new = self.ts_pvs['chStreamOrthoZ'].get('')['value']
-                if(len(ids) > self.buffer_size 
-                    or idx_new!=idx or idy_new!=idy or idz_new!=idz
-                    or center_new!=center):  
-                    # recompute if the buffer was overfilled, 
-                    # idx, idy, idz, or center changed in GUI
-                    ids = np.arange(self.buffer_size)
-                    idx = idx_new
-                    idy = idy_new
-                    idz = idz_new
-                    center = center_new
-
                 if(len(ids) == 0):  # if no new data in the buffer then continue
-                    continue
+                    continue                
+                # take parameters from the GUI
+                if(len(ids) > self.buffer_size):
+                    # recompute if the buffer was overfilled, 
+                    ids = np.arange(self.buffer_size)                    
                 
+                center = self.ts_pvs['chStreamCenter'].get('')['value']
+                idx = self.ts_pvs['chStreamOrthoX'].get('')['value']
+                idy = self.ts_pvs['chStreamOrthoY'].get('')['value']
+                idz = self.ts_pvs['chStreamOrthoZ'].get('')['value']
+        
                 log.info('center %s: idx, idy, idz: %s %s %s, ids: %s',
-                         center, idx_new, idy_new, idz_new, len(ids))
+                         center, idx, idy, idz, len(ids))
+                                
                                 
                 # make copies of what should be processed
                 proj_part = self.proj_buffer[ids].copy()

@@ -19,7 +19,7 @@ class Solver():
 
     def __init__(self, ntheta, n, nz):
         #self.pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
-        #cp.cuda.set_allocator(self.pool.malloc)
+        # cp.cuda.set_allocator(self.pool.malloc)
         self.n = n
         self.nz = nz
         self.ntheta = ntheta
@@ -32,13 +32,13 @@ class Solver():
         self.wfilter = cp.tile(cp.fft.rfftfreq(
             self.n) * (1 - cp.fft.rfftfreq(self.n) * 2)**3, [nz, 1])
         # data storages for array updates in the optimized reconstruction function
-        self.datapi = cp.zeros([ntheta, nz, n], dtype='uint8')
-        self.objpi = cp.zeros([n, 3*n], dtype='float32')
-        self.thetapi = cp.zeros([ntheta], dtype='float32')
-        self.idxpi = cp.zeros([ntheta], dtype='int32')
-        self.idypi = cp.zeros([ntheta], dtype='int32')
-        self.idzpi = cp.zeros([ntheta], dtype='int32')
-        self.centerpi = cp.zeros([ntheta], dtype='float32')+n//2
+        self.data = cp.zeros([ntheta, nz, n], dtype='uint8')  # type???
+        self.obj = cp.zeros([n, 3*n], dtype='float32')
+        self.theta = cp.zeros([ntheta], dtype='float32')
+        self.idx = n//2
+        self.idy = n//2
+        self.idz = nz//2
+        self.center = n/2
 
     def set_flat(self, data):
         """Copy the average of flat fields to GPU"""
@@ -61,8 +61,8 @@ class Solver():
     def fbp_filter(self, data):
         """FBP filtering of projections"""
         for k in range(data.shape[0]):
-           data[k] = irfft(
-               self.wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
+            data[k] = irfft(
+                self.wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
         return data
 
     def darkflat_correction(self, data):
@@ -78,19 +78,19 @@ class Solver():
 
     def recon_part(self, data, theta, center, idx, idy, idz):
         """Reconstruction with the standard processing pipeline on GPU"""
-        data=data.astype('float32')        
+        data = data.astype('float32')
         data = self.darkflat_correction(data)
         data = self.minus_log(data)
         data = self.fbp_filter(data)
         obj = self.backprojection(data, theta *
-                                   np.pi/180, center, idx, idy, idz)
+                                  np.pi/180, center, idx, idy, idz)
         return obj
 
     def recon_part_time(self, data, theta, center, idx, idy, idz):
         """Reconstruction with measuring times for each processing procedure"""
-        data=data.astype('float32')
-        util.tic()        
-        data = self.darkflat_correction(data)        
+        data = data.astype('float32')
+        util.tic()
+        data = self.darkflat_correction(data)
         cp.cuda.Stream.null.synchronize()
         print('dark-flat correction time:', util.toc())
         util.tic()
@@ -98,14 +98,14 @@ class Solver():
         cp.cuda.Stream.null.synchronize()
         print('minus log time:', util.toc())
         util.tic()
-        
+
         data = self.fbp_filter(data)
         cp.cuda.Stream.null.synchronize()
         print('fbp fitler time:', util.toc())
         util.tic()
-        
+
         obj = self.backprojection(data, theta *
-                                   np.pi/180, center, idx, idy, idz)
+                                  np.pi/180, center, idx, idy, idz)
         cp.cuda.Stream.null.synchronize()
         print('backprojection time:', util.toc())
         return obj
@@ -131,41 +131,29 @@ class Solver():
 
         Return
         ----------
-        objpi: np.array(n,3*n) 
+        obj: np.array(n,3*n) 
             Concatenated reconstructions for X-Y-Z orthoslices
         """
-        idx = np.tile(idx, len(ids)).astype('int32')
-        idy = np.tile(idy, len(ids)).astype('int32')
-        idz = np.tile(idz, len(ids)).astype('int32')
-        center = np.tile(center, len(ids)).astype('float32')        
-        data = data.reshape(data.shape[0], self.nz, self.n)
-        
-        data=cp.array(data)
-        theta=cp.array(theta)
-        center=cp.array(center)
-        idx=cp.array(idx)
-        idy=cp.array(idy)
-        idz=cp.array(idz)
-        
-        if(len(ids)<=self.ntheta//2):
+        data = cp.array(data.reshape(data.shape[0], self.nz, self.n))
+        theta = cp.array(theta)
+        recompute = (idx != self.idx or idy != self.idy or idz !=
+                     self.idz or center != self.center)
+
+        if(len(ids) <= self.ntheta//2 and (not recompute)):
             print('part')
             # new part
-            obj = self.recon_part(data, theta, center, idx, idy, idz)            
+            obj = self.recon_part(data, theta, center, idx, idy, idz)
             # old part
-            objold = self.recon_part(self.datapi[ids], self.thetapi[ids], self.centerpi[ids],
-                            self.idxpi[ids], self.idypi[ids], self.idzpi[ids])            
-            self.objpi += (obj-objold)/self.ntheta            
+            objold = self.recon_part(self.data[ids], self.theta[ids], self.center[ids],
+                                     self.idx[ids], self.idy[ids], self.idz[ids])
+            self.obj += (obj-objold)/self.ntheta
 
-        self.datapi[ids] = data
-        self.thetapi[ids] = theta
-        self.idxpi[ids] = idx
-        self.idypi[ids] = idy
-        self.idzpi[ids] = idz
-        self.centerpi[ids] = center
+        self.data[ids] = data
+        self.theta[ids] = theta
 
-        if(len(ids)>self.ntheta//2):
+        if(len(ids) > self.ntheta//2 or recompute):
             print('all')
-            self.objpi = self.recon_part(self.datapi, self.thetapi, self.centerpi,
-                            self.idxpi, self.idypi, self.idzpi)/self.ntheta
+            self.obj = self.recon_part(self.data, self.theta, self.center,
+                                       self.idx, self.idy, self.idz)/self.ntheta
 
-        return self.objpi.get()
+        return self.obj.get()
