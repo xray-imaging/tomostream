@@ -19,8 +19,7 @@ class Server():
 
     def __init__(self, args):
         self.ts_pvs = pv.init(args.tomoscan_prefix)
-        # flag is True if dark and flat fields are being captured
-        self.dark_flat_capture = False
+        self.dark_flat_capture = False # flag is True if dark and flat fields are being captured
         self.proj_capture = False  # flag is True if projections are being captured
         self.serverFlatDark = []  # server for broadcasting dark and flat fields
         self.flatdark_pva_name = args.flatdark_pva_name
@@ -30,14 +29,14 @@ class Server():
     def capture_data(self, pv):
         """PV monitoring function of the capture button for gettng dark and flat fields, or projections
         """
-        if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 0):  # streaming
+        if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 0):  # streaming status OFF
             return
 
         if(pv['value']['index'] == 1  # capture button pressed,
                 and self.dark_flat_capture == False  # dark flat are not being acquired,
                 and self.proj_capture == False):  # check that the previous dataset is written into hdf5 file
 
-            if (list(self.ts_pvs['chFileName_RBV'].get()['value']) == [ord('t'), 0]):
+            if (self.ts_pvs['chFileName_RBV'].get()['value'].view('c').tostring() == b'dark_flat_buffer\x00'):
                 # start acquiring flat and dark
                 log.info('start capturing dark and flat')
                 self.dark_flat_capture = True
