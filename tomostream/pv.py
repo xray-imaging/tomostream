@@ -34,12 +34,17 @@ def init(tomoscan_prefix):
     ts_pvs['chStreamOrthoX'] = pva.Channel(tomoscan_prefix + 'StreamOrthoX', pva.CA)
     ts_pvs['chStreamOrthoY'] = pva.Channel(tomoscan_prefix + 'StreamOrthoY', pva.CA)
     ts_pvs['chStreamOrthoZ'] = pva.Channel(tomoscan_prefix + 'StreamOrthoZ', pva.CA)
+    ts_pvs['chStreamOrthoXlimit'] = pva.Channel(tomoscan_prefix + 'StreamOrthoX.HOPR', pva.CA)
+    ts_pvs['chStreamOrthoYlimit'] = pva.Channel(tomoscan_prefix + 'StreamOrthoY.HOPR', pva.CA)
+    ts_pvs['chStreamOrthoZlimit'] = pva.Channel(tomoscan_prefix + 'StreamOrthoZ.HOPR', pva.CA)
+    
     ts_pvs['chCapture_RBV'] = pva.Channel(file_plugin_prefix + 'Capture_RBV', pva.CA)
     ts_pvs['chFullFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FullFileName_RBV', pva.CA)
     ts_pvs['chFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FileName_RBV', pva.CA)    
     ts_pvs['chNumCaptured_RBV'] = pva.Channel(file_plugin_prefix + 'NumCaptured_RBV', pva.CA)    
     
     ts_pvs['chFlatDark'] = pva.Channel(tomoscan_prefix + 'FlatDark')
+    
 
     # mistery
     t = ts_pvs['chStreamNumFlatFields'].get(

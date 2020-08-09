@@ -31,7 +31,8 @@ class Recon():
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
         ch_flat_dark = ts_pvs['chFlatDark']
 
-        ## create pva type pv for reconstrucion by copying metadata from the data pv, but replacing the sizes
+        ## 1) create pva type pv for reconstrucion by copying metadata from the data pv, but replacing the sizes
+        # This way the ADViewer plugin can be also used for visualizing reconstructions.
         pv_data = ch_data.get('')
         pv_dict = pv_data.getStructureDict()
         width = pv_data['dimension'][0]['size']
@@ -44,8 +45,12 @@ class Recon():
         self.server_rec = pva.PvaServer(args.recon_pva_name, self.pv_rec)
         log.info('Reconstruction PV: %s, size: %s %s',
                  args.recon_pva_name, 3*width, width)
-
-        ## form circular buffers, whenever the projection count goes higher than buffer_size
+        # update limits on sliders
+        ts_pvs['chStreamOrthoXlimit'].put(width)
+        ts_pvs['chStreamOrthoYlimit'].put(width)
+        ts_pvs['chStreamOrthoZlimit'].put(height)
+        
+        ## 2) form circular buffers, whenever the projection count goes higher than buffer_size
         # then corresponding projection is replacing the first one
         buffer_size = ts_pvs['chStreamBufferSize'].get()['value']
         datatype_list = ts_pvs['chDataType_RBV'].get()['value']
@@ -54,11 +59,11 @@ class Recon():
         self.theta_buffer = np.zeros(buffer_size, dtype='float32')
         self.ids_buffer = np.zeros(buffer_size, dtype='int32')
 
-        ## load angles from psofly
+        ## 3) load angles from psofly
         self.theta = ts_pvs['chStreamThetaArray'].get(
             '')['value'][:ts_pvs['chStreamNumAngles'].get()['value']]
 
-        ## create solver class on GPU
+        ## 4) create solver class on GPU
         # read initial parameters from the GUI
         center = ts_pvs['chStreamCenter'].get()['value']
         idx = ts_pvs['chStreamOrthoX'].get()['value']
@@ -66,7 +71,7 @@ class Recon():
         idz = ts_pvs['chStreamOrthoZ'].get()['value']      
         # create solver class on GPU with memory allocation          
         self.slv = solver.Solver(buffer_size, width, height, center, idx, idy, idz)
-
+        
         # parameters needed in other class functions
         self.ts_pvs = ts_pvs
         self.width = width
@@ -74,7 +79,7 @@ class Recon():
         self.buffer_size = buffer_size
         self.num_proj = 0
 
-        ## start PV monitoring
+        ## 5) start PV monitoring
         # start monitoring projection data
         ch_data.monitor(self.add_data, '')
         # start monitoring dark and flat fields pv
