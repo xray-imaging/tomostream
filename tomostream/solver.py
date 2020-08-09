@@ -6,8 +6,8 @@ from tomostream import util
 
 
 class Solver():
-    """Class for tomography reconstruction of orthogonal slices through direct 
-    discreatization of line integrals in the Radon transform.
+    """Class for tomography reconstruction of ortho-slices through direct 
+    discreatization of circular integrals in the Radon transform.
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ class Solver():
         # GPU storage for dark anf flat fields
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
-        # Paganin filter
+        # Parzen filter
         self.wfilter = cp.tile(cp.fft.rfftfreq(
             self.n) * (1 - cp.fft.rfftfreq(self.n) * 2)**3, [nz, 1])
         # data storages for array updates in the optimized reconstruction function
@@ -110,7 +110,7 @@ class Solver():
 
     def recon_optimized(self, data, theta, ids, center, idx, idy, idz, dbg=False):
         """Optimized reconstruction of the object
-        from the whole set of projections in the interval of the size pi.
+        from the whole set of projections in the interval of size pi.
         Resulting reconstruction is obtained by replacing the reconstruction part corresponding to incoming projections, 
         objnew = objold + recon(datanew) - recon(dataold)
 
@@ -138,7 +138,6 @@ class Solver():
                      self.idz or center != self.center or len(ids) > self.ntheta//2)
 
         if(recompute_part):
-            print('part')
             # old part
             self.obj -= self.recon(self.data[ids], self.theta[ids])    
 
@@ -154,7 +153,6 @@ class Solver():
             # new part
             self.obj += self.recon(self.data[ids], self.theta[ids])    
         else:        
-            print('all')
             self.obj = self.recon(self.data, self.theta)
 
         return self.obj.get()
