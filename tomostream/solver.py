@@ -3,7 +3,8 @@ import numpy as np
 from cupyx.scipy.fft import rfft, irfft
 from tomostream import kernels
 from tomostream import util
-
+import signal
+import sys
 
 class Solver():
     """Class for tomography reconstruction of ortho-slices through direct 
@@ -17,9 +18,10 @@ class Solver():
         The pixel width and height of the projection.
     """
 
-    def __init__(self, ntheta, n, nz, center, idx, idy, idz):
-        #self.pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
-        # cp.cuda.set_allocator(self.pool.malloc)
+    def __init__(self, ntheta, n, nz, center, idx, idy, idz, fbpfilter):
+        #pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
+        self.mempool = cp.get_default_memory_pool()
+        #cp.cuda.set_allocator(self.pool.malloc)
         self.n = n
         self.nz = nz
         self.ntheta = ntheta
@@ -27,9 +29,6 @@ class Solver():
         # GPU storage for dark anf flat fields
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
-        # Parzen filter
-        self.wfilter = cp.tile(cp.fft.rfftfreq(
-            self.n) * (1 - cp.fft.rfftfreq(self.n) * 2)**3, [nz, 1])
         # data storages for array updates in the optimized reconstruction function
         self.data = cp.zeros([ntheta, nz, n], dtype='uint8')  # type???
         self.obj = cp.zeros([n, 3*n], dtype='float32')
@@ -38,6 +37,14 @@ class Solver():
         self.idx = idx
         self.idy = idy
         self.idz = idz
+        self.fbpfilter = fbpfilter
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTSTP, self.signal_handler)
+
+    def signal_handler(self, sig, frame):  
+        """Free gpu memory after SIGINT, SIGSTSTP"""
+        self.mempool.free_all_blocks()
+        sys.exit()
 
     def set_flat(self, data):
         """Copy the average of flat fields to GPU"""
@@ -60,9 +67,20 @@ class Solver():
 
     def fbp_filter(self, data):
         """FBP filtering of projections"""
+        t = cp.fft.rfftfreq(self.n)
+        if (self.fbpfilter=='Parzen'):
+            wfilter = t * (1 - t * 2)**3    
+        elif (self.fbpfilter=='Ramp'):
+            wfilter = t
+        elif (self.fbpfilter=='Shepp-logan'):
+            wfilter = np.sin(t)
+        elif (self.fbpfilter=='Butterworth'):# todo: replace by other
+            wfilter = t / (1+pow(2*t,16)) # as in tomopy
+
+        wfilter = cp.tile(t, [self.nz, 1])    
         for k in range(data.shape[0]):
             data[k] = irfft(
-                self.wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
+                wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
         return data
 
     def darkflat_correction(self, data):
@@ -108,7 +126,7 @@ class Solver():
         print('backprojection time:', util.toc())
         return obj
 
-    def recon_optimized(self, data, theta, ids, center, idx, idy, idz, dbg=False):
+    def recon_optimized(self, data, theta, ids, center, idx, idy, idz, fbpfilter, dbg=False):
         """Optimized reconstruction of the object
         from the whole set of projections in the interval of size pi.
         Resulting reconstruction is obtained by replacing the reconstruction part corresponding to incoming projections, 
@@ -134,8 +152,8 @@ class Solver():
         """
         
         # recompute only by replacing a part of the data in the buffer, or by using the whole buffer
-        recompute_part = not (idx != self.idx or idy != self.idy or idz !=
-                     self.idz or center != self.center or len(ids) > self.ntheta//2)
+        recompute_part = not (idx != self.idx or idy != self.idy or idz != self.idz 
+            or center != self.center or fbpfilter != self.fbpfilter or len(ids) > self.ntheta//2)
 
         if(recompute_part):
             # old part
@@ -148,6 +166,7 @@ class Solver():
         self.idy = np.int32(idy)
         self.idz = np.int32(idz)
         self.center = np.float32(center)
+        self.fbpfilter = fbpfilter
 
         if(recompute_part):
             # new part
