@@ -87,7 +87,7 @@ class Recon():
         self.height = height
         self.buffer_size = buffer_size
         self.num_proj = 0
-            
+      
         ## 5) start PV monitoring
         # start monitoring dark and flat fields pv
         ch_flat_dark.monitor(self.add_dark_flat, '')
@@ -98,7 +98,7 @@ class Recon():
     def add_data(self, pv):
         """PV monitoring function for adding projection data and corresponding angle to circular buffers"""
 
-        if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 1): # if streaming ans scan statuses are On
+        if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 1): # if streaming status is On
             cur_id = pv['uniqueId'] # unique projection id for determining angles and places in the buffers
             frame_type_all = self.ts_pvs['chStreamFrameType'].get()['value']
             frame_type = frame_type_all['choices'][frame_type_all['index']]
@@ -125,6 +125,15 @@ class Recon():
             # send dark and flat fields to the solver
             self.slv.set_dark_flat(dark_flat)
             log.info('new dark and flat fields acquired')
+    
+    # def retake_flat(self,pv):
+    #     self.ts_pvs['chStreamStatus'].put('Off')
+    #     self.ts_pvs[].put(..)
+    #     filename = 
+    #     capture = 1
+    #     nframes = 20
+
+        
 
     def run(self):
         """Run streaming reconstruction by sending new incoming projections from the circular buffer to the solver class,
