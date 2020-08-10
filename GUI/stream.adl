@@ -1,0 +1,575 @@
+
+file {
+	name="/home/beams8/TOMO/vnikitin/tomostream/GUI/stream.adl"
+	version=030111
+}
+display {
+	object {
+		x=1173
+		y=79
+		width=543
+		height=342
+	}
+	clr=14
+	bclr=4
+	cmap=""
+	gridSpacing=5
+	gridOn=0
+	snapToGrid=0
+}
+"color map" {
+	ncolors=65
+	colors {
+		ffffff,
+		ececec,
+		dadada,
+		c8c8c8,
+		bbbbbb,
+		aeaeae,
+		9e9e9e,
+		919191,
+		858585,
+		787878,
+		696969,
+		5a5a5a,
+		464646,
+		2d2d2d,
+		000000,
+		00d800,
+		1ebb00,
+		339900,
+		2d7f00,
+		216c00,
+		fd0000,
+		de1309,
+		be190b,
+		a01207,
+		820400,
+		5893ff,
+		597ee1,
+		4b6ec7,
+		3a5eab,
+		27548d,
+		fbf34a,
+		f9da3c,
+		eeb62b,
+		e19015,
+		cd6100,
+		ffb0ff,
+		d67fe2,
+		ae4ebc,
+		8b1a96,
+		610a75,
+		a4aaff,
+		8793e2,
+		6a73c1,
+		4d52a4,
+		343386,
+		c7bb6d,
+		b79d5c,
+		a47e3c,
+		7d5627,
+		58340f,
+		99ffff,
+		73dfff,
+		4ea5f9,
+		2a63e4,
+		0a00b8,
+		ebf1b5,
+		d4db9d,
+		bbc187,
+		a6a462,
+		8b8239,
+		73ff6b,
+		52da3b,
+		3cb420,
+		289315,
+		1a7309,
+	}
+}
+rectangle {
+	object {
+		x=3
+		y=3
+		width=537
+		height=336
+	}
+	"basic attribute" {
+		clr=14
+		fill="outline"
+		width=2
+	}
+}
+valuator {
+	object {
+		x=155
+		y=123
+		width=370
+		height=25
+	}
+	control {
+		chan="$(P)$(R)StreamOrthoX"
+		clr=14
+		bclr=4
+	}
+	dPrecision=1.000000
+	limits {
+		precSrc="default"
+		precDefault=1
+	}
+}
+valuator {
+	object {
+		x=155
+		y=148
+		width=370
+		height=25
+	}
+	control {
+		chan="$(P)$(R)StreamOrthoY"
+		clr=14
+		bclr=4
+	}
+	dPrecision=1.000000
+	limits {
+	}
+}
+valuator {
+	object {
+		x=155
+		y=173
+		width=370
+		height=25
+	}
+	control {
+		chan="$(P)$(R)StreamOrthoZ"
+		clr=14
+		bclr=4
+	}
+	dPrecision=1.000000
+	limits {
+	}
+}
+text {
+	object {
+		x=16
+		y=127
+		width=75
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Ortho X"
+	align="horiz. right"
+}
+text {
+	object {
+		x=16
+		y=152
+		width=75
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Orhto Y"
+	align="horiz. right"
+}
+text {
+	object {
+		x=16
+		y=177
+		width=75
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Ortho Z"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=102
+		y=177
+		width=50
+		height=20
+	}
+	control {
+		chan="$(P)$(R)StreamOrthoZ"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=102
+		y=152
+		width=50
+		height=20
+	}
+	control {
+		chan="$(P)$(R)StreamOrthoY"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=102
+		y=127
+		width=50
+		height=20
+	}
+	control {
+		chan="$(P)$(R)StreamOrthoX"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=144
+		y=43
+		width=80
+		height=20
+	}
+	control {
+		chan="$(P)$(R)StreamCenter"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+menu {
+	object {
+		x=144
+		y=74
+		width=80
+		height=20
+	}
+	control {
+		chan="$(P)$(R)StreamFilterType"
+		clr=14
+		bclr=51
+	}
+}
+text {
+	object {
+		x=39
+		y=43
+		width=100
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Center"
+	align="horiz. right"
+}
+text {
+	object {
+		x=39
+		y=74
+		width=100
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Filter type"
+	align="horiz. right"
+}
+text {
+	object {
+		x=29
+		y=11
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Status"
+	align="horiz. right"
+}
+menu {
+	object {
+		x=144
+		y=11
+		width=80
+		height=20
+	}
+	control {
+		chan="$(P)$(R)StreamStatus"
+		clr=14
+		bclr=51
+	}
+}
+text {
+	object {
+		x=288
+		y=251
+		width=90
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="# Capture"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=383
+		y=250
+		width=60
+		height=22
+	}
+	control {
+		chan="$(PH)$(RH)NumCapture"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+text {
+	object {
+		x=72
+		y=251
+		width=70
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Capture"
+	align="horiz. right"
+}
+"message button" {
+	object {
+		x=152
+		y=251
+		width=59
+		height=20
+	}
+	control {
+		chan="$(PH)$(RH)Capture"
+		clr=14
+		bclr=51
+	}
+	label="Start"
+	press_msg="1"
+}
+"message button" {
+	object {
+		x=219
+		y=251
+		width=59
+		height=20
+	}
+	control {
+		chan="$(PH)$(RH)Capture"
+		clr=14
+		bclr=51
+	}
+	label="Stop"
+	press_msg="0"
+}
+"text update" {
+	object {
+		x=152
+		y=229
+		width=100
+		height=20
+	}
+	monitor {
+		chan="$(PH)$(RH)Capture_RBV"
+		clr=63
+		bclr=4
+	}
+	clrmod="alarm"
+	format="string"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=155
+		y=308
+		width=300
+		height=14
+	}
+	monitor {
+		chan="$(PH)$(RH)WriteMessage"
+		clr=20
+		bclr=2
+	}
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=12
+		y=303
+		width=130
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Write message"
+	align="horiz. right"
+}
+text {
+	object {
+		x=22
+		y=278
+		width=120
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Write status"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=151
+		y=278
+		width=120
+		height=20
+	}
+	monitor {
+		chan="$(PH)$(RH)WriteStatus"
+		clr=63
+		bclr=4
+	}
+	clrmod="alarm"
+	format="string"
+	limits {
+	}
+}
+rectangle {
+	object {
+		x=8
+		y=224
+		width=527
+		height=105
+	}
+	"basic attribute" {
+		clr=14
+		fill="outline"
+		width=2
+	}
+}
+"text update" {
+	object {
+		x=448
+		y=252
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(PH)$(RH)NumCaptured_RBV"
+		clr=54
+		bclr=4
+	}
+	limits {
+	}
+}
+text {
+	object {
+		x=270
+		y=11
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Image Counter"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=390
+		y=11
+		width=130
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)ImagesCollected"
+		clr=54
+		bclr=4
+	}
+	limits {
+	}
+}
+text {
+	object {
+		x=270
+		y=43
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Buffer size"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=390
+		y=43
+		width=60
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)StreamBufferSize"
+		clr=54
+		bclr=4
+	}
+	limits {
+	}
+}
+text {
+	object {
+		x=270
+		y=75
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Recon time"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=390
+		y=75
+		width=60
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)StreamPaganinAlpha"
+		clr=54
+		bclr=4
+	}
+	limits {
+	}
+}
