@@ -42,8 +42,6 @@ class Server():
     def capture_data(self, pv):
         """PV monitoring function of the capture button for gettng dark and flat fields, or projections
         """
-        if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 0):  # streaming status OFF
-            return
 
         if(pv['value']['index'] == 1  # capturing is activated,
                 and self.dark_flat_capture == False  # dark flat are not being acquired,
