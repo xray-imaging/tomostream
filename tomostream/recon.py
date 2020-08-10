@@ -74,9 +74,12 @@ class Recon():
         idz = ts_pvs['chStreamOrthoZ'].get()['value']    
         fbpfilter_list = ts_pvs['chStreamFilterType'].get()['value']
         fbpfilter = fbpfilter_list['choices'][fbpfilter_list['index']]
+        num_dark = ts_pvs['chStreamNumDarkFields'].get()['value']        
+        num_flat = ts_pvs['chStreamNumFlatFields'].get()['value']            
                   
         # create solver class on GPU with memory allocation          
-        self.slv = solver.Solver(buffer_size, width, height, center, idx, idy, idz, fbpfilter)
+        self.slv = solver.Solver(buffer_size, width, height, 
+            num_dark, num_flat, center, idx, idy, idz, fbpfilter)
         
         # parameters needed in other class functions
         self.ts_pvs = ts_pvs
@@ -84,7 +87,6 @@ class Recon():
         self.height = height
         self.buffer_size = buffer_size
         self.num_proj = 0
-        self.dark_flat_exist = False
             
         ## 5) start PV monitoring
         # start monitoring dark and flat fields pv
@@ -96,7 +98,7 @@ class Recon():
     def add_data(self, pv):
         """PV monitoring function for adding projection data and corresponding angle to circular buffers"""
 
-        if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 1): # if streaming status is On
+        if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 1): # if streaming ans scan statuses are On
             cur_id = pv['uniqueId'] # unique projection id for determining angles and places in the buffers
             frame_type_all = self.ts_pvs['chStreamFrameType'].get()['value']
             frame_type = frame_type_all['choices'][frame_type_all['index']]
@@ -106,13 +108,13 @@ class Recon():
                                     ] = pv['value'][0][util.type_dict[self.datatype]]
                 # write theta to the circular buffer
                 self.theta_buffer[np.mod(
-                    self.num_proj, self.buffer_size)] = self.theta[cur_id]
+                    self.num_proj, self.buffer_size)] = self.theta[min(cur_id,len(self.theta)-1)]
                 # write position in the buffer
                 self.ids_buffer[np.mod(
                     self.num_proj, self.buffer_size)] = np.mod(self.num_proj, self.buffer_size)
 
                 self.num_proj += 1
-                # log.info('id: %s type %s', cur_id, frame_type)
+                log.info('id: %s type %s', cur_id, frame_type)
 
     def add_dark_flat(self, pv):
         """PV monitoring function for reading new dark and flat fields from manually running pv server 
@@ -120,19 +122,9 @@ class Recon():
 
         if(pv['value'][0]):  # if pv with dark and flat is not empty
             dark_flat = pv['value'][0]['floatValue']
-            num_flat_fields = self.ts_pvs['chStreamNumFlatFields'].get(
-                '')['value']  # probably better to read from the server pv
-            num_dark_fields = self.ts_pvs['chStreamNumDarkFields'].get()[
-                'value']
-            dark = dark_flat[:num_dark_fields * self.width*self.height]
-            flat = dark_flat[num_dark_fields * self.width*self.height:]
-            dark = dark.reshape(num_dark_fields, self.height, self.width)
-            flat = flat.reshape(num_flat_fields, self.height, self.width)
             # send dark and flat fields to the solver
-            self.slv.set_dark(dark)
-            self.slv.set_flat(flat)
-            self.dark_flat_exist = True
-            log.info('new flat and dark fields acquired')
+            self.slv.set_dark_flat(dark_flat)
+            log.info('new dark and flat fields acquired')
 
     def run(self):
         """Run streaming reconstruction by sending new incoming projections from the circular buffer to the solver class,
@@ -142,9 +134,7 @@ class Recon():
                 
         while(True):
             # if streaming status and scan statuses are On
-            if(self.ts_pvs['chStartScan'].get()['value']['index'] == 1 and
-                self.ts_pvs['chStreamStatus'].get()['value']['index'] == 1 and 
-                self.dark_flat_exist == True):
+            if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 1):
                 # take positions of new projections in the buffer
                 ids = np.mod(np.arange(id_start, self.num_proj),
                              self.buffer_size)
