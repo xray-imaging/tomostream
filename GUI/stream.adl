@@ -555,14 +555,14 @@ text {
 	"basic attribute" {
 		clr=14
 	}
-	textix="Recon time"
+	textix="Recon time (s)"
 	align="horiz. right"
 }
 "text update" {
 	object {
 		x=390
 		y=75
-		width=150
+		width=60
 		height=18
 	}
 	monitor {
