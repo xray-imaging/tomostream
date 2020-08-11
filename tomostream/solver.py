@@ -58,6 +58,7 @@ class Solver():
         flat = flat.reshape(self.nflat, self.nz, self.n)            
         self.dark = cp.array(np.mean(dark, axis=0).astype('float32'))
         self.flat = cp.array(np.mean(flat, axis=0).astype('float32'))
+        
         self.new_dark_flat = True
 
     def backprojection(self, data, theta):
@@ -83,7 +84,7 @@ class Solver():
         elif (self.fbpfilter=='Butterworth'):# todo: replace by other
             wfilter = t / (1+pow(2*t,16)) # as in tomopy
 
-        wfilter = cp.tile(t, [self.nz, 1])    
+        wfilter = cp.tile(wfilter, [self.nz, 1])    
         for k in range(data.shape[0]):
             data[k] = irfft(
                 wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
