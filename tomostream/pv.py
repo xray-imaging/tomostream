@@ -29,6 +29,8 @@ def init(tomoscan_prefix):
     ts_pvs['chStreamPaganinAlpha'] = pva.Channel(tomoscan_prefix + 'StreamPaganinAlpha', pva.CA)
     ts_pvs['chStreamCenter'] = pva.Channel(tomoscan_prefix + 'StreamCenter', pva.CA)
     ts_pvs['chStreamFilterType'] = pva.Channel(tomoscan_prefix + 'StreamFilterType', pva.CA)
+    ts_pvs['chStreamReconTime'] = pva.Channel(tomoscan_prefix + 'StreamReconTime', pva.CA)
+    ts_pvs['chStreamRetakeFlat'] = pva.Channel(tomoscan_prefix + 'StreamRetakeFlat', pva.CA)
     
     ts_pvs['chStreamOrthoX'] = pva.Channel(tomoscan_prefix + 'StreamOrthoX', pva.CA)
     ts_pvs['chStreamOrthoY'] = pva.Channel(tomoscan_prefix + 'StreamOrthoY', pva.CA)
