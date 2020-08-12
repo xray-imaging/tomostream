@@ -18,7 +18,7 @@ class Solver():
         The pixel width and height of the projection.
     """
 
-    def __init__(self, ntheta, n, nz, ndark, nflat, center, idx, idy, idz, fbpfilter):
+    def __init__(self, ntheta, n, nz, ndark, nflat, center, idx, idy, idz, fbpfilter, data_type):
         #pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
         self.mempool = cp.get_default_memory_pool()
         #cp.cuda.set_allocator(self.pool.malloc)
@@ -30,7 +30,7 @@ class Solver():
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
         # data storages for array updates in the optimized reconstruction function
-        self.data = cp.zeros([ntheta, nz, n], dtype='uint8')  # type???
+        self.data = cp.zeros([ntheta, nz, n], dtype=data_type)  # type???
         self.obj = cp.zeros([n, 3*n], dtype='float32')
         self.theta = cp.zeros([ntheta], dtype='float32')
         self.center = center

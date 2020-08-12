@@ -66,8 +66,11 @@ class Recon():
 
 
         ts_pvs['chStreamBufferSize'].put(buffer_size)        
-        datatype_list = ts_pvs['chDataType_RBV'].get()['value']        
+        datatype_list = ts_pvs['chDataType_RBV'].get()['value']   
+        
         self.datatype = datatype_list['choices'][datatype_list['index']].lower()        
+        print(self.datatype)
+
         self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
         self.theta_buffer = np.zeros(buffer_size, dtype='float32')
         self.ids_buffer = np.zeros(buffer_size, dtype='int32')
@@ -85,7 +88,7 @@ class Recon():
                   
         # create solver class on GPU with memory allocation          
         self.slv = solver.Solver(buffer_size, width, height, 
-            num_dark, num_flat, center, idx, idy, idz, fbpfilter)
+            num_dark, num_flat, center, idx, idy, idz, fbpfilter, self.datatype)
         
         # parameters needed in other class functions
         self.ts_pvs = ts_pvs
