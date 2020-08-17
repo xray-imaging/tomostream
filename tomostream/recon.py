@@ -30,7 +30,7 @@ class Recon():
         ch_data = ts_pvs['chData']
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
         ch_flat_dark = ts_pvs['chFlatDark']
-
+        
         ## 1) create pva type pv for reconstrucion by copying metadata from the data pv, but replacing the sizes
         # This way the ADViewer plugin can be also used for visualizing reconstructions.
         pv_data = ch_data.get('')
@@ -46,9 +46,9 @@ class Recon():
         log.info('Reconstruction PV: %s, size: %s %s',
                  args.recon_pva_name, 3*width, width)
         # update limits on sliders
-        ts_pvs['chStreamOrthoXlimit'].put(width)
-        ts_pvs['chStreamOrthoYlimit'].put(width)
-        ts_pvs['chStreamOrthoZlimit'].put(height)
+        ts_pvs['chStreamOrthoXlimit'].put(width-1)
+        ts_pvs['chStreamOrthoYlimit'].put(width-1)
+        ts_pvs['chStreamOrthoZlimit'].put(height-1)
         
         ## 2) load angles from psofly
         self.theta = ts_pvs['chStreamThetaArray'].get(
@@ -56,12 +56,21 @@ class Recon():
 
         ## 3) form circular buffers, whenever the projection count goes higher than buffer_size
         # then corresponding projection is replacing the first one
-        buffer_size = np.where(self.theta-self.theta[0]>180)[0][0]
-        if(not buffer_size):
+        if(max(self.theta)<180):
             buffer_size = len(self.theta)
+        else:        
+            buffer_size = np.where(self.theta-self.theta[0]>180)[0][0]
+        if(buffer_size*width*height>pow(2,32)):
+            print('buffer_size', buffer_size, 'not enough memory')
+            exit(0)
+
+
         ts_pvs['chStreamBufferSize'].put(buffer_size)        
-        datatype_list = ts_pvs['chDataType_RBV'].get()['value']        
+        datatype_list = ts_pvs['chDataType_RBV'].get()['value']   
+        
         self.datatype = datatype_list['choices'][datatype_list['index']].lower()        
+        print(self.datatype)
+
         self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
         self.theta_buffer = np.zeros(buffer_size, dtype='float32')
         self.ids_buffer = np.zeros(buffer_size, dtype='int32')
@@ -74,9 +83,12 @@ class Recon():
         idz = ts_pvs['chStreamOrthoZ'].get()['value']    
         fbpfilter_list = ts_pvs['chStreamFilterType'].get()['value']
         fbpfilter = fbpfilter_list['choices'][fbpfilter_list['index']]
+        num_dark = ts_pvs['chStreamNumDarkFields'].get()['value']        
+        num_flat = ts_pvs['chStreamNumFlatFields'].get()['value']            
                   
         # create solver class on GPU with memory allocation          
-        self.slv = solver.Solver(buffer_size, width, height, center, idx, idy, idz, fbpfilter)
+        self.slv = solver.Solver(buffer_size, width, height, 
+            num_dark, num_flat, center, idx, idy, idz, fbpfilter, self.datatype)
         
         # parameters needed in other class functions
         self.ts_pvs = ts_pvs
@@ -84,8 +96,7 @@ class Recon():
         self.height = height
         self.buffer_size = buffer_size
         self.num_proj = 0
-        self.dark_flat_exist = False
-            
+      
         ## 5) start PV monitoring
         # start monitoring dark and flat fields pv
         ch_flat_dark.monitor(self.add_dark_flat, '')
@@ -102,17 +113,17 @@ class Recon():
             frame_type = frame_type_all['choices'][frame_type_all['index']]
             if(frame_type == 'Projection'):
                 # write projection to the circular buffer
-                self.proj_buffer[np.mod(self.num_proj, self.buffer_size)
+                self.proj_buffer[np.mod(cur_id, self.buffer_size)
                                     ] = pv['value'][0][util.type_dict[self.datatype]]
                 # write theta to the circular buffer
                 self.theta_buffer[np.mod(
-                    self.num_proj, self.buffer_size)] = self.theta[cur_id]
+                    cur_id, self.buffer_size)] = self.theta[min(cur_id,len(self.theta)-1)]
                 # write position in the buffer
                 self.ids_buffer[np.mod(
-                    self.num_proj, self.buffer_size)] = np.mod(self.num_proj, self.buffer_size)
+                    self.num_proj, self.buffer_size)] = np.mod(cur_id, self.buffer_size)
 
                 self.num_proj += 1
-                # log.info('id: %s type %s', cur_id, frame_type)
+                log.info('id: %s type %s', cur_id, frame_type)
 
     def add_dark_flat(self, pv):
         """PV monitoring function for reading new dark and flat fields from manually running pv server 
@@ -120,42 +131,30 @@ class Recon():
 
         if(pv['value'][0]):  # if pv with dark and flat is not empty
             dark_flat = pv['value'][0]['floatValue']
-            num_flat_fields = self.ts_pvs['chStreamNumFlatFields'].get(
-                '')['value']  # probably better to read from the server pv
-            num_dark_fields = self.ts_pvs['chStreamNumDarkFields'].get()[
-                'value']
-            dark = dark_flat[:num_dark_fields * self.width*self.height]
-            flat = dark_flat[num_dark_fields * self.width*self.height:]
-            dark = dark.reshape(num_dark_fields, self.height, self.width)
-            flat = flat.reshape(num_flat_fields, self.height, self.width)
             # send dark and flat fields to the solver
-            self.slv.set_dark(dark)
-            self.slv.set_flat(flat)
-            self.dark_flat_exist = True
-            log.info('new flat and dark fields acquired')
-
+            self.slv.set_dark_flat(dark_flat)
+            log.info('new dark and flat fields acquired')
+    
     def run(self):
         """Run streaming reconstruction by sending new incoming projections from the circular buffer to the solver class,
         and broadcasting the reconstruction result to a pv variable
         """
-        id_start = 0  # start position in the circular buffer
+        pos_start = 0  # start position in the circular buffer
                 
         while(True):
             # if streaming status and scan statuses are On
-            if(self.ts_pvs['chStartScan'].get()['value']['index'] == 1 and
-                self.ts_pvs['chStreamStatus'].get()['value']['index'] == 1 and 
-                self.dark_flat_exist == True):
+            if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 1):
                 # take positions of new projections in the buffer
-                ids = np.mod(np.arange(id_start, self.num_proj),
+                pos = np.mod(np.arange(pos_start, self.num_proj),
                              self.buffer_size)
                 # update id_start to the id of the next data portion
-                id_start = self.num_proj
+                pos_start = self.num_proj
 
-                if(len(ids) == 0):  # if no new data in the buffer then continue
+                if(len(pos) == 0):  # if no new data in the buffer then continue
                     continue                
-                if(len(ids) > self.buffer_size):
+                if(len(pos) > self.buffer_size):
                     # recompute by using all buffer elements if the buffer was overfilled, 
-                    ids = np.arange(self.buffer_size)                                    
+                    pos = np.arange(self.buffer_size)                                    
                 # take parameters from the GUI                
                 center = self.ts_pvs['chStreamCenter'].get()['value']
                 idx = self.ts_pvs['chStreamOrthoX'].get()['value']
@@ -165,18 +164,18 @@ class Recon():
                 fbpfilter = fbpfilter_list['choices'][fbpfilter_list['index']]
                 
                 log.info('center %s: idx, idy, idz: %s %s %s, filter: %s, new proj: %s',
-                         center, idx, idy, idz, fbpfilter, len(ids))
+                         center, idx, idy, idz, fbpfilter, len(pos))
                                                                 
                 # make copies of what should be processed
-                proj_part = self.proj_buffer[ids].copy()
-                theta_part = self.theta_buffer[ids].copy()
-                ids_part = self.ids_buffer[ids].copy()
+                proj_part = self.proj_buffer[self.ids_buffer[pos]].copy()
+                theta_part = self.theta_buffer[self.ids_buffer[pos]].copy()
+                ids_part = self.ids_buffer[pos].copy()
                 
                 # reconstruct on GPU
                 util.tic()
                 rec = self.slv.recon_optimized(
                     proj_part, theta_part, ids_part, center, idx, idy, idz, fbpfilter)
-                self.ts_pvs['chStreamPaganinAlpha'].put(util.toc())##todo: add new pv for that
+                self.ts_pvs['chStreamReconTime'].put(util.toc())
                 
                 # write result to pv
                 self.pv_rec['value'] = ({'floatValue': rec.flatten()},)                

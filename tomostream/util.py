@@ -12,6 +12,7 @@ def toc():
 type_dict = {
 'uint8': 'ubyteValue',
 'float32': 'floatValue',
+'uint16' : 'ushortValue'
 # add others
 }
 

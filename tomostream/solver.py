@@ -18,7 +18,7 @@ class Solver():
         The pixel width and height of the projection.
     """
 
-    def __init__(self, ntheta, n, nz, center, idx, idy, idz, fbpfilter):
+    def __init__(self, ntheta, n, nz, ndark, nflat, center, idx, idy, idz, fbpfilter, data_type):
         #pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
         self.mempool = cp.get_default_memory_pool()
         #cp.cuda.set_allocator(self.pool.malloc)
@@ -30,7 +30,7 @@ class Solver():
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
         # data storages for array updates in the optimized reconstruction function
-        self.data = cp.zeros([ntheta, nz, n], dtype='uint8')  # type???
+        self.data = cp.zeros([ntheta, nz, n], dtype=data_type)  # type???
         self.obj = cp.zeros([n, 3*n], dtype='float32')
         self.theta = cp.zeros([ntheta], dtype='float32')
         self.center = center
@@ -38,6 +38,10 @@ class Solver():
         self.idy = idy
         self.idz = idz
         self.fbpfilter = fbpfilter
+        self.ndark = ndark
+        self.nflat = nflat
+        
+        self.new_dark_flat = False
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTSTP, self.signal_handler)
 
@@ -46,13 +50,16 @@ class Solver():
         self.mempool.free_all_blocks()
         sys.exit()
 
-    def set_flat(self, data):
-        """Copy the average of flat fields to GPU"""
-        self.flat = cp.array(np.mean(data, axis=0).astype('float32'))
-
-    def set_dark(self, data):
-        """Copy the average of dark fields to GPU"""
-        self.dark = cp.array(np.mean(data, axis=0).astype('float32'))
+    def set_dark_flat(self, dark_flat):
+        """Copy the average of flat fields and dark fields to GPU"""
+        dark = dark_flat[:self.ndark*self.n*self.nz]
+        flat = dark_flat[self.ndark * self.n*self.nz:]
+        dark = dark.reshape(self.ndark, self.nz, self.n)
+        flat = flat.reshape(self.nflat, self.nz, self.n)            
+        self.dark = cp.array(np.mean(dark, axis=0).astype('float32'))
+        self.flat = cp.array(np.mean(flat, axis=0).astype('float32'))
+        
+        self.new_dark_flat = True
 
     def backprojection(self, data, theta):
         """Compute backprojection to orthogonal slices"""
@@ -77,7 +84,7 @@ class Solver():
         elif (self.fbpfilter=='Butterworth'):# todo: replace by other
             wfilter = t / (1+pow(2*t,16)) # as in tomopy
 
-        wfilter = cp.tile(t, [self.nz, 1])    
+        wfilter = cp.tile(wfilter, [self.nz, 1])    
         for k in range(data.shape[0]):
             data[k] = irfft(
                 wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
@@ -153,7 +160,8 @@ class Solver():
         
         # recompute only by replacing a part of the data in the buffer, or by using the whole buffer
         recompute_part = not (idx != self.idx or idy != self.idy or idz != self.idz 
-            or center != self.center or fbpfilter != self.fbpfilter or len(ids) > self.ntheta//2)
+            or center != self.center or fbpfilter != self.fbpfilter or self.new_dark_flat or
+            len(ids) > self.ntheta//2)
 
         if(recompute_part):
             # old part
@@ -167,7 +175,7 @@ class Solver():
         self.idz = np.int32(idz)
         self.center = np.float32(center)
         self.fbpfilter = fbpfilter
-
+        self.new_dark_flat = False
         if(recompute_part):
             # new part
             self.obj += self.recon(self.data[ids], self.theta[ids])    

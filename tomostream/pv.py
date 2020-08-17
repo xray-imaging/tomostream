@@ -22,7 +22,6 @@ def init(tomoscan_prefix):
     ts_pvs['chStreamNumDarkFields'] = pva.Channel(tomoscan_prefix + 'NumDarkFields', pva.CA)
     ts_pvs['chStreamNumFlatFields'] = pva.Channel(tomoscan_prefix + 'NumFlatFields', pva.CA)
 
-    ts_pvs['chStartScan'] = pva.Channel(tomoscan_prefix + 'StartScan', pva.CA)    
     ts_pvs['chStreamStatus'] = pva.Channel(tomoscan_prefix + 'StreamStatus', pva.CA)
     ts_pvs['chStreamBufferSize'] = pva.Channel(tomoscan_prefix + 'StreamBufferSize', pva.CA)
     ts_pvs['chStreamRingRemoval'] = pva.Channel(tomoscan_prefix + 'StreamRingRemoval', pva.CA)
@@ -30,6 +29,8 @@ def init(tomoscan_prefix):
     ts_pvs['chStreamPaganinAlpha'] = pva.Channel(tomoscan_prefix + 'StreamPaganinAlpha', pva.CA)
     ts_pvs['chStreamCenter'] = pva.Channel(tomoscan_prefix + 'StreamCenter', pva.CA)
     ts_pvs['chStreamFilterType'] = pva.Channel(tomoscan_prefix + 'StreamFilterType', pva.CA)
+    ts_pvs['chStreamReconTime'] = pva.Channel(tomoscan_prefix + 'StreamReconTime', pva.CA)
+    ts_pvs['chStreamRetakeFlat'] = pva.Channel(tomoscan_prefix + 'StreamRetakeFlat', pva.CA)
     
     ts_pvs['chStreamOrthoX'] = pva.Channel(tomoscan_prefix + 'StreamOrthoX', pva.CA)
     ts_pvs['chStreamOrthoY'] = pva.Channel(tomoscan_prefix + 'StreamOrthoY', pva.CA)

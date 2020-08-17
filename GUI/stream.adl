@@ -103,7 +103,7 @@ rectangle {
 valuator {
 	object {
 		x=155
-		y=123
+		y=140
 		width=370
 		height=25
 	}
@@ -121,7 +121,7 @@ valuator {
 valuator {
 	object {
 		x=155
-		y=148
+		y=165
 		width=370
 		height=25
 	}
@@ -137,7 +137,7 @@ valuator {
 valuator {
 	object {
 		x=155
-		y=173
+		y=190
 		width=370
 		height=25
 	}
@@ -153,7 +153,7 @@ valuator {
 text {
 	object {
 		x=16
-		y=127
+		y=144
 		width=75
 		height=20
 	}
@@ -166,7 +166,7 @@ text {
 text {
 	object {
 		x=16
-		y=152
+		y=169
 		width=75
 		height=20
 	}
@@ -179,7 +179,7 @@ text {
 text {
 	object {
 		x=16
-		y=177
+		y=194
 		width=75
 		height=20
 	}
@@ -192,7 +192,7 @@ text {
 "text entry" {
 	object {
 		x=102
-		y=177
+		y=194
 		width=50
 		height=20
 	}
@@ -207,7 +207,7 @@ text {
 "text entry" {
 	object {
 		x=102
-		y=152
+		y=169
 		width=50
 		height=20
 	}
@@ -222,7 +222,7 @@ text {
 "text entry" {
 	object {
 		x=102
-		y=127
+		y=144
 		width=50
 		height=20
 	}
@@ -555,7 +555,7 @@ text {
 	"basic attribute" {
 		clr=14
 	}
-	textix="Recon time"
+	textix="Recon time (s)"
 	align="horiz. right"
 }
 "text update" {
@@ -566,10 +566,36 @@ text {
 		height=18
 	}
 	monitor {
-		chan="$(P)$(R)StreamPaganinAlpha"
+		chan="$(P)$(R)StreamReconTime"
 		clr=54
 		bclr=4
 	}
 	limits {
 	}
+}
+"choice button" {
+	object {
+		x=152
+		y=100
+		width=45
+		height=31
+	}
+	control {
+		chan="$(P)$(R)StreamRetakeFlat"
+		clr=14
+		bclr=4
+	}
+}
+text {
+	object {
+		x=42
+		y=107
+		width=100
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Retake flat"
+	align="horiz. right"
 }

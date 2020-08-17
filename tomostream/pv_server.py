@@ -42,8 +42,6 @@ class Server():
     def capture_data(self, pv):
         """PV monitoring function of the capture button for gettng dark and flat fields, or projections
         """
-        if(self.ts_pvs['chStreamStatus'].get()['value']['index'] == 0):  # streaming status OFF
-            return
 
         if(pv['value']['index'] == 1  # capturing is activated,
                 and self.dark_flat_capture == False  # dark flat are not being acquired,
@@ -76,9 +74,12 @@ class Server():
                     time.sleep(0.01)
 
             # save dark/flat fields in local variables of the class
-            self.dark_save = hdf_file['/exchange/data_dark'][:]
-            self.flat_save = hdf_file['/exchange/data_white'][:]
-
+            tmp = hdf_file['/exchange/data_dark'][:]
+            if(tmp.shape[0]==self.ts_pvs['chStreamNumDarkFields'].get()['value']):
+                self.dark_save = tmp  
+            tmp = hdf_file['/exchange/data_white'][:]            
+            if(tmp.shape[0]==self.ts_pvs['chStreamNumFlatFields'].get()['value']):            
+                self.flat_save = tmp
             # binning dark and flat to projection sizes
             dark = self.dark_save.astype('float32')
             flat = self.flat_save.astype('float32')
@@ -91,7 +92,8 @@ class Server():
                 flat = 0.5*(flat[:, ::2, :]+flat[:, 1::2, :])
             flat_dark_buffer = np.concatenate((dark, flat), axis=0)
             
-            log.info('broadcast dark and flat fields')            
+            log.info('broadcast dark and flat fields, shape: %s, norms: %s %s',flat_dark_buffer.shape,
+            np.linalg.norm(dark),np.linalg.norm(flat))            
             self.pv_flat_dark['value'] = (
                 {'floatValue': flat_dark_buffer.flatten()},)
             self.dark_flat_capture = False # ready for capturing next data set
