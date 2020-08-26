@@ -24,9 +24,6 @@ def init(tomoscan_prefix):
 
     ts_pvs['chStreamStatus'] = pva.Channel(tomoscan_prefix + 'StreamStatus', pva.CA)
     ts_pvs['chStreamBufferSize'] = pva.Channel(tomoscan_prefix + 'StreamBufferSize', pva.CA)
-    ts_pvs['chStreamRingRemoval'] = pva.Channel(tomoscan_prefix + 'StreamRingRemoval', pva.CA)
-    ts_pvs['chStreamPaganin'] = pva.Channel(tomoscan_prefix + 'StreamPaganin', pva.CA)
-    ts_pvs['chStreamPaganinAlpha'] = pva.Channel(tomoscan_prefix + 'StreamPaganinAlpha', pva.CA)
     ts_pvs['chStreamCenter'] = pva.Channel(tomoscan_prefix + 'StreamCenter', pva.CA)
     ts_pvs['chStreamFilterType'] = pva.Channel(tomoscan_prefix + 'StreamFilterType', pva.CA)
     ts_pvs['chStreamReconTime'] = pva.Channel(tomoscan_prefix + 'StreamReconTime', pva.CA)
