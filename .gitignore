@@ -47,6 +47,7 @@ __pycache__
 *.sql
 *.sqlite
 /.docker/pgilinux-*
+.loglogin
 
 # OS generated files #
 ######################
