@@ -23,7 +23,7 @@ class Server():
 
     def __init__(self, args):
 
-        self.ts_pvs = pv.init(args.tomoscan_prefix)
+        self.ts_pvs = pv.init(args)
         self.pv_data = self.ts_pvs['chData'].get('')                
         
         # pva type pv for dark and flat fields

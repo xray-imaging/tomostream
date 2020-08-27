@@ -1,13 +1,13 @@
 import pvaccess as pva
 import time
 
-def init(tomoscan_prefix):
+def init(args):
     
     ts_pvs = {}
 
-    chCameraPVPrefix = pva.Channel(tomoscan_prefix + 'CameraPVPrefix', pva.CA)
-    chFilePluginPVPrefix = pva.Channel(tomoscan_prefix + 'FilePluginPVPrefix', pva.CA)    
-    chPSOPVPrefix = pva.Channel(tomoscan_prefix + 'PSOPVPrefix', pva.CA)
+    chCameraPVPrefix = pva.Channel(args.tomoscan_prefix + 'CameraPVPrefix', pva.CA)
+    chFilePluginPVPrefix = pva.Channel(args.tomoscan_prefix + 'FilePluginPVPrefix', pva.CA)    
+    chPSOPVPrefix = pva.Channel(args.tomoscan_prefix + 'PSOPVPrefix', pva.CA)
     
     camera_prefix = chCameraPVPrefix.get('')['value']
     file_plugin_prefix = chFilePluginPVPrefix.get('')['value']    
@@ -17,31 +17,31 @@ def init(tomoscan_prefix):
     ts_pvs['chData'] = pva.Channel(camera_prefix + 'Pva1:Image')
     ts_pvs['chDataType_RBV'] = pva.Channel(camera_prefix + 'Pva1:DataType_RBV')
 
-    ts_pvs['chStreamFrameType'] = pva.Channel(tomoscan_prefix + 'FrameType', pva.CA)
-    ts_pvs['chStreamNumAngles'] = pva.Channel(tomoscan_prefix + 'NumAngles', pva.CA)
-    ts_pvs['chStreamNumDarkFields'] = pva.Channel(tomoscan_prefix + 'NumDarkFields', pva.CA)
-    ts_pvs['chStreamNumFlatFields'] = pva.Channel(tomoscan_prefix + 'NumFlatFields', pva.CA)
+    ts_pvs['chStreamFrameType'] = pva.Channel(args.tomoscan_prefix + 'FrameType', pva.CA)
+    ts_pvs['chStreamNumAngles'] = pva.Channel(args.tomoscan_prefix + 'NumAngles', pva.CA)
+    ts_pvs['chStreamNumDarkFields'] = pva.Channel(args.tomoscan_prefix + 'NumDarkFields', pva.CA)
+    ts_pvs['chStreamNumFlatFields'] = pva.Channel(args.tomoscan_prefix + 'NumFlatFields', pva.CA)
 
-    ts_pvs['chStreamStatus'] = pva.Channel(tomoscan_prefix + 'StreamStatus', pva.CA)
-    ts_pvs['chStreamBufferSize'] = pva.Channel(tomoscan_prefix + 'StreamBufferSize', pva.CA)
-    ts_pvs['chStreamCenter'] = pva.Channel(tomoscan_prefix + 'StreamCenter', pva.CA)
-    ts_pvs['chStreamFilterType'] = pva.Channel(tomoscan_prefix + 'StreamFilterType', pva.CA)
-    ts_pvs['chStreamReconTime'] = pva.Channel(tomoscan_prefix + 'StreamReconTime', pva.CA)
-    ts_pvs['chStreamRetakeFlat'] = pva.Channel(tomoscan_prefix + 'StreamRetakeFlat', pva.CA)
+    ts_pvs['chStreamStatus'] = pva.Channel(args.tomoscan_prefix + 'StreamStatus', pva.CA)
+    ts_pvs['chStreamBufferSize'] = pva.Channel(args.tomoscan_prefix + 'StreamBufferSize', pva.CA)
+    ts_pvs['chStreamCenter'] = pva.Channel(args.tomoscan_prefix + 'StreamCenter', pva.CA)
+    ts_pvs['chStreamFilterType'] = pva.Channel(args.tomoscan_prefix + 'StreamFilterType', pva.CA)
+    ts_pvs['chStreamReconTime'] = pva.Channel(args.tomoscan_prefix + 'StreamReconTime', pva.CA)
+    ts_pvs['chStreamRetakeFlat'] = pva.Channel(args.tomoscan_prefix + 'StreamRetakeFlat', pva.CA)
     
-    ts_pvs['chStreamOrthoX'] = pva.Channel(tomoscan_prefix + 'StreamOrthoX', pva.CA)
-    ts_pvs['chStreamOrthoY'] = pva.Channel(tomoscan_prefix + 'StreamOrthoY', pva.CA)
-    ts_pvs['chStreamOrthoZ'] = pva.Channel(tomoscan_prefix + 'StreamOrthoZ', pva.CA)
-    ts_pvs['chStreamOrthoXlimit'] = pva.Channel(tomoscan_prefix + 'StreamOrthoX.HOPR', pva.CA)
-    ts_pvs['chStreamOrthoYlimit'] = pva.Channel(tomoscan_prefix + 'StreamOrthoY.HOPR', pva.CA)
-    ts_pvs['chStreamOrthoZlimit'] = pva.Channel(tomoscan_prefix + 'StreamOrthoZ.HOPR', pva.CA)
+    ts_pvs['chStreamOrthoX'] = pva.Channel(args.tomoscan_prefix + 'StreamOrthoX', pva.CA)
+    ts_pvs['chStreamOrthoY'] = pva.Channel(args.tomoscan_prefix + 'StreamOrthoY', pva.CA)
+    ts_pvs['chStreamOrthoZ'] = pva.Channel(args.tomoscan_prefix + 'StreamOrthoZ', pva.CA)
+    ts_pvs['chStreamOrthoXlimit'] = pva.Channel(args.tomoscan_prefix + 'StreamOrthoX.HOPR', pva.CA)
+    ts_pvs['chStreamOrthoYlimit'] = pva.Channel(args.tomoscan_prefix + 'StreamOrthoY.HOPR', pva.CA)
+    ts_pvs['chStreamOrthoZlimit'] = pva.Channel(args.tomoscan_prefix + 'StreamOrthoZ.HOPR', pva.CA)
     
     ts_pvs['chCapture_RBV'] = pva.Channel(file_plugin_prefix + 'Capture_RBV', pva.CA)
     ts_pvs['chFullFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FullFileName_RBV', pva.CA)
     ts_pvs['chFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FileName_RBV', pva.CA)    
     ts_pvs['chNumCaptured_RBV'] = pva.Channel(file_plugin_prefix + 'NumCaptured_RBV', pva.CA)    
     
-    ts_pvs['chFlatDark'] = pva.Channel(tomoscan_prefix + 'FlatDark')
+    ts_pvs['chFlatDark'] = pva.Channel(args.tomoscan_prefix + 'FlatDark')
     
     
     # mistery

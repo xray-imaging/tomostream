@@ -26,7 +26,7 @@ class Recon():
 
     def __init__(self, args):
 
-        ts_pvs = pv.init(args.tomoscan_prefix)  # read all pvs
+        ts_pvs = pv.init(args)  # read all pvs
         # pva type channel that contains projection and metadata
         ch_data = ts_pvs['chData']
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
