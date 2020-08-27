@@ -14,8 +14,8 @@ def init(args):
     pso_prefix = PSOPVPrefix.get('')['value']
     
     ts_pvs['ThetaArray'] = pva.Channel(pso_prefix +'motorPos.AVAL', pva.CA)
-    ts_pvs['PvaImage'] = pva.Channel(camera_prefix + 'Pva1:Image')
-    ts_pvs['PvaDataType_RBV'] = pva.Channel(camera_prefix + 'Pva1:DataType_RBV')
+    ts_pvs['PvaPImage'] = pva.Channel(camera_prefix + 'Pva1:Image')
+    ts_pvs['PvaPDataType_RBV'] = pva.Channel(camera_prefix + 'Pva1:DataType_RBV')
 
     ts_pvs['FrameType'] = pva.Channel(args.tomoscan_prefix + 'FrameType', pva.CA)
     ts_pvs['NumAngles'] = pva.Channel(args.tomoscan_prefix + 'NumAngles', pva.CA)
@@ -41,7 +41,7 @@ def init(args):
     ts_pvs['FPFileName_RBV'] = pva.Channel(file_plugin_prefix + 'FileName_RBV', pva.CA)    
     ts_pvs['FPNumCaptured_RBV'] = pva.Channel(file_plugin_prefix + 'NumCaptured_RBV', pva.CA)    
     
-    ts_pvs['chFlatDark'] = pva.Channel(args.tomoscan_prefix + 'FlatDark')
+    ts_pvs['chFlatDark'] = pva.Channel(args.flatdark_pva_name)
     
     
     # mistery

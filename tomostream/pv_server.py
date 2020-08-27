@@ -24,7 +24,7 @@ class Server():
     def __init__(self, args):
 
         self.ts_pvs = pv.init(args)
-        self.pv_data = self.ts_pvs['PvaImage'].get('')                
+        self.pv_data = self.ts_pvs['PvaPImage'].get('')                
         
         # pva type pv for dark and flat fields
         self.pv_flat_dark = pva.PvObject(self.pv_data.getStructureDict())

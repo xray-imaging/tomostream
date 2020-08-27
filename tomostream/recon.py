@@ -28,7 +28,7 @@ class Recon():
 
         ts_pvs = pv.init(args)  # read all pvs
         # pva type channel that contains projection and metadata
-        ch_data = ts_pvs['PvaImage']
+        ch_data = ts_pvs['PvaPImage']
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
         ch_flat_dark = ts_pvs['chFlatDark']
         
@@ -67,7 +67,7 @@ class Recon():
         
         # take datatype
         ts_pvs['StreamBufferSize'].put(buffer_size)        
-        datatype_list = ts_pvs['PvaDataType_RBV'].get()['value']   
+        datatype_list = ts_pvs['PvaPDataType_RBV'].get()['value']   
         self.datatype = datatype_list['choices'][datatype_list['index']].lower()        
         print(self.datatype)
         # queue
