@@ -30,7 +30,7 @@ class Recon():
         # pva type channel that contains projection and metadata
         ch_data = ts_pvs['PvaPImage']
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
-        ch_flat_dark = ts_pvs['chFlatDark']
+        ch_flat_dark = ts_pvs['PvaFlatDark']
         
         ## 1) create pva type pv for reconstrucion by copying metadata from the data pv, but replacing the sizes
         # This way the ADViewer plugin can be also used for visualizing reconstructions.
