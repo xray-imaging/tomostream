@@ -62,14 +62,14 @@ class Recon():
         else:        
             buffer_size = np.where(self.theta-self.theta[0]>180)[0][0]
         if(buffer_size*width*height>pow(2,32)):
-            print('buffer_size', buffer_size, 'not enough memory')
+            log.error('buffer_size %s not enough memory', buffer_size)
             exit(0)
         
         # take datatype
         ts_pvs['StreamBufferSize'].put(buffer_size)        
         datatype_list = ts_pvs['PvaPDataType_RBV'].get()['value']   
         self.datatype = datatype_list['choices'][datatype_list['index']].lower()        
-        print(self.datatype)
+        log.info('datatype %s', self.datatype)
         # queue
         self.data_queue = queue.Queue(maxsize=buffer_size)
 
@@ -117,7 +117,7 @@ class Recon():
                 if(not self.data_queue.full()):
                     self.data_queue.put(data_item)
                 else:
-                    print("queue is full, skip frame")
+                    log.warning("queue is full, skip frame")
                 log.info('id: %s type %s queue size %s', cur_id, frame_type, self.data_queue.qsize())
 
     def add_dark_flat(self, pv):
