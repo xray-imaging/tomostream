@@ -28,17 +28,17 @@ class Recon():
 
         ts_pvs = pv.init(args)  # read all pvs
         # pva type channel that contains projection and metadata
-        ch_data = ts_pvs['PvaPImage']
+        pva_plugin_image = ts_pvs['PvaPImage']
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
-        ch_flat_dark = ts_pvs['PvaFlatDark']
+        pva_flat_dark = ts_pvs['PvaFlatDark']
         
         ## 1) create pva type pv for reconstrucion by copying metadata from the data pv, but replacing the sizes
         # This way the ADViewer plugin can be also used for visualizing reconstructions.
-        pv_data = ch_data.get('')
-        pv_dict = pv_data.getStructureDict()
-        width = pv_data['dimension'][0]['size']
-        height = pv_data['dimension'][1]['size']
-        self.pv_rec = pva.PvObject(pv_dict)
+        pva_image_data = pva_plugin_image.get('')
+        pva_image_dict = pva_image_data.getStructureDict()
+        width = pva_image_data['dimension'][0]['size']
+        height = pva_image_data['dimension'][1]['size']
+        self.pv_rec = pva.PvObject(pva_image_dict)
         # set dimensions for reconstruction (assume width>=height), todo if not
         self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
                                     {'size': width, 'fullSize': width, 'binning': 1}]
@@ -97,9 +97,9 @@ class Recon():
       
         ## 5) start PV monitoring
         # start monitoring dark and flat fields pv
-        ch_flat_dark.monitor(self.add_dark_flat, '')
+        pva_flat_dark.monitor(self.add_dark_flat, '')
         # start monitoring projection data        
-        ch_data.monitor(self.add_data, '')
+        pva_plugin_image.monitor(self.add_data, '')
         
 
     def add_data(self, pv):

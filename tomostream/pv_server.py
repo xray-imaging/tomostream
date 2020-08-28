@@ -24,10 +24,10 @@ class Server():
     def __init__(self, args):
 
         self.ts_pvs = pv.init(args)
-        self.pv_data = self.ts_pvs['PvaPImage'].get('')                
+        self.pva_image_data = self.ts_pvs['PvaPImage'].get('')                
         
         # pva type pv for dark and flat fields
-        self.pv_flat_dark = pva.PvObject(self.pv_data.getStructureDict())
+        self.pv_flat_dark = pva.PvObject(self.pva_image_data.getStructureDict())
         # run server for broadcasting flat and dark fiels for streaming
         self.serverFlatDark = pva.PvaServer(
                 args.flatdark_pva_name, self.pv_flat_dark)
@@ -86,7 +86,7 @@ class Server():
             dark = self.dark_save.astype('float32')
             flat = self.flat_save.astype('float32')
             binning = int(
-                np.log2(dark.shape[2]//self.pv_data['dimension'][0]['size']))
+                np.log2(dark.shape[2]//self.pva_image_data['dimension'][0]['size']))
             for k in range(binning):
                 dark = 0.5*(dark[:, :, ::2]+dark[:, :, 1::2])
                 dark = 0.5*(dark[:, ::2, :]+dark[:, 1::2, :])
