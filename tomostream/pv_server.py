@@ -24,6 +24,8 @@ class Server():
     def __init__(self, args):
 
         self.ts_pvs = pv.init(args)
+        # set default NumCapture to cover 180 deg at RotationStep interval
+        self.ts_pvs['FPNumCapture'].put(int(180./ts_pvs['RotationStep'].get() + 1))
         self.pva_image_data = self.ts_pvs['PvaPImage'].get('')                
         
         # pva type pv for dark and flat fields
