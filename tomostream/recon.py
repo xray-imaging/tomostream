@@ -53,7 +53,7 @@ class Recon():
         
         ## 2) load angles from psofly
         self.theta = ts_pvs['ThetaArray'].get(
-            '')['value'][:ts_pvs['NumAngles'].get()['value']]
+            '')['value'][:ts_pvs['NumAngles'].get()]
 
         ## 3) create a queue to store projections
         # find max size of the queue, the size is equal to the number of angles in the interval of size pi
@@ -75,14 +75,14 @@ class Recon():
 
         ## 4) create solver class on GPU
         # read initial parameters from the GUI
-        center = ts_pvs['StreamCenter'].get()['value']
-        idx = ts_pvs['StreamOrthoX'].get()['value']
-        idy = ts_pvs['StreamOrthoY'].get()['value']
-        idz = ts_pvs['StreamOrthoZ'].get()['value']    
-        fbpfilter_list = ts_pvs['StreamFilterType'].get()['value']
-        fbpfilter = fbpfilter_list['choices'][fbpfilter_list['index']]
-        num_dark = ts_pvs['NumDarkFields'].get()['value']        
-        num_flat = ts_pvs['NumFlatFields'].get()['value']            
+        center = ts_pvs['StreamCenter'].get()
+        idx = ts_pvs['StreamOrthoX'].get()
+        idy = ts_pvs['StreamOrthoY'].get()
+        idz = ts_pvs['StreamOrthoZ'].get()    
+        fbpfilter = ts_pvs['StreamFilterType'].get(as_string=True)
+
+        num_dark = ts_pvs['NumDarkFields'].get()        
+        num_flat = ts_pvs['NumFlatFields'].get()            
                   
         # create solver class on GPU with memory allocation          
         self.slv = solver.Solver(buffer_size, width, height, 
@@ -105,10 +105,9 @@ class Recon():
     def add_data(self, pv):
         """PV monitoring function for adding projection data and corresponding angle to circular buffers"""
 
-        if(self.ts_pvs['StreamStatus'].get()['value']['index'] == 1): # if streaming status is On
+        if(self.ts_pvs['StreamStatus'].get(as_string=True) == 'On'): # if streaming status is On
             cur_id = pv['uniqueId'] # unique projection id for determining angles and places in the buffers
-            frame_type_all = self.ts_pvs['FrameType'].get()['value']
-            frame_type = frame_type_all['choices'][frame_type_all['index']]
+            frame_type = self.ts_pvs['FrameType'].get(as_string=True)
             if(frame_type == 'Projection'):
                 # write projection, theta, and id into the queue
                 data_item = {'projection': pv['value'][0][util.type_dict[self.datatype]],
@@ -142,15 +141,14 @@ class Recon():
         
         while(True):
             # if streaming status and scan statuses are On
-            if(self.ts_pvs['StreamStatus'].get()['value']['index'] == 1):
+            if(self.ts_pvs['StreamStatus'].get(as_string=True) == 'On'):
                 # take parameters from the GUI                
-                center = self.ts_pvs['StreamCenter'].get()['value']
-                idx = self.ts_pvs['StreamOrthoX'].get()['value']
-                idy = self.ts_pvs['StreamOrthoY'].get()['value']
-                idz = self.ts_pvs['StreamOrthoZ'].get()['value']
-                fbpfilter_list = self.ts_pvs['StreamFilterType'].get()['value']
-                fbpfilter = fbpfilter_list['choices'][fbpfilter_list['index']]
-                
+                center = self.ts_pvs['StreamCenter'].get()
+                idx = self.ts_pvs['StreamOrthoX'].get()
+                idy = self.ts_pvs['StreamOrthoY'].get()
+                idz = self.ts_pvs['StreamOrthoZ'].get()
+                fbpfilter = self.ts_pvs['StreamFilterType'].get(as_string=True)
+
                 log.info('center %s: idx, idy, idz: %s %s %s, filter: %s',
                          center, idx, idy, idz, fbpfilter)
                                                                 

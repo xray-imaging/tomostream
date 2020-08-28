@@ -46,7 +46,8 @@ class Server():
         if(pv['value']['index'] == 1  # capturing is activated,
                 and self.dark_flat_capture == False  # dark flat are not being acquired,
                 and self.proj_capture == False):  # check that the previous dataset is written into hdf5 file 
-            if (self.ts_pvs['FPFileName_RBV'].get()['value'].view('c').tostring() == b'dark_flat_buffer\x00'):
+            # if (self.ts_pvs['FPFileName_RBV'].get()['value'].view('c').tostring() == b'dark_flat_buffer\x00'):
+            if (self.ts_pvs['FPFileName_RBV'].get(as_string=True) == 'dark_flat_buffer'): # hope this is correct I could not test
                 # start acquiring flat and dark
                 log.info('start capturing dark and flat')
                 self.dark_flat_capture = True
@@ -62,7 +63,8 @@ class Server():
             # 4) broadcast binned dark/flat fields in a pva variable
 
             log.info('read dark and flat fields from the hdf5 file and broadcast')
-            file_name = "".join(map(chr, self.ts_pvs['FPFullFileName_RBV'].get()['value']))
+            # file_name = "".join(map(chr, self.ts_pvs['FPFullFileName_RBV'].get()['value']))
+            file_name = self.ts_pvs['FPFullFileName_RBV'].get(as_string=True) # hope this is correct I could not test
             # read dark and flat from the h5 file dark_flat_buffer.h5
             log.info('loading dark and flat fields from %s', file_name)
             while(True):  # hdf5 file may be locked with writing acquired projections
@@ -75,10 +77,10 @@ class Server():
 
             # save dark/flat fields in local variables of the class
             tmp = hdf_file['/exchange/data_dark'][:]
-            if(tmp.shape[0]==self.ts_pvs['NumDarkFields'].get()['value']):
+            if(tmp.shape[0]==self.ts_pvs['NumDarkFields'].get()):
                 self.dark_save = tmp  
             tmp = hdf_file['/exchange/data_white'][:]            
-            if(tmp.shape[0]==self.ts_pvs['NumFlatFields'].get()['value']):            
+            if(tmp.shape[0]==self.ts_pvs['NumFlatFields'].get()):            
                 self.flat_save = tmp
             # binning dark and flat to projection sizes
             dark = self.dark_save.astype('float32')
@@ -101,8 +103,9 @@ class Server():
         elif(self.proj_capture):  # capturing projections is finished:
             # 1) add theta to the h5 file            
             # 2) add saved dark/flat fields to the h5 file,
-            file_name = "".join(map(chr, self.ts_pvs['FPFullFileName_RBV'].get()[
-                                'value']))  # possible problems with non-utf8 symbols
+            # file_name = "".join(map(chr, self.ts_pvs['FPFullFileName_RBV'].get()[
+            #                     'value']))  # possible problems with non-utf8 symbols
+            file_name = self.ts_pvs['FPFullFileName_RBV'].get(as_string=True) # hope this is correct I could not test
             while(True):  # hdf5 file may be locked with writing acquired projections
                 try:
                     hdf_file = h5py.File(file_name, 'r+')
@@ -115,7 +118,8 @@ class Server():
             # take ids
             unique_ids = hdf_file['/defaults/NDArrayUniqueId'][:]
             # take theta from PSOFly
-            theta = self.ts_pvs['ThetaArray'].get()['value'][:self.ts_pvs['NumAngles'].get()['value']]
+            # theta = self.ts_pvs['ThetaArray'].get()['value'][:self.ts_pvs['NumAngles'].get()]
+            theta = self.ts_pvs['ThetaArray'].get(count=int(self.ts_pvs['NumAngles'].get())) # hope this is correct I could not test
             log.info('theta: %s', theta[unique_ids])
             log.info('total: %s', len(unique_ids))
             dset = hdf_file.create_dataset('/exchange/theta', (len(unique_ids),), dtype='float32')
