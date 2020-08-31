@@ -116,21 +116,21 @@ class Solver():
         util.tic()
         data = self.darkflat_correction(data)
         cp.cuda.Stream.null.synchronize()
-        print('dark-flat correction time:', util.toc())
+        log.info('dark-flat correction time: %s', util.toc())
         util.tic()
         data = self.minus_log(data)
         cp.cuda.Stream.null.synchronize()
-        print('minus log time:', util.toc())
+        log.info('minus log time: %s', util.toc())
         util.tic()
 
         data = self.fbp_filter(data)
         cp.cuda.Stream.null.synchronize()
-        print('fbp fitler time:', util.toc())
+        log.info('fbp fitler time: %s', util.toc())
         util.tic()
 
         obj = self.backprojection(data, theta*np.pi/180)
         cp.cuda.Stream.null.synchronize()
-        print('backprojection time:', util.toc())
+        log.info('backprojection time: %s', util.toc())
         return obj
 
     def recon_optimized(self, data, theta, ids, center, idx, idy, idz, fbpfilter, dbg=False):
