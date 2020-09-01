@@ -54,21 +54,41 @@ class Recon():
         ## 2) load angles from psofly
         self.theta = ts_pvs['ThetaArray'].get()[:ts_pvs['NumAngles'].get()]
 
+        ## SIMULATION
+        # Streming simulation mode by using data from the hdf5 file
+        self.simulate_mode = (args.simulate_h5file!='None')
+        if(self.simulate_mode): 
+            log.info('Streaming simulation by using the h5 file %s', args.simulate_h5file)            
+            log.info('Read data... ')            
+            
+            hdf_file = h5py.File(args.simulate_h5file, 'r')        
+            data = hdf_file['/exchange/data'][:].astype('float32')    
+            # binning data to the sizes after binning with ROI1 plugin
+            binning = int(np.log2(data.shape[2]//width))
+            for k in range(binning):
+                data = 0.5*(data[:, :, ::2]+data[:, :, 1::2])
+                data = 0.5*(data[:, ::2, :]+data[:, 1::2, :])
+
+            log.info('Done. ')            
+                
+            self.data = data.reshape(data.shape[0],-1)
+            self.theta = hdf_file['/exchange/theta'][:].astype('float32')
+        
         ## 3) create a queue to store projections
         # find max size of the queue, the size is equal to the number of angles in the interval of size pi
         if(max(self.theta)<180):
             buffer_size = len(self.theta)
         else:        
-            buffer_size = np.where(self.theta-self.theta[0]>180)[0][0]
+            dtheta = self.theta[1]-self.theta[0]
+            buffer_size = np.where(self.theta-self.theta[0]>180-dtheta)[0][0]
         if(buffer_size*width*height>pow(2,32)):
             log.error('buffer_size %s not enough memory', buffer_size)
             exit(0)
-        
         # take datatype
         ts_pvs['StreamBufferSize'].put(buffer_size)        
         datatype_list = ts_pvs['PvaPDataType_RBV'].get()['value']   
         self.datatype = datatype_list['choices'][datatype_list['index']].lower()        
-        log.info('datatype %s', self.datatype)
+        log.info('datatype %s, buffer size %s', self.datatype, buffer_size)
         # queue
         self.data_queue = queue.Queue(maxsize=buffer_size)
 
@@ -90,28 +110,8 @@ class Recon():
         self.height = height
         self.buffer_size = buffer_size
         
-        ## SIMULATION
-        # 5) Streming simulation mode by using data from the hdf5 file
-        self.simulate_mode = (args.simulate_h5file!='None')
-        if(self.simulate_mode): 
-            log.info('Streaming simulation by using the h5 file %s', args.simulate_h5file)            
-            hdf_file = h5py.File(args.simulate_h5file, 'r')        
-            data = hdf_file['/exchange/data'][:].astype('float32')    
-            # binning data to the sizes after binning with ROI1 plugin
-            binning = int(np.log2(data.shape[2]//width))
-            for k in range(binning):
-                data = 0.5*(data[:, :, ::2]+data[:, :, 1::2])
-                data = 0.5*(data[:, ::2, :]+data[:, 1::2, :])
-                
-            self.data = data.reshape(data.shape[0],-1)
-            self.theta = hdf_file['/exchange/theta'][:].astype('float32')
-            # set parameters in tomoscan GUI?            
-            #ts_pvs['RotationStep'].put(hdf_file['/process/acquisition/rotation/rotation_step'][:])
-            #ts_pvs['RotationStart'].put(hdf_file['/process/acquisition/rotation/rotation_start'][:])
-            #ts_pvs['NumDarkFields'].put(hdf_file['/exchange/data_dark'][:].shape[0])
-            #ts_pvs['NumFlatFields'].put(hdf_file['/exchange/data_white'][:].shape[0])
-
-        ## 6) start PV monitoring
+            
+        ## 5) start PV monitoring
         # start monitoring dark and flat fields pv
         pva_flat_dark.monitor(self.add_dark_flat, '')
         # start monitoring projection data        

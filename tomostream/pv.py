@@ -9,10 +9,6 @@ def init(args):
 
     ts_pvs['FrameType']          = PV(args.tomoscan_prefix + 'FrameType')
     ts_pvs['NumAngles']          = PV(args.tomoscan_prefix + 'NumAngles')
-    ts_pvs['NumDarkFields']      = PV(args.tomoscan_prefix + 'NumDarkFields')
-    ts_pvs['NumFlatFields']      = PV(args.tomoscan_prefix + 'NumFlatFields')
-    ts_pvs['RotationStart']       = PV(args.tomoscan_prefix + 'RotationStart')    
-    ts_pvs['RotationStep']       = PV(args.tomoscan_prefix + 'RotationStep')
     ts_pvs['StreamStatus']       = PV(args.tomoscan_prefix + 'StreamStatus')
     ts_pvs['StreamBufferSize']   = PV(args.tomoscan_prefix + 'StreamBufferSize')
     ts_pvs['StreamCenter']       = PV(args.tomoscan_prefix + 'StreamCenter')
@@ -24,7 +20,6 @@ def init(args):
     ts_pvs['StreamOrthoXlimit']  = PV(args.tomoscan_prefix + 'StreamOrthoX.HOPR')
     ts_pvs['StreamOrthoYlimit']  = PV(args.tomoscan_prefix + 'StreamOrthoY.HOPR')
     ts_pvs['StreamOrthoZlimit']  = PV(args.tomoscan_prefix + 'StreamOrthoZ.HOPR')
-    # ts_pvs['StreamRetakeFlat']   = PV(args.tomoscan_prefix + 'StreamRetakeFlat') # this in not used by tomostream
     
     ts_pvs['CameraPVPrefix']     = PV(args.tomoscan_prefix + 'CameraPVPrefix')
     camera_prefix                = ts_pvs['CameraPVPrefix'].get()
@@ -37,7 +32,6 @@ def init(args):
     ts_pvs['FPFullFileName_RBV'] = PV(file_plugin_prefix + 'FullFileName_RBV')
     ts_pvs['FPFileName_RBV']     = PV(file_plugin_prefix + 'FileName_RBV')
     ts_pvs['FPNumCapture']       = PV(file_plugin_prefix + 'NumCapture')
-    # ts_pvs['FPNumCaptured_RBV']  = PV(file_plugin_prefix + 'NumCaptured_RBV')    # this in not used by tomostream
     
     ts_pvs['PSOPVPrefix']        = PV(args.tomoscan_prefix + 'PSOPVPrefix')
     pso_prefix                   = ts_pvs['PSOPVPrefix'].get()  
@@ -45,9 +39,4 @@ def init(args):
 
     ts_pvs['PvaFlatDark']        = pva.Channel(args.flatdark_pva_name)
         
-    # mistery
-    # t = ts_pvs['NumFlatFields'].get(
-    #     '')['value']+ts_pvs['NumDarkFields'].get('')['value']
-    t = ts_pvs['NumFlatFields'].get()+ts_pvs['NumDarkFields'].get()
-   
     return ts_pvs
