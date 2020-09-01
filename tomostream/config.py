@@ -66,6 +66,10 @@ SECTIONS['tomostream'] = {
         'default': '2bma:TomoScan:FlatDark',
         'type': str,
         'help': "The name of the Pva where the flat and dark streaming images will update."},
+    'simulate-h5file':{
+        'default': 'None',
+        'type': str,
+        'help': "HDF5 data file name for streaming simulation."},
         }
 
 TOMOSTREAM_PARAMS = ('tomostream', )

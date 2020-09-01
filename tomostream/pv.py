@@ -11,6 +11,7 @@ def init(args):
     ts_pvs['NumAngles']          = PV(args.tomoscan_prefix + 'NumAngles')
     ts_pvs['NumDarkFields']      = PV(args.tomoscan_prefix + 'NumDarkFields')
     ts_pvs['NumFlatFields']      = PV(args.tomoscan_prefix + 'NumFlatFields')
+    ts_pvs['RotationStart']       = PV(args.tomoscan_prefix + 'RotationStart')    
     ts_pvs['RotationStep']       = PV(args.tomoscan_prefix + 'RotationStep')
     ts_pvs['StreamStatus']       = PV(args.tomoscan_prefix + 'StreamStatus')
     ts_pvs['StreamBufferSize']   = PV(args.tomoscan_prefix + 'StreamBufferSize')

@@ -25,7 +25,7 @@ class Server():
 
         self.ts_pvs = pv.init(args)
         # set default NumCapture to cover 180 deg at RotationStep interval
-        self.ts_pvs['FPNumCapture'].put(int(180./ts_pvs['RotationStep'].get() + 1))
+        self.ts_pvs['FPNumCapture'].put(int(180./self.ts_pvs['RotationStep'].get() + 1))
         self.pva_image_data = self.ts_pvs['PvaPImage'].get('')                
         
         # pva type pv for dark and flat fields
@@ -38,6 +38,14 @@ class Server():
 
         self.dark_flat_capture = False # flag is True if dark and flat fields are being captured
         self.proj_capture = False  # flag is True if projections are being captured
+        
+        ## SIMULATION            
+        # Use an input hdf5 file for the streaming simulation mode
+        self.simulate_mode = (args.simulate_h5file!='None')
+        if(self.simulate_mode):
+            log.info('Streaming simulation by using the h5 file %s', args.simulate_h5file)
+            self.simulate_h5file = args.simulate_h5file # hdf5 file for streaming simulation
+
 
         log.info('FlatDark PV: %s', args.flatdark_pva_name)
 
@@ -67,6 +75,12 @@ class Server():
             log.info('read dark and flat fields from the hdf5 file and broadcast')
             # file_name = "".join(map(chr, self.ts_pvs['FPFullFileName_RBV'].get()['value']))
             file_name = self.ts_pvs['FPFullFileName_RBV'].get(as_string=True) # hope this is correct I could not test
+            
+            ## SIMULATION            
+            if(self.simulate_mode):# streaming simulation mode
+                log.info('Read simulated dark and flat fields from the h5 file')            
+                file_name = self.simulate_h5file
+            
             # read dark and flat from the h5 file dark_flat_buffer.h5
             log.info('loading dark and flat fields from %s', file_name)
             while(True):  # hdf5 file may be locked with writing acquired projections
@@ -79,11 +93,9 @@ class Server():
 
             # save dark/flat fields in local variables of the class
             tmp = hdf_file['/exchange/data_dark'][:]
-            if(tmp.shape[0]==self.ts_pvs['NumDarkFields'].get()):
+            if(tmp.shape[0]!=1 or np.max(tmp)>0):# no dark fields when retake flats
                 self.dark_save = tmp  
-            tmp = hdf_file['/exchange/data_white'][:]            
-            if(tmp.shape[0]==self.ts_pvs['NumFlatFields'].get()):            
-                self.flat_save = tmp
+            self.flat_save = hdf_file['/exchange/data_white'][:]            
             # binning dark and flat to projection sizes
             dark = self.dark_save.astype('float32')
             flat = self.flat_save.astype('float32')
@@ -99,7 +111,10 @@ class Server():
             log.info('broadcast dark and flat fields, shape: %s, norms: %s %s',flat_dark_buffer.shape,
             np.linalg.norm(dark),np.linalg.norm(flat))            
             self.pv_flat_dark['value'] = (
-                {'floatValue': flat_dark_buffer.flatten()},)
+                {'floatValue': flat_dark_buffer.flatten()})
+            self.pv_flat_dark['attribute'] =  [{'name': str(dark.shape[0])},
+                {'name': str(flat.shape[0])}] # todo with set value
+            
             self.dark_flat_capture = False # ready for capturing next data set
 
         elif(self.proj_capture):  # capturing projections is finished:
@@ -132,6 +147,16 @@ class Server():
             hdf_file['/exchange/data_dark'][:] = self.dark_save
             hdf_file['/exchange/data_white'].resize(self.flat_save.shape[0], 0)
             hdf_file['/exchange/data_white'][:] = self.flat_save
+            
+            ## SIMULATION
+            if(self.simulate_mode):
+                log.info('Update captured data with simulated data from the h5 file')            
+                hdf_file_sim = h5py.File(self.simulate_h5file, 'r')
+                simdata = hdf_file_sim['/exchange/data'][:]                
+                simtheta = hdf_file_sim['/exchange/theta'][:]
+                hdf_file['/exchange/data'][:] = simdata[unique_ids%simdata.shape[0]]                 
+                hdf_file['/exchange/theta'][:] = simtheta[unique_ids%simdata.shape[0]]                 
+                
             self.proj_capture = False # ready capturing next data set
 
     def run(self):

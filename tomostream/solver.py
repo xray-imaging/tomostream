@@ -18,7 +18,7 @@ class Solver():
         The pixel width and height of the projection.
     """
 
-    def __init__(self, ntheta, n, nz, ndark, nflat, center, idx, idy, idz, fbpfilter, data_type):
+    def __init__(self, ntheta, n, nz, center, idx, idy, idz, fbpfilter, data_type):
         #pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
         self.mempool = cp.get_default_memory_pool()
         #cp.cuda.set_allocator(self.pool.malloc)
@@ -38,8 +38,6 @@ class Solver():
         self.idy = idy
         self.idz = idz
         self.fbpfilter = fbpfilter
-        self.ndark = ndark
-        self.nflat = nflat
         
         self.new_dark_flat = False
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -50,12 +48,12 @@ class Solver():
         self.mempool.free_all_blocks()
         sys.exit()
 
-    def set_dark_flat(self, dark_flat):
+    def set_dark_flat(self, dark_flat, ndark, nflat):
         """Copy the average of flat fields and dark fields to GPU"""
-        dark = dark_flat[:self.ndark*self.n*self.nz]
-        flat = dark_flat[self.ndark * self.n*self.nz:]
-        dark = dark.reshape(self.ndark, self.nz, self.n)
-        flat = flat.reshape(self.nflat, self.nz, self.n)            
+        dark = dark_flat[:ndark*self.n*self.nz]
+        flat = dark_flat[ndark * self.n*self.nz:]
+        dark = dark.reshape(ndark, self.nz, self.n)
+        flat = flat.reshape(nflat, self.nz, self.n)            
         self.dark = cp.array(np.mean(dark, axis=0).astype('float32'))
         self.flat = cp.array(np.mean(flat, axis=0).astype('float32'))
         
