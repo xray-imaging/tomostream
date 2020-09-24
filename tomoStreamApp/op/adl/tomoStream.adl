@@ -1,14 +1,14 @@
 
 file {
-	name="/home/beams8/USER2BMB/tmp/stream.adl"
+	name="/local/user2bmb/conda/tomoscan/tomoStreamApp/op/adl/tomoStream.adl"
 	version=030111
 }
 display {
 	object {
-		x=653
-		y=438
-		width=663
-		height=359
+		x=446
+		y=385
+		width=600
+		height=380
 	}
 	clr=14
 	bclr=4
@@ -87,12 +87,23 @@ display {
 		1a7309,
 	}
 }
+rectangle {
+	object {
+		x=0
+		y=5
+		width=600
+		height=30
+	}
+	"basic attribute" {
+		clr=2
+	}
+}
 "wheel switch" {
 	object {
-		x=144
-		y=33
+		x=190
+		y=325
 		width=80
-		height=40
+		height=50
 	}
 	control {
 		chan="$(P)$(R)StreamCenter"
@@ -103,24 +114,11 @@ display {
 	limits {
 	}
 }
-rectangle {
-	object {
-		x=3
-		y=3
-		width=657
-		height=336
-	}
-	"basic attribute" {
-		clr=14
-		fill="outline"
-		width=2
-	}
-}
 valuator {
 	object {
-		x=155
-		y=140
-		width=370
+		x=275
+		y=116
+		width=300
 		height=25
 	}
 	control {
@@ -136,9 +134,9 @@ valuator {
 }
 valuator {
 	object {
-		x=155
-		y=165
-		width=370
+		x=275
+		y=141
+		width=300
 		height=25
 	}
 	control {
@@ -152,9 +150,9 @@ valuator {
 }
 valuator {
 	object {
-		x=155
-		y=190
-		width=370
+		x=275
+		y=166
+		width=300
 		height=25
 	}
 	control {
@@ -168,9 +166,9 @@ valuator {
 }
 text {
 	object {
-		x=16
-		y=144
-		width=75
+		x=29
+		y=120
+		width=140
 		height=20
 	}
 	"basic attribute" {
@@ -181,9 +179,9 @@ text {
 }
 text {
 	object {
-		x=16
-		y=169
-		width=75
+		x=29
+		y=145
+		width=140
 		height=20
 	}
 	"basic attribute" {
@@ -194,9 +192,9 @@ text {
 }
 text {
 	object {
-		x=16
-		y=194
-		width=75
+		x=29
+		y=170
+		width=140
 		height=20
 	}
 	"basic attribute" {
@@ -207,9 +205,9 @@ text {
 }
 "text entry" {
 	object {
-		x=102
-		y=194
-		width=50
+		x=190
+		y=170
+		width=80
 		height=20
 	}
 	control {
@@ -222,9 +220,9 @@ text {
 }
 "text entry" {
 	object {
-		x=102
-		y=169
-		width=50
+		x=190
+		y=145
+		width=80
 		height=20
 	}
 	control {
@@ -237,9 +235,9 @@ text {
 }
 "text entry" {
 	object {
-		x=102
-		y=144
-		width=50
+		x=190
+		y=120
+		width=80
 		height=20
 	}
 	control {
@@ -252,8 +250,8 @@ text {
 }
 menu {
 	object {
-		x=144
-		y=74
+		x=190
+		y=70
 		width=80
 		height=20
 	}
@@ -265,22 +263,22 @@ menu {
 }
 text {
 	object {
-		x=39
-		y=43
-		width=100
+		x=29
+		y=335
+		width=140
 		height=20
 	}
 	"basic attribute" {
 		clr=14
 	}
-	textix="Center"
+	textix="Adjust center"
 	align="horiz. right"
 }
 text {
 	object {
-		x=39
-		y=74
-		width=100
+		x=29
+		y=70
+		width=140
 		height=20
 	}
 	"basic attribute" {
@@ -292,8 +290,8 @@ text {
 text {
 	object {
 		x=29
-		y=11
-		width=110
+		y=45
+		width=140
 		height=20
 	}
 	"basic attribute" {
@@ -304,8 +302,8 @@ text {
 }
 menu {
 	object {
-		x=144
-		y=11
+		x=190
+		y=45
 		width=80
 		height=20
 	}
@@ -317,198 +315,23 @@ menu {
 }
 text {
 	object {
-		x=288
-		y=251
-		width=90
+		x=29
+		y=245
+		width=140
 		height=20
 	}
 	"basic attribute" {
 		clr=14
 	}
-	textix="# Capture"
+	textix="Images collected"
 	align="horiz. right"
-}
-"text entry" {
-	object {
-		x=383
-		y=250
-		width=60
-		height=22
-	}
-	control {
-		chan="$(PH)$(RH)NumCapture"
-		clr=14
-		bclr=51
-	}
-	limits {
-	}
-}
-text {
-	object {
-		x=72
-		y=251
-		width=70
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Capture"
-	align="horiz. right"
-}
-"message button" {
-	object {
-		x=152
-		y=251
-		width=59
-		height=20
-	}
-	control {
-		chan="$(PH)$(RH)Capture"
-		clr=14
-		bclr=51
-	}
-	label="Start"
-	press_msg="1"
-}
-"message button" {
-	object {
-		x=219
-		y=251
-		width=59
-		height=20
-	}
-	control {
-		chan="$(PH)$(RH)Capture"
-		clr=14
-		bclr=51
-	}
-	label="Stop"
-	press_msg="0"
 }
 "text update" {
 	object {
-		x=513
-		y=253
-		width=130
-		height=20
-	}
-	monitor {
-		chan="$(PH)$(RH)Capture_RBV"
-		clr=54
-		bclr=4
-	}
-	clrmod="alarm"
-	format="string"
-	limits {
-	}
-}
-"text update" {
-	object {
-		x=155
-		y=308
+		x=190
+		y=245
 		width=300
-		height=14
-	}
-	monitor {
-		chan="$(PH)$(RH)WriteMessage"
-		clr=20
-		bclr=2
-	}
-	format="string"
-	limits {
-	}
-}
-text {
-	object {
-		x=12
-		y=303
-		width=130
 		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Write message"
-	align="horiz. right"
-}
-text {
-	object {
-		x=22
-		y=278
-		width=120
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Write status"
-	align="horiz. right"
-}
-"text update" {
-	object {
-		x=151
-		y=278
-		width=120
-		height=20
-	}
-	monitor {
-		chan="$(PH)$(RH)WriteStatus"
-		clr=63
-		bclr=4
-	}
-	clrmod="alarm"
-	format="string"
-	limits {
-	}
-}
-rectangle {
-	object {
-		x=8
-		y=224
-		width=646
-		height=105
-	}
-	"basic attribute" {
-		clr=14
-		fill="outline"
-		width=2
-	}
-}
-"text update" {
-	object {
-		x=448
-		y=252
-		width=60
-		height=18
-	}
-	monitor {
-		chan="$(PH)$(RH)NumCaptured_RBV"
-		clr=54
-		bclr=4
-	}
-	limits {
-	}
-}
-text {
-	object {
-		x=270
-		y=11
-		width=110
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Image Counter"
-	align="horiz. right"
-}
-"text update" {
-	object {
-		x=390
-		y=11
-		width=130
-		height=18
 	}
 	monitor {
 		chan="$(P)$(R)ImagesCollected"
@@ -520,9 +343,9 @@ text {
 }
 text {
 	object {
-		x=270
-		y=43
-		width=110
+		x=29
+		y=220
+		width=140
 		height=20
 	}
 	"basic attribute" {
@@ -533,10 +356,10 @@ text {
 }
 "text update" {
 	object {
-		x=390
-		y=43
-		width=60
-		height=18
+		x=190
+		y=220
+		width=300
+		height=20
 	}
 	monitor {
 		chan="$(P)$(R)StreamBufferSize"
@@ -548,9 +371,9 @@ text {
 }
 text {
 	object {
-		x=270
-		y=75
-		width=110
+		x=29
+		y=195
+		width=140
 		height=20
 	}
 	"basic attribute" {
@@ -561,10 +384,10 @@ text {
 }
 "text update" {
 	object {
-		x=390
-		y=75
-		width=60
-		height=18
+		x=190
+		y=195
+		width=300
+		height=20
 	}
 	monitor {
 		chan="$(P)$(R)StreamReconTime"
@@ -576,10 +399,10 @@ text {
 }
 "choice button" {
 	object {
-		x=152
-		y=100
-		width=45
-		height=31
+		x=190
+		y=270
+		width=80
+		height=50
 	}
 	control {
 		chan="$(P)$(R)StreamRetakeFlat"
@@ -589,9 +412,9 @@ text {
 }
 text {
 	object {
-		x=42
-		y=107
-		width=100
+		x=29
+		y=285
+		width=140
 		height=20
 	}
 	"basic attribute" {
@@ -602,23 +425,23 @@ text {
 }
 text {
 	object {
-		x=288
-		y=278
-		width=90
-		height=20
+		x=0
+		y=5
+		width=600
+		height=30
 	}
 	"basic attribute" {
-		clr=14
+		clr=54
 	}
-	textix="# Pre-buffer"
-	align="horiz. right"
+	textix="$(P)$(R)  Stream"
+	align="horiz. centered"
 }
 "text entry" {
 	object {
-		x=383
-		y=277
-		width=60
-		height=22
+		x=190
+		y=95
+		width=80
+		height=20
 	}
 	control {
 		chan="$(P)$(R)StreamPreCount"
@@ -628,35 +451,16 @@ text {
 	limits {
 	}
 }
-"text update" {
+text {
 	object {
-		x=448
-		y=277
-		width=60
-		height=18
+		x=29
+		y=95
+		width=140
+		height=20
 	}
-	monitor {
-		chan="$(PH)$(CB)CurrentQty_RBV"
-		clr=54
-		bclr=4
+	"basic attribute" {
+		clr=14
 	}
-	limits {
-	}
-}
-"text update" {
-	object {
-		x=512
-		y=277
-		width=130
-		height=16
-	}
-	monitor {
-		chan="$(PH)$(CB)StatusMessage"
-		clr=54
-		bclr=4
-	}
-	clrmod="alarm"
-	format="string"
-	limits {
-	}
+	textix="# Pre-buffer"
+	align="horiz. right"
 }
