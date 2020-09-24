@@ -106,7 +106,7 @@ rectangle {
 		height=50
 	}
 	control {
-		chan="$(P)$(R)StreamCenter"
+		chan="$(P)$(R)Center"
 		clr=14
 		bclr=4
 	}
@@ -122,7 +122,7 @@ valuator {
 		height=25
 	}
 	control {
-		chan="$(P)$(R)StreamOrthoX"
+		chan="$(P)$(R)OrthoX"
 		clr=14
 		bclr=4
 	}
@@ -140,7 +140,7 @@ valuator {
 		height=25
 	}
 	control {
-		chan="$(P)$(R)StreamOrthoY"
+		chan="$(P)$(R)OrthoY"
 		clr=14
 		bclr=4
 	}
@@ -156,7 +156,7 @@ valuator {
 		height=25
 	}
 	control {
-		chan="$(P)$(R)StreamOrthoZ"
+		chan="$(P)$(R)OrthoZ"
 		clr=14
 		bclr=4
 	}
@@ -211,7 +211,7 @@ text {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)StreamOrthoZ"
+		chan="$(P)$(R)OrthoZ"
 		clr=14
 		bclr=51
 	}
@@ -226,7 +226,7 @@ text {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)StreamOrthoY"
+		chan="$(P)$(R)OrthoY"
 		clr=14
 		bclr=51
 	}
@@ -241,7 +241,7 @@ text {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)StreamOrthoX"
+		chan="$(P)$(R)OrthoX"
 		clr=14
 		bclr=51
 	}
@@ -256,7 +256,7 @@ menu {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)StreamFilterType"
+		chan="$(P)$(R)FilterType"
 		clr=14
 		bclr=51
 	}
@@ -308,7 +308,7 @@ menu {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)StreamStatus"
+		chan="$(P)$(R)Status"
 		clr=14
 		bclr=51
 	}
@@ -334,7 +334,7 @@ text {
 		height=20
 	}
 	monitor {
-		chan="$(P)$(R)StreamBufferSize"
+		chan="$(P)$(R)BufferSize"
 		clr=54
 		bclr=4
 	}
@@ -362,7 +362,7 @@ text {
 		height=20
 	}
 	monitor {
-		chan="$(P)$(R)StreamReconTime"
+		chan="$(P)$(R)ReconTime"
 		clr=54
 		bclr=4
 	}
