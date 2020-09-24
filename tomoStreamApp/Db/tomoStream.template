@@ -5,23 +5,23 @@
 # Streaming analysis control
 ############################
 
-record(bo, "$(P)$(R)StreamStatus")
+record(bo, "$(P)$(R)Status")
 {
    field(ZNAM, "Off")
    field(ONAM, "On")
 }
 
-record(longout, "$(P)$(R)StreamBufferSize")
+record(longout, "$(P)$(R)BufferSize")
 {
 }
 
-record(ao, "$(P)$(R)StreamCenter")
+record(ao, "$(P)$(R)Center")
 {
    field(PREC, "3")
    field(HOPR, "2448")
 }
 
-record(mbbo, "$(P)$(R)StreamFilterType")
+record(mbbo, "$(P)$(R)FilterType")
 {
    field(ZRVL, "0")
    field(ZRST, "Parzen")
@@ -33,26 +33,26 @@ record(mbbo, "$(P)$(R)StreamFilterType")
    field(THST, "Butterworth")
 }
 
-record(longout, "$(P)$(R)StreamOrthoX")
+record(longout, "$(P)$(R)OrthoX")
 {
    field(LOPR, "0")
    field(HOPR, "2448")
 }
 
-record(longout, "$(P)$(R)StreamOrthoY")
+record(longout, "$(P)$(R)OrthoY")
 {
    field(LOPR, "0")
    field(HOPR, "2448")
 }
 
-record(longout, "$(P)$(R)StreamOrthoZ")
+record(longout, "$(P)$(R)OrthoZ")
 {
    field(LOPR, "0")
    field(HOPR, "2448")
 }
 
 
-record(ao, "$(P)$(R)StreamReconTime")
+record(ao, "$(P)$(R)ReconTime")
 {
    field(PREC, "5")
 }

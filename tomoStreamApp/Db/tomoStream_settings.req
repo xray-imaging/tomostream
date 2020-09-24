@@ -10,12 +10,12 @@
 ############################
 # Streaming analysis control
 ############################
-$(P)$(R)StreamStatus
-$(P)$(R)StreamBufferSize
-$(P)$(R)StreamCenter
-$(P)$(R)StreamFilterType
-$(P)$(R)StreamOrthoX
-$(P)$(R)StreamOrthoY
-$(P)$(R)StreamOrthoZ
-$(P)$(R)StreamReconTime
+$(P)$(R)Status
+$(P)$(R)BufferSize
+$(P)$(R)Center
+$(P)$(R)FilterType
+$(P)$(R)OrthoX
+$(P)$(R)OrthoY
+$(P)$(R)OrthoZ
+$(P)$(R)ReconTime
 
