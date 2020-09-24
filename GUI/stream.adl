@@ -1,14 +1,14 @@
 
 file {
-	name="/local/tomo/conda/tomostream-decarlof/GUI/stream.adl"
+	name="/home/beams8/USER2BMB/tmp/stream.adl"
 	version=030111
 }
 display {
 	object {
-		x=835
-		y=463
-		width=543
-		height=342
+		x=653
+		y=438
+		width=663
+		height=359
 	}
 	clr=14
 	bclr=4
@@ -107,7 +107,7 @@ rectangle {
 	object {
 		x=3
 		y=3
-		width=537
+		width=657
 		height=336
 	}
 	"basic attribute" {
@@ -388,14 +388,14 @@ text {
 }
 "text update" {
 	object {
-		x=152
-		y=229
-		width=100
+		x=513
+		y=253
+		width=130
 		height=20
 	}
 	monitor {
 		chan="$(PH)$(RH)Capture_RBV"
-		clr=63
+		clr=54
 		bclr=4
 	}
 	clrmod="alarm"
@@ -466,7 +466,7 @@ rectangle {
 	object {
 		x=8
 		y=224
-		width=527
+		width=646
 		height=105
 	}
 	"basic attribute" {
@@ -479,7 +479,7 @@ rectangle {
 	object {
 		x=448
 		y=252
-		width=80
+		width=60
 		height=18
 	}
 	monitor {
@@ -599,4 +599,64 @@ text {
 	}
 	textix="Retake flat"
 	align="horiz. right"
+}
+text {
+	object {
+		x=288
+		y=278
+		width=90
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="# Pre-buffer"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=383
+		y=277
+		width=60
+		height=22
+	}
+	control {
+		chan="$(P)$(R)StreamPreCount"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=448
+		y=277
+		width=60
+		height=18
+	}
+	monitor {
+		chan="$(PH)$(CB)CurrentQty_RBV"
+		clr=54
+		bclr=4
+	}
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=512
+		y=277
+		width=130
+		height=16
+	}
+	monitor {
+		chan="$(PH)$(CB)StatusMessage"
+		clr=54
+		bclr=4
+	}
+	clrmod="alarm"
+	format="string"
+	limits {
+	}
 }

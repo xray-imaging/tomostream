@@ -2,12 +2,12 @@ import pvaccess as pva
 import numpy as np
 import queue
 import time
+import h5py
 
 from tomostream import util
 from tomostream import log
 from tomostream import pv
 from tomostream import solver
-
 
 class Recon():
     """ Class for streaming reconstuction of ortho-slices on a machine with GPU.
@@ -52,24 +52,43 @@ class Recon():
         ts_pvs['StreamOrthoZlimit'].put(height-1)
         
         ## 2) load angles from psofly
-        self.theta = ts_pvs['ThetaArray'].get(
-            '')['value'][:ts_pvs['NumAngles'].get()]
+        self.theta = ts_pvs['ThetaArray'].get()[:ts_pvs['NumAngles'].get()]
 
+        ## SIMULATION
+        # Streming simulation mode by using data from the hdf5 file
+        self.simulate_mode = (args.simulate_h5file!='None')
+        if(self.simulate_mode): 
+            log.info('Streaming simulation by using the h5 file %s', args.simulate_h5file)            
+            log.info('Read data... ')            
+            
+            hdf_file = h5py.File(args.simulate_h5file, 'r')        
+            data = hdf_file['/exchange/data'][:].astype('float32')    
+            # binning data to the sizes after binning with ROI1 plugin
+            binning = int(np.log2(data.shape[2]//width))
+            for k in range(binning):
+                data = 0.5*(data[:, :, ::2]+data[:, :, 1::2])
+                data = 0.5*(data[:, ::2, :]+data[:, 1::2, :])
+
+            log.info('Done. ')            
+                
+            self.data = data.reshape(data.shape[0],-1)
+            self.theta = hdf_file['/exchange/theta'][:].astype('float32')
+        
         ## 3) create a queue to store projections
         # find max size of the queue, the size is equal to the number of angles in the interval of size pi
         if(max(self.theta)<180):
             buffer_size = len(self.theta)
         else:        
-            buffer_size = np.where(self.theta-self.theta[0]>180)[0][0]
+            dtheta = self.theta[1]-self.theta[0]
+            buffer_size = np.where(self.theta-self.theta[0]>180-dtheta)[0][0]
         if(buffer_size*width*height>pow(2,32)):
             log.error('buffer_size %s not enough memory', buffer_size)
             exit(0)
-        
         # take datatype
         ts_pvs['StreamBufferSize'].put(buffer_size)        
         datatype_list = ts_pvs['PvaPDataType_RBV'].get()['value']   
         self.datatype = datatype_list['choices'][datatype_list['index']].lower()        
-        log.info('datatype %s', self.datatype)
+        log.info('datatype %s, buffer size %s', self.datatype, buffer_size)
         # queue
         self.data_queue = queue.Queue(maxsize=buffer_size)
 
@@ -80,13 +99,10 @@ class Recon():
         idy = ts_pvs['StreamOrthoY'].get()
         idz = ts_pvs['StreamOrthoZ'].get()    
         fbpfilter = ts_pvs['StreamFilterType'].get(as_string=True)
-
-        num_dark = ts_pvs['NumDarkFields'].get()        
-        num_flat = ts_pvs['NumFlatFields'].get()            
                   
-        # create solver class on GPU with memory allocation          
+        # create solver class on GPU with memory allocation  
         self.slv = solver.Solver(buffer_size, width, height, 
-            num_dark, num_flat, center, idx, idy, idz, fbpfilter, self.datatype)
+            center, idx, idy, idz, fbpfilter, self.datatype)
         
         # parameters needed in other class functions
         self.ts_pvs = ts_pvs
@@ -94,14 +110,15 @@ class Recon():
         self.height = height
         self.buffer_size = buffer_size
         
-      
+            
         ## 5) start PV monitoring
         # start monitoring dark and flat fields pv
         pva_flat_dark.monitor(self.add_dark_flat, '')
         # start monitoring projection data        
         pva_plugin_image.monitor(self.add_data, '')
-        
 
+        
+    
     def add_data(self, pv):
         """PV monitoring function for adding projection data and corresponding angle to circular buffers"""
 
@@ -114,6 +131,11 @@ class Recon():
                             'theta': self.theta[min(cur_id,len(self.theta)-1)],
                             'id': np.mod(cur_id, self.buffer_size)
                 }
+                ## SIMULATION
+                if(self.simulate_mode):# streaming simulation mode
+                    data_item['projection'] = self.data[cur_id%self.data.shape[0]]
+                    data_item['theta'] = self.theta[cur_id%self.data.shape[0]]
+                            
                 if(not self.data_queue.full()):
                     self.data_queue.put(data_item)
                 else:
@@ -126,8 +148,9 @@ class Recon():
 
         if(pv['value'][0]):  # if pv with dark and flat is not empty
             dark_flat = pv['value'][0]['floatValue']
-            # send dark and flat fields to the solver
-            self.slv.set_dark_flat(dark_flat)
+            ndark = int(pv['attribute'][0]['name']) #todo with set value (see dict of attribute)
+            nflat = int(pv['attribute'][1]['name'])             
+            self.slv.set_dark_flat(dark_flat, ndark, nflat)
             log.info('new dark and flat fields acquired')
     
     def run(self):
@@ -149,10 +172,8 @@ class Recon():
                 idz = self.ts_pvs['StreamOrthoZ'].get()
                 fbpfilter = self.ts_pvs['StreamFilterType'].get(as_string=True)
 
-                log.info('center %s: idx, idy, idz: %s %s %s, filter: %s',
-                         center, idx, idy, idz, fbpfilter)
                                                                 
-                # take item from the queue
+                # take items from the queue
                 nitem = 0
                 while ((not self.data_queue.empty()) and (nitem < self.buffer_size)):
                     item = self.data_queue.get()
@@ -163,6 +184,8 @@ class Recon():
                 
                 if(nitem == 0):
                     continue
+                log.info('center %s: idx, idy, idz: %s %s %s, filter: %s',
+                         center, idx, idy, idz, fbpfilter)
                 
                 # reconstruct on GPU
                 util.tic()
