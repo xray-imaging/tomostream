@@ -2,5 +2,5 @@ file "$(TOP)/db/tomoStream.template"
 {
 pattern
 {  P,      R}
-{2bma:, TomoStream:}
+{2bm:, TomoStream:}
 }
