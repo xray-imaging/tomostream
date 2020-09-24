@@ -1,14 +1,14 @@
 
 file {
-	name="/local/user2bmb/conda/tomoscan/tomoStreamApp/op/adl/tomoStream.adl"
+	name="/local/user2bmb/conda/tomostream/iocBoot/iocTomoStream/../../tomoStreamApp/op/adl/tomoStream.adl"
 	version=030111
 }
 display {
 	object {
-		x=446
-		y=385
+		x=5020
+		y=1011
 		width=600
-		height=380
+		height=280
 	}
 	clr=14
 	bclr=4
@@ -101,7 +101,7 @@ rectangle {
 "wheel switch" {
 	object {
 		x=190
-		y=325
+		y=220
 		width=80
 		height=50
 	}
@@ -117,7 +117,7 @@ rectangle {
 valuator {
 	object {
 		x=275
-		y=116
+		y=91
 		width=300
 		height=25
 	}
@@ -135,7 +135,7 @@ valuator {
 valuator {
 	object {
 		x=275
-		y=141
+		y=116
 		width=300
 		height=25
 	}
@@ -151,7 +151,7 @@ valuator {
 valuator {
 	object {
 		x=275
-		y=166
+		y=141
 		width=300
 		height=25
 	}
@@ -167,7 +167,7 @@ valuator {
 text {
 	object {
 		x=29
-		y=120
+		y=95
 		width=140
 		height=20
 	}
@@ -180,7 +180,7 @@ text {
 text {
 	object {
 		x=29
-		y=145
+		y=120
 		width=140
 		height=20
 	}
@@ -193,7 +193,7 @@ text {
 text {
 	object {
 		x=29
-		y=170
+		y=145
 		width=140
 		height=20
 	}
@@ -206,7 +206,7 @@ text {
 "text entry" {
 	object {
 		x=190
-		y=170
+		y=145
 		width=80
 		height=20
 	}
@@ -221,7 +221,7 @@ text {
 "text entry" {
 	object {
 		x=190
-		y=145
+		y=120
 		width=80
 		height=20
 	}
@@ -236,7 +236,7 @@ text {
 "text entry" {
 	object {
 		x=190
-		y=120
+		y=95
 		width=80
 		height=20
 	}
@@ -264,7 +264,7 @@ menu {
 text {
 	object {
 		x=29
-		y=335
+		y=230
 		width=140
 		height=20
 	}
@@ -316,35 +316,7 @@ menu {
 text {
 	object {
 		x=29
-		y=245
-		width=140
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Images collected"
-	align="horiz. right"
-}
-"text update" {
-	object {
-		x=190
-		y=245
-		width=300
-		height=20
-	}
-	monitor {
-		chan="$(P)$(R)ImagesCollected"
-		clr=54
-		bclr=4
-	}
-	limits {
-	}
-}
-text {
-	object {
-		x=29
-		y=220
+		y=195
 		width=140
 		height=20
 	}
@@ -357,7 +329,7 @@ text {
 "text update" {
 	object {
 		x=190
-		y=220
+		y=195
 		width=300
 		height=20
 	}
@@ -372,7 +344,7 @@ text {
 text {
 	object {
 		x=29
-		y=195
+		y=170
 		width=140
 		height=20
 	}
@@ -385,7 +357,7 @@ text {
 "text update" {
 	object {
 		x=190
-		y=195
+		y=170
 		width=300
 		height=20
 	}
@@ -396,32 +368,6 @@ text {
 	}
 	limits {
 	}
-}
-"choice button" {
-	object {
-		x=190
-		y=270
-		width=80
-		height=50
-	}
-	control {
-		chan="$(P)$(R)StreamRetakeFlat"
-		clr=14
-		bclr=4
-	}
-}
-text {
-	object {
-		x=29
-		y=285
-		width=140
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Retake flat"
-	align="horiz. right"
 }
 text {
 	object {
@@ -435,32 +381,4 @@ text {
 	}
 	textix="$(P)$(R)  Stream"
 	align="horiz. centered"
-}
-"text entry" {
-	object {
-		x=190
-		y=95
-		width=80
-		height=20
-	}
-	control {
-		chan="$(P)$(R)StreamPreCount"
-		clr=14
-		bclr=51
-	}
-	limits {
-	}
-}
-text {
-	object {
-		x=29
-		y=95
-		width=140
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="# Pre-buffer"
-	align="horiz. right"
 }
