@@ -1,0 +1,58 @@
+# Database for EPICS PVS for tomography data streaming software
+# This database contains all of the PVs used by the tomostream base class.
+
+############################
+# Streaming analysis control
+############################
+
+record(bo, "$(P)$(R)Status")
+{
+   field(ZNAM, "Off")
+   field(ONAM, "On")
+}
+
+record(longout, "$(P)$(R)BufferSize")
+{
+}
+
+record(ao, "$(P)$(R)Center")
+{
+   field(PREC, "3")
+   field(HOPR, "2448")
+}
+
+record(mbbo, "$(P)$(R)FilterType")
+{
+   field(ZRVL, "0")
+   field(ZRST, "Parzen")
+   field(ONVL, "1")
+   field(ONST, "Shepp-logan")
+   field(TWVL, "2")
+   field(TWST, "Ramp")
+   field(THVL, "3")
+   field(THST, "Butterworth")
+}
+
+record(longout, "$(P)$(R)OrthoX")
+{
+   field(LOPR, "0")
+   field(HOPR, "2448")
+}
+
+record(longout, "$(P)$(R)OrthoY")
+{
+   field(LOPR, "0")
+   field(HOPR, "2448")
+}
+
+record(longout, "$(P)$(R)OrthoZ")
+{
+   field(LOPR, "0")
+   field(HOPR, "2448")
+}
+
+
+record(ao, "$(P)$(R)ReconTime")
+{
+   field(PREC, "5")
+}

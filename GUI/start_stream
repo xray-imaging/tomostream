@@ -1,3 +1,0 @@
-#!/bin/csh
-
-medm -attach -x -dg +50+450 -macro "P=2bma:, R=TomoScan:, PH=2bmbSP1:, RH=HDF1:, C=cam1:" -local stream.adl &

@@ -1,0 +1,21 @@
+# This file is used by autosave to determine what PVs to save
+# It is also used by tomoStream to determine what PVs to create
+
+# This file contains all of the PVs used by the tomostream base class.
+
+# Lines that begin with #controlPV are not saved by autosave,
+# but they are used by tomostream.  
+# These PVs are not saved in the tomostream configuration file.
+
+############################
+# Streaming analysis control
+############################
+$(P)$(R)Status
+$(P)$(R)BufferSize
+$(P)$(R)Center
+$(P)$(R)FilterType
+$(P)$(R)OrthoX
+$(P)$(R)OrthoY
+$(P)$(R)OrthoZ
+$(P)$(R)ReconTime
+
