@@ -33,12 +33,12 @@ $(P)$(R)OrthoZ
 ##################################
 # Stream status via Channel Access
 ##################################
-$(P)$(R)ReconTime
-$(P)$(R)StreamStatus
-$(P)$(R)Watchdog
+#controlPV $(P)$(R)ReconTime
+#controlPV $(P)$(R)StreamStatus
+#controlPV $(P)$(R)Watchdog
 
 ###################################
 # Stream control via Channel Access
 ###################################
-$(P)$(R)StartStream
-$(P)$(R)AbortStream
+#controlPV $(P)$(R)StartStream
+#controlPV $(P)$(R)AbortStream
