@@ -75,26 +75,22 @@ class TomoStream():
         pva_image_data = self.pva_plugin_image.get('')
         pva_image_dict = pva_image_data.getStructureDict()        
         self.pv_rec = pva.PvObject(pva_image_dict)
-        # self.width = pva_image_data['dimension'][0]['size']
-        # self.height = pva_image_data['dimension'][1]['size']
         
         # run server for reconstruction pv
         recon_pva_name = self.control_pvs['StreamRecon']
         self.server_rec = pva.PvaServer(recon_pva_name, self.pv_rec)
-        ## 2) load angles from psofly
-                  
         
         # reinit will be performed whenever data sizes or angles are changed
         self.reinit_monitors(self.control_pvs)
         
         # temp buffers for storing data taken from the queue
-        self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
-        self.theta_buffer = np.zeros(buffer_size, dtype='float32')
-        self.ids_buffer = np.zeros(buffer_size, dtype='int32')
+        #self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
+        #self.theta_buffer = np.zeros(buffer_size, dtype='float32')
+        #self.ids_buffer = np.zeros(buffer_size, dtype='int32')
 
-        self.width = width
-        self.height = height
-        self.buffer_size = buffer_size
+        #self.width = width
+        #self.height = height
+        #self.buffer_size = buffer_size
         
         # start PV monitoring
         # start monitoring dark and flat fields pv
