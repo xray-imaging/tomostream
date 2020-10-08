@@ -50,26 +50,26 @@ SECTIONS['general'] = {
         }
 
 SECTIONS['tomostream'] = {
+    'tomostream-prefix':{
+        'default': '2bma:TomoStream:',
+        'type': str,
+        'help': "The tomostream prefix, i.e.'2bma:TomoStream:' "},
     'tomoscan-prefix':{
         'default': '2bma:TomoScan:',
         'type': str,
-        'help': "The tomostream prefix, i.e.'13BMDPG1:TS:' or '2bma:TomoScan:' "},
+        'help': "The tomostream prefix, i.e. '2bma:TomoScan:' "},    
     'recon-pva-name':{
-        'default': '2bma:TomoScan:StreamReconstruction',
+        'default': 'StreamReconstruction',
         'type': str,
         'help': "The name of the Pva where the X-Y-Z streaming reconstruction image will update. This PV name can be entered in the ImageJ  EPICS_NTNDA_Viewer plug-in for display."},
-    'recon-refresh-rate':{
-        'default': 0.1,
-        'type': float,
-        'help': "Streaming reconstruction refresh rate (s)."},
-    'flatdark-pva-name':{
-        'default': '2bma:TomoScan:FlatDark',
+    'dark-pva-name':{
+        'default': 'StreamDarkFields',
         'type': str,
-        'help': "The name of the Pva where the flat and dark streaming images will update."},
-    'simulate-h5file':{
-        'default': 'None',
+        'help': "The name of the Pva where the dark streaming images will update."},
+    'flat-pva-name':{
+        'default': 'StreamFlatFields',
         'type': str,
-        'help': "HDF5 data file name for streaming simulation."},
+        'help': "The name of the Pva where the flat streaming images will update."},
         }
 
 TOMOSTREAM_PARAMS = ('tomostream', )

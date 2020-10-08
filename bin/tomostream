@@ -4,27 +4,25 @@
 import os
 import sys
 import argparse
+import time
 
 from datetime import datetime
 from tomostream import log
 from tomostream import config
-
+from tomostream import recon
+    
 def init(args):
     if not os.path.exists(str(args.config)):
         config.write(str(args.config))
     else:
         raise RuntimeError("{0} already exists".format(args.config))
 
-def run_status(args):
+def run_status(args):    
     config.show_config(args)
 
-def run_server(args):
-    from tomostream import pv_server
-    pv_server.Server(args).run()
-
 def run_recon(args):
-    from tomostream import recon
-    recon.Recon(args).run()
+        cl = recon.Recon(args)
+        cl.run()
 
 def main():
     home = os.path.expanduser("~")
@@ -44,7 +42,6 @@ def main():
     cmd_parsers = [
         ('init',          init,           (),                             "Create configuration file"),
         ('status',        run_status,     tomostream_params,              "Show tomostream status"),
-        ('server',        run_server,     tomostream_params,              "Start the server. Run this command on the same computer areadetector is running"),
         ('recon',         run_recon,      tomostream_params,              "Start the streaming reconstruction. Run this on the computer that runs the reconstruction"),
     ]
 
