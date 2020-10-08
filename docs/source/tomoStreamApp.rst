@@ -141,12 +141,28 @@ It has the same usage and type of content as tomoStream_settings.req described a
 medm files
 ~~~~~~~~~~
 
+To start the tomostream medm screen::
+
+  $ cd /local/USERNAME/epics/synApps/support/tomostream/iocBoot/iocTomoStream
+  $ start_medm
+
+where USERNAME is the username under which the tomoStreamApp is installed.
+
 tomoStream.adl
 ^^^^^^^^^^^^^^
 
 The following is the MEDM screen :download:`tomoStream.adl <../../tomoStreamApp/op/adl/tomoStream.adl>`.  
-This screen contains the PVs for the TomoScan_2BM derived class.  If the BeamReadyPV is changed then tomoscan must be restarted.
+This screen contains the PVs to control tomoStream.
 
 .. image:: img/tomoStream.png
     :width: 75%
+    :align: center
+
+tomoStreamEPICS_PVs.adl
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The EPICS PV names screen is below:
+
+.. image:: img/tomoStreamEPICS_PVs.png
+    :width: 60%
     :align: center
