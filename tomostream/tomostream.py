@@ -94,10 +94,10 @@ class TomoStream():
         
         # start PV monitoring
         # start monitoring dark and flat fields pv
-        self.pva_dark.monitor(self.add_dark,'')
-        self.pva_flat.monitor(self.add_flat,'')        
+        #self.pva_dark.monitor(self.add_dark,'')
+        #self.pva_flat.monitor(self.add_flat,'')        
         # start monitoring projection data        
-        self.pva_plugin_image.monitor(self.add_data,'')
+        #self.pva_plugin_image.monitor(self.add_data,'')
 
    def reinit_monitors(self,control_pvs):
         """Reinit pv monitoring functions with updating data sizes"""
