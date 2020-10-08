@@ -123,12 +123,6 @@ Stream status via Channel Access
   * - $(P)$(R)ReconTime
     - ao
     - This record will update with the time to reconstruct the selected 3 orthogonal slices.
-  * - $(P)$(R)
-    - 
-    - 
-  * - $(P)$(R)
-    - 
-    - 
   * - $(P)$(R)ServerRunning
     - bi
     - This record will be ``Running`` if the Python server is running and ``Stopped`` if not.
