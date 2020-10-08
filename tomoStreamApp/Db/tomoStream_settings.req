@@ -7,15 +7,38 @@
 # but they are used by tomostream.  
 # These PVs are not saved in the tomostream configuration file.
 
+########################
+# tomoStream PV Prefixes
+########################
+$(P)$(R)TomoScanPVPrefix
+
+######################
+# tomoStream PVA names
+######################
+$(P)$(R)DarkPVAName
+$(P)$(R)FlatPVAName
+$(P)$(R)ReconPVAName
+$(P)$(R)ImagePVAPName
+
 ############################
 # Streaming analysis control
 ############################
-$(P)$(R)Status
 $(P)$(R)BufferSize
 $(P)$(R)Center
 $(P)$(R)FilterType
 $(P)$(R)OrthoX
 $(P)$(R)OrthoY
 $(P)$(R)OrthoZ
-$(P)$(R)ReconTime
 
+##################################
+# Stream status via Channel Access
+##################################
+$(P)$(R)ReconTime
+$(P)$(R)StreamStatus
+$(P)$(R)Watchdog
+
+###################################
+# Stream control via Channel Access
+###################################
+$(P)$(R)StartStream
+$(P)$(R)AbortStream
