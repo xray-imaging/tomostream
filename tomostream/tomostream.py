@@ -99,6 +99,81 @@ class TomoStream():
         # start monitoring projection data        
         self.pva_plugin_image.monitor(self.add_data,'')
 
+   def reinit_monitors(self,control_pvs):
+        """Reinit pv monitoring functions with updating data sizes"""
+
+        log.warning('reinit monitors with updating data sizes')
+        # stop monitors
+        self.pva_dark.stopMonitor()
+        self.pva_flat.stopMonitor()
+        self.pva_plugin_image.stopMonitor()                
+        while(self.pva_dark.isMonitorActive() or 
+            self.pva_flat.isMonitorActive() or
+            self.pva_plugin_image.isMonitorActive()):
+            time.sleep(0.01)
+        time.sleep(0.5)# need wait for some reason?
+        # take new data sizes
+        pva_image_data = self.pva_plugin_image.get('')
+        width = pva_image_data['dimension'][0]['size']
+        height = pva_image_data['dimension'][1]['size']
+        self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
+                                    {'size': width, 'fullSize': width, 'binning': 1}]
+        self.theta = control_pvs['ThetaArray'].get()[:control_pvs['NumAngles'].get()]                
+        # update limits on sliders
+        # control_pvs['OrthoXlimit'].put(width-1)
+        # control_pvs['OrthoYlimit'].put(width-1)
+        # control_pvs['OrthoZlimit'].put(height-1)        
+        
+        ## create a queue to store projections
+        # find max size of the queue, the size is equal to the number of angles in the interval of size pi
+        if(max(self.theta)<180):
+            buffer_size = len(self.theta)
+        else:        
+            dtheta = self.theta[1]-self.theta[0]
+            buffer_size = np.where(self.theta-self.theta[0]>180-dtheta)[0][0]
+        if(buffer_size*width*height>pow(2,32)):
+            log.error('buffer_size %s not enough memory', buffer_size)
+            exit(0)
+        control_pvs['BufferSize'].put(buffer_size)                
+        # queue
+        self.data_queue = queue.Queue(maxsize=buffer_size)
+        
+        # take datatype        
+        datatype_list = control_pvs['PvaPDataType_RBV'].get()['value']   
+        self.datatype = datatype_list['choices'][datatype_list['index']].lower()                
+        
+        # update parameters from in the GUI
+        center = ts_pvs['Center'].get()
+        idx = ts_pvs['OrthoX'].get()
+        idy = ts_pvs['OrthoY'].get()
+        idz = ts_pvs['OrthoZ'].get()
+        fbpfilter = ts_pvs['FilterType'].get(as_string=True)        
+        
+        if hasattr(self,'width'): # update parameters for new sizes 
+            control_pvs['Center'].put(center*width/self.width)
+            control_pvs['OrthoX'].put(int(idx*width/self.width))
+            control_pvs['OrthoY'].put(int(idy*width/self.width))
+            control_pvs['OrthoZ'].put(int(idz*width/self.width))
+
+        ## create solver class on GPU        
+        self.slv = gpu_solver.Solver(buffer_size, width, height, 
+            center, idx, idy, idz, fbpfilter, self.datatype)
+        
+        # temp buffers for storing data taken from the queue
+        self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
+        self.theta_buffer = np.zeros(buffer_size, dtype='float32')
+        self.ids_buffer = np.zeros(buffer_size, dtype='int32')
+
+        self.width = width
+        self.height = height
+        self.buffer_size = buffer_size
+        
+        ## start PV monitoring
+        # start monitoring dark and flat fields pv
+        self.pva_dark.monitor(self.add_dark,'')
+        self.pva_flat.monitor(self.add_flat,'')        
+        # start monitoring projection data        
+        self.pva_plugin_image.monitor(self.add_data,'')
 
     def add_data(self, pv):
         """PV monitoring function for adding projection data and corresponding angle to the queue"""
@@ -176,82 +251,6 @@ class TomoStream():
             
             # write result to pv
             self.pv_rec['value'] = ({'floatValue': rec.flatten()},)                
-
-    def reinit_monitors(self,control_pvs):
-        """Reinit pv monitoring functions with updating data sizes"""
-
-        log.warning('reinit monitors with updating data sizes')
-        # stop monitors
-        self.pva_dark.stopMonitor()
-        self.pva_flat.stopMonitor()
-        self.pva_plugin_image.stopMonitor()                
-        while(self.pva_dark.isMonitorActive() or 
-            self.pva_flat.isMonitorActive() or
-            self.pva_plugin_image.isMonitorActive()):
-            time.sleep(0.01)
-        time.sleep(0.5)# need wait for some reason?
-        # take new data sizes
-        pva_image_data = self.pva_plugin_image.get('')
-        width = pva_image_data['dimension'][0]['size']
-        height = pva_image_data['dimension'][1]['size']
-        self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
-                                    {'size': width, 'fullSize': width, 'binning': 1}]
-        self.theta = control_pvs['ThetaArray'].get()[:control_pvs['NumAngles'].get()]                
-        # update limits on sliders
-        # control_pvs['OrthoXlimit'].put(width-1)
-        # control_pvs['OrthoYlimit'].put(width-1)
-        # control_pvs['OrthoZlimit'].put(height-1)        
-        
-        ## create a queue to store projections
-        # find max size of the queue, the size is equal to the number of angles in the interval of size pi
-        if(max(self.theta)<180):
-            buffer_size = len(self.theta)
-        else:        
-            dtheta = self.theta[1]-self.theta[0]
-            buffer_size = np.where(self.theta-self.theta[0]>180-dtheta)[0][0]
-        if(buffer_size*width*height>pow(2,32)):
-            log.error('buffer_size %s not enough memory', buffer_size)
-            exit(0)
-        control_pvs['BufferSize'].put(buffer_size)                
-        # queue
-        self.data_queue = queue.Queue(maxsize=buffer_size)
-        
-        # take datatype        
-        datatype_list = control_pvs['PvaPDataType_RBV'].get()['value']   
-        self.datatype = datatype_list['choices'][datatype_list['index']].lower()                
-        
-        # update parameters from in the GUI
-        center = ts_pvs['Center'].get()
-        idx = ts_pvs['OrthoX'].get()
-        idy = ts_pvs['OrthoY'].get()
-        idz = ts_pvs['OrthoZ'].get()
-        fbpfilter = ts_pvs['FilterType'].get(as_string=True)        
-        
-        if hasattr(self,'width'): # update parameters for new sizes 
-            control_pvs['Center'].put(center*width/self.width)
-            control_pvs['OrthoX'].put(int(idx*width/self.width))
-            control_pvs['OrthoY'].put(int(idy*width/self.width))
-            control_pvs['OrthoZ'].put(int(idz*width/self.width))
-
-        ## create solver class on GPU        
-        self.slv = gpu_solver.Solver(buffer_size, width, height, 
-            center, idx, idy, idz, fbpfilter, self.datatype)
-        
-        # temp buffers for storing data taken from the queue
-        self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
-        self.theta_buffer = np.zeros(buffer_size, dtype='float32')
-        self.ids_buffer = np.zeros(buffer_size, dtype='int32')
-
-        self.width = width
-        self.height = height
-        self.buffer_size = buffer_size
-        
-        ## start PV monitoring
-        # start monitoring dark and flat fields pv
-        self.pva_dark.monitor(self.add_dark,'')
-        self.pva_flat.monitor(self.add_flat,'')        
-        # start monitoring projection data        
-        self.pva_plugin_image.monitor(self.add_data,'')
         
     def read_pv_file(self, pv_file_name, macros):
         """Reads a file containing a list of EPICS PVs to be used by TomoScan.
