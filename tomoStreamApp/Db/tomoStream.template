@@ -1,15 +1,43 @@
 # Database for EPICS PVS for tomography data streaming software
 # This database contains all of the PVs used by the tomostream base class.
 
+########################
+# tomoStream PV Prefixes
+########################
+
+record(stringout, "$(P)$(R)TomoScanPVPrefix")
+{
+   field(VAL,  "$(TOMO_SCAN)")
+}
+
+
+#######################
+# tomoStream  PVA names
+#######################
+
+record(stringout, "$(P)$(R)ImagePVAPName")
+{
+   field(VAL,  "$(IMAGE_P)")
+}
+
+record(stringout, "$(P)$(R)DarkPVAName")
+{
+   field(VAL,  "$(DARK_PVA)")
+}
+
+record(stringout, "$(P)$(R)FlatPVAName")
+{
+   field(VAL,  "$(FLAT_PVA)")
+}
+
+record(stringout, "$(P)$(R)ReconPVAName")
+{
+   field(VAL,  "$(RECON_PVA)")
+}
+
 ############################
 # Streaming analysis control
 ############################
-
-record(bo, "$(P)$(R)Status")
-{
-   field(ZNAM, "Off")
-   field(ONAM, "On")
-}
 
 record(longout, "$(P)$(R)BufferSize")
 {
@@ -51,8 +79,55 @@ record(longout, "$(P)$(R)OrthoZ")
    field(HOPR, "2448")
 }
 
+##################################
+# Stream status via Channel Access
+##################################
+
+record(waveform,"$(P)$(R)StreamStatus") 
+{
+   field(FTVL, "UCHAR")
+   field(NELM, "256")
+}
 
 record(ao, "$(P)$(R)ReconTime")
 {
    field(PREC, "5")
+}
+
+record(calcout, "$(P)$(R)Watchdog")
+{
+   field(SCAN, "1 second")
+   field(INPA, "$(P)$(R)Watchdog.VAL NPP")
+   field(CALC, "A-1")
+   field(OCAL, "A>0?1:0")
+   field(OOPT, "On Change")
+   field(DOPT, "Use OCAL")
+   field(OUT,  "$(P)$(R)ServerRunning PP")
+}
+
+record(bi, "$(P)$(R)ServerRunning")
+{
+   field(ZNAM, "Stopped")
+   field(ZSV,  "MAJOR")
+   field(ONAM, "Running")
+   field(OSV,  "NO_ALARM")
+}
+
+###################################
+# Stream control via Channel Access
+###################################
+
+record(busy,"$(P)$(R)StartStream")
+{
+   field(ZNAM,"Done")
+   field(ZSV, "NO_ALARM")
+   field(ONAM,"Acquire")
+   field(OSV, "MINOR")
+   field(VAL, "0")
+}
+
+record(bo,"$(P)$(R)AbortStream")
+{
+   field(ZNAM,"No")
+   field(ONAM,"Yes")
 }

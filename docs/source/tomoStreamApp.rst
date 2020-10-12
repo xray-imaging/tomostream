@@ -31,6 +31,45 @@ tomoStream.template
 This is the database file that contains only the PVs required by the tomoscan.py base class
 :doc:`tomoStream.template`.
 
+tomoStream PV Prefixes
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. cssclass:: table-bordered table-striped table-hover
+.. list-table::
+  :header-rows: 1
+  :widths: 5 5 90
+
+  * - Record name
+    - Record type
+    - Description
+  * - $(P)$(R)TomoScanPVPrefix
+    - stringout
+    - Contains the prefix for the tomoscan controlling the data collection, e.g. 2bma:TomoScan
+
+tomoStream PVA Names
+~~~~~~~~~~~~~~~~~~~~
+
+.. cssclass:: table-bordered table-striped table-hover
+.. list-table::
+  :header-rows: 1
+  :widths: 5 5 90
+
+  * - Record name
+    - Record type
+    - Description
+  * - $(P)$(R)ImagePVAPName
+    - stringout
+    - Contains the name of the TomoScan PV storing the PV prefix of the images streamed by the detector
+  * - $(P)$(R)DarkPVAName
+    - stringout
+    - Contains the name of the TomoScan PVA where the dark images are stored
+  * - $(P)$(R)FlatPVAName
+    - stringout
+    - Contains the name of the TomoScan PVA where the flat images are stored
+  * - $(P)$(R)ReconPVAName
+    - stringout
+    - Contains the name of the TomoStream PVA where the the selected 3 orthogonal slices are stored
+
 Streaming analysis control
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -66,9 +105,29 @@ Streaming analysis control
   * - $(P)$(R)OrthoZ
     - longout
     - Ortho slice in the Z direction for streaming reconstruction
+
+Stream status via Channel Access
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. cssclass:: table-bordered table-striped table-hover
+.. list-table::
+  :header-rows: 1
+  :widths: 5 5 90
+
+  * - Record name
+    - Record type
+    - Description
+  * - $(P)$(R)StreamStatus
+    - waveform
+    - This record will be updated with the stream reconstruction status while scanning.
   * - $(P)$(R)ReconTime
     - ao
-    - Streaming reconstruction time
+    - This record will update with the time to reconstruct the selected 3 orthogonal slices.
+  * - $(P)$(R)ServerRunning
+    - bi
+    - This record will be ``Running`` if the Python server is running and ``Stopped`` if not.
+      It is controlled by a watchdog timer, and will change from ``Running`` to ``Stopped``
+      within 5 seconds if the Python server exits.
 
 
 tomoStream_settings.req
@@ -82,12 +141,28 @@ It has the same usage and type of content as tomoStream_settings.req described a
 medm files
 ~~~~~~~~~~
 
+To start the tomostream medm screen::
+
+  $ cd /local/USERNAME/epics/synApps/support/tomostream/iocBoot/iocTomoStream
+  $ start_medm
+
+where USERNAME is the username under which the tomoStreamApp is installed.
+
 tomoStream.adl
 ^^^^^^^^^^^^^^
 
 The following is the MEDM screen :download:`tomoStream.adl <../../tomoStreamApp/op/adl/tomoStream.adl>`.  
-This screen contains the PVs for the TomoScan_2BM derived class.  If the BeamReadyPV is changed then tomoscan must be restarted.
+This screen contains the PVs to control tomoStream.
 
 .. image:: img/tomoStream.png
     :width: 75%
+    :align: center
+
+tomoStreamEPICS_PVs.adl
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The EPICS PV names screen is below:
+
+.. image:: img/tomoStreamEPICS_PVs.png
+    :width: 60%
     :align: center

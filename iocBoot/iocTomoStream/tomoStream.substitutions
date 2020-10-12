@@ -1,6 +1,6 @@
 file "$(TOP)/db/tomoStream.template"
 {
 pattern
-{  P,      R}
-{2bm:, TomoStream:}
+{  P,      R, TOMO_SCAN, IMAGE_P, DARK_PVA, FLAT_PVA, RECON_PVA}
+{2bma:, TomoStream:, 2bma:TomoScan:, 2bma:TomoScan:PvaPluginPVPrefix, 2bma:TomoScan:StreamDarkFields, 2bma:TomoScan:StreamFlatFields, 2bma:TomoStream:StreamRecon}
 }
