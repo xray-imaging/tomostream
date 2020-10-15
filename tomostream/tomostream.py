@@ -45,13 +45,11 @@ class TomoStream():
         # tomoscan pvs
         self.epics_pvs['FrameType']          = PV(prefix + 'FrameType')
         self.epics_pvs['NumAngles']          = PV(prefix + 'NumAngles')
-        print(self.epics_pvs['NumAngles'].get())
     
         self.epics_pvs['RotationStep']       = PV(prefix + 'RotationStep')
         
         self.epics_pvs['PSOPVPrefix']        = PV(prefix + 'PSOPVPrefix')
         self.epics_pvs['ThetaArray']         = PV(self.epics_pvs['PSOPVPrefix'].get(as_string=True) + 'motorPos.AVAL')
-        print(self.epics_pvs['ThetaArray'].get())
     
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
         self.epics_pvs['PvaDark']        = pva.Channel(self.epics_pvs['DarkPVAName'].get())
@@ -74,7 +72,6 @@ class TomoStream():
     
         # run server for reconstruction pv
         recon_pva_name = self.epics_pvs['ReconPVAName'].get()
-        print(recon_pva_name)
         self.server_rec = pva.PvaServer(recon_pva_name, self.pv_rec)
 
         self.epics_pvs['StartStream'].put('Done')
@@ -90,8 +87,7 @@ class TomoStream():
         thread = threading.Thread(target=self.reset_watchdog, args=(), daemon=True)
         thread.start()
         log.setup_custom_logger("./tomostream.log")
-
-
+        
 
     def pv_callback(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed
@@ -103,17 +99,19 @@ class TomoStream():
         - ``AbortScan`` : Calls ``abort_scan()``
       
         """
-
         log.debug('pv_callback pvName=%s, value=%s, char_value=%s', pvname, value, char_value)        
         if (pvname.find('StartStream') != -1) and (value == 1):
-            self.begin_stream()
-        elif (pvname.find('AbortStream') != -1) and (value == 1):
-            self.abort_stream()
+            thread = threading.Thread(target=self.begin_stream, args=())
+            thread.start()   
+        elif (pvname.find('AbortStream') != -1) and (value == 0):
+            thread = threading.Thread(target=self.abort_stream, args=())
+            thread.start()  
 
     def signal_handler(self, sig, frame):
         """Calls abort_scan when ^C is typed"""
         if sig == signal.SIGINT:
             self.abort_stream()
+            self.slv.mempool.free_all_blocks()
 
     def reset_watchdog(self):
         """Sets the watchdog timer to 5 every 3 seconds"""
@@ -166,11 +164,11 @@ class TomoStream():
         self.datatype = datatype_list['choices'][datatype_list['index']].lower()                
         
         # update parameters from in the GUI
-        center = ts_pvs['Center'].get()
-        idx = ts_pvs['OrthoX'].get()
-        idy = ts_pvs['OrthoY'].get()
-        idz = ts_pvs['OrthoZ'].get()
-        fbpfilter = ts_pvs['FilterType'].get(as_string=True)        
+        center = self.epics_pvs['Center'].get()
+        idx = self.epics_pvs['OrthoX'].get()
+        idy = self.epics_pvs['OrthoY'].get()
+        idz = self.epics_pvs['OrthoZ'].get()
+        fbpfilter = self.epics_pvs['FilterType'].get(as_string=True)        
         
         if hasattr(self,'width'): # update parameters for new sizes 
             self.epics_pvs['Center'].put(center*width/self.width)
@@ -179,7 +177,7 @@ class TomoStream():
             self.epics_pvs['OrthoZ'].put(int(idz*width/self.width))
 
         ## create solver class on GPU        
-        self.slv = gpu_solver.Solver(buffer_size, width, height, 
+        self.slv = solver.Solver(buffer_size, width, height, 
             center, idx, idy, idz, fbpfilter, self.datatype)
         
         # temp buffers for storing data taken from the queue
@@ -197,12 +195,13 @@ class TomoStream():
         self.pva_flat.monitor(self.add_flat,'')        
         # start monitoring projection data        
         self.pva_plugin_image.monitor(self.add_data,'')
+        self.stream_is_running = True
 
     def add_data(self, pv):
         """PV monitoring function for adding projection data and corresponding angle to the queue"""
 
         frame_type = self.epics_pvs['FrameType'].get(as_string=True)
-        if(frame_type == 'Projection'):
+        if(self.stream_is_running and self.epics_pvs['FrameType'].get(as_string=True) == 'Projection'):
             cur_id = pv['uniqueId'] # unique projection id for determining angles and places in the buffers        
             # write projection, theta, and id into the queue
             data_item = {'projection': pv['value'][0][util.type_dict[self.datatype]],
@@ -219,7 +218,7 @@ class TomoStream():
         """PV monitoring function for reading new dark fields from manually running pv server 
         on the detector machine"""
         
-        if(len(pv['value'])==self.width*self.height):  # if pv with dark field has cocrrect sizes
+        if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with dark field has cocrrect sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_dark(data)
             log.warning('new dark fields acquired')
@@ -228,7 +227,7 @@ class TomoStream():
         """PV monitoring function for reading new flat fields from manually running pv server 
         on the detector machine"""
 
-        if(len(pv['value'])==self.width*self.height):  # if pv with flat has correct sizes
+        if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with flat has correct sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_flat(data)
             log.warning('new flat fields acquired')
@@ -237,10 +236,10 @@ class TomoStream():
         """Run streaming reconstruction by sending new incoming projections from the queue to the solver class,
         and broadcasting the reconstruction result to a pv variable
         """
-        self.stream_is_running = True
-
+        
         self.reinit_monitors()
-
+        self.epics_pvs['StreamStatus'].put('Running')
+        
         while(self.stream_is_running):
             # take parameters from the GUI                
             center = self.epics_pvs['Center'].get()
@@ -276,11 +275,14 @@ class TomoStream():
             self.epics_pvs['ReconTime'].put(util.toc())
             
             # write result to pv
-            self.pv_rec['value'] = ({'floatValue': rec.flatten()},)                
- 
+            self.pv_rec['value'] = ({'floatValue': rec.flatten()},)     
+        self.epics_pvs['StartStream'].put('Done')           
+        self.epics_pvs['StreamStatus'].put('Stopped')
+        
     def abort_stream(self):
         """Aborts streaming that is running.
         """
+        self.epics_pvs['StreamStatus'].put('Aborting reconstruction')
         self.stream_is_running = False
 
     def read_pv_file(self, pv_file_name, macros):
@@ -321,7 +323,6 @@ class TomoStream():
                 dictentry = dictentry.replace(key, '')
             epics_pv = PV(pvname)
 
-            print(dictentry,pvname, is_config_pv)
             if is_config_pv:
                 self.config_pvs[dictentry] = epics_pv
             else:

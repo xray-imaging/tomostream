@@ -40,13 +40,7 @@ class Solver():
         self.fbpfilter = fbpfilter
         
         self.new_dark_flat = False
-        signal.signal(signal.SIGINT, self.signal_handler)
-        signal.signal(signal.SIGTSTP, self.signal_handler)
 
-    def signal_handler(self, sig, frame):  
-        """Free gpu memory after SIGINT, SIGSTSTP"""
-        self.mempool.free_all_blocks()
-        sys.exit()
 
     def set_dark_flat(self, dark_flat, ndark, nflat):
         """Copy the average of flat fields and dark fields to GPU"""

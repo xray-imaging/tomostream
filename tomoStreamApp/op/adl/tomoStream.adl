@@ -499,7 +499,7 @@ text {
 	"basic attribute" {
 		clr=14
 	}
-	textix="Scan status"
+	textix="Recon status"
 	align="horiz. right"
 }
 "text update" {
