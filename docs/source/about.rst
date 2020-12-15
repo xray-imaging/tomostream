@@ -21,3 +21,7 @@ All **tomostream** functionalies can be controlled from the window below:
 
 
 test
+
+.. image:: img/tomoStream.png
+    :width: 60%
+    :align: center
