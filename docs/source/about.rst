@@ -19,9 +19,6 @@ The streaming reconstruction engine generates 3 selectable X-Y-Z orthogonal plan
 
 All **tomostream** functionalies can be controlled from the window below:
 
-
-test
-
 .. image:: img/tomoStream.png
     :width: 60%
     :align: center
