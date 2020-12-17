@@ -19,53 +19,60 @@ class Solver():
     """
 
     def __init__(self, ntheta, n, nz, center, idx, idy, idz, fbpfilter, data_type):
-        #pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
-        self.mempool = cp.get_default_memory_pool()
-        #cp.cuda.set_allocator(self.pool.malloc)
+        
         self.n = n
         self.nz = nz
         self.ntheta = ntheta
         
-        # GPU storage for dark anf flat fields
+        # GPU storage for dark and flat fields
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
         # data storages for array updates in the optimized reconstruction function
-        self.data = cp.zeros([ntheta, nz, n], dtype=data_type)  # type???
+        self.data = cp.zeros([ntheta, nz, n], dtype=data_type)  
         self.obj = cp.zeros([n, 3*n], dtype='float32')
         self.theta = cp.zeros([ntheta], dtype='float32')
         self.center = center
         self.idx = idx
         self.idy = idy
         self.idz = idz
-        self.fbpfilter = fbpfilter
-        
+        self.fbpfilter = fbpfilter        
         self.new_dark_flat = False
 
+        # manual handling of gpu memory deallocation with ctrl-c,ctrl-z signals
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTSTP, self.signal_handler)
 
-    def set_dark_flat(self, dark_flat, ndark, nflat):
-        """Copy the average of flat fields and dark fields to GPU"""
-        dark = dark_flat[:ndark*self.n*self.nz]
-        flat = dark_flat[ndark * self.n*self.nz:]
-        dark = dark.reshape(ndark, self.nz, self.n)
-        flat = flat.reshape(nflat, self.nz, self.n)            
-        self.dark = cp.array(np.mean(dark, axis=0).astype('float32'))
-        self.flat = cp.array(np.mean(flat, axis=0).astype('float32'))
-        
+    def signal_handler(self, sig, frame):  
+        """Free gpu memory after SIGINT, SIGSTSTP"""
+
+        cp.get_default_memory_pool().free_all_blocks()
+        sys.exit()
+
+    def set_dark(self, data):
+        """Copy the average of dark fields to GPU"""
+
+        self.dark = cp.array(data.astype('float32'))        
         self.new_dark_flat = True
+    
+    def set_flat(self, data):
+        """Copy the average of dark fields to GPU"""
 
+        self.flat = cp.array(data.astype('float32'))
+        self.new_dark_flat = True
+    
     def backprojection(self, data, theta):
         """Compute backprojection to orthogonal slices"""
+
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')
-        obj[:self.nz, :self.n] = kernels.orthox(data, theta, self.center, self.idx)
-        obj[:self.nz, self.n:2 *
-            self.n] = kernels.orthoy(data, theta, self.center, self.idy)
-        obj[:self.n, 2*self.n:3 *
-            self.n] = kernels.orthoz(data, theta, self.center, self.idz)
-        obj/=self.ntheta
+        obj[:self.nz,         :self.n  ] = kernels.orthox(data, theta, self.center, self.idx)
+        obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy)
+        obj[:self.n , 2*self.n:3*self.n] = kernels.orthoz(data, theta, self.center, self.idz)
+        obj /= self.ntheta
         return obj
 
     def fbp_filter(self, data):
         """FBP filtering of projections"""
+
         t = cp.fft.rfftfreq(self.n)
         if (self.fbpfilter=='Parzen'):
             wfilter = t * (1 - t * 2)**3    
@@ -77,24 +84,27 @@ class Solver():
             wfilter = t / (1+pow(2*t,16)) # as in tomopy
 
         wfilter = cp.tile(wfilter, [self.nz, 1])    
-        for k in range(data.shape[0]):
+        for k in range(data.shape[0]):# work with 2D arrays to sae gpu memory
             data[k] = irfft(
                 wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
         return data
 
     def darkflat_correction(self, data):
         """Dark-flat field correction"""
-        for k in range(data.shape[0]):
+
+        for k in range(data.shape[0]):# work with 2D arrays to sae gpu memory
             data[k] = (data[k]-self.dark)/cp.maximum(self.flat-self.dark, 1e-6)
         return data
 
     def minus_log(self, data):
         """Taking negative logarithm"""
+
         data = -cp.log(cp.maximum(data, 1e-6))
         return data
 
     def recon(self, data, theta):
         """Reconstruction with the standard processing pipeline on GPU"""
+
         data = data.astype('float32')
         data = self.darkflat_correction(data)
         data = self.minus_log(data)
@@ -102,28 +112,6 @@ class Solver():
         obj = self.backprojection(data, theta*np.pi/180)
         return obj
 
-    def recon_time(self, data, theta, center):
-        """Reconstruction with measuring times for each processing procedure"""
-        data = data.astype('float32')
-        util.tic()
-        data = self.darkflat_correction(data)
-        cp.cuda.Stream.null.synchronize()
-        log.info('dark-flat correction time: %s', util.toc())
-        util.tic()
-        data = self.minus_log(data)
-        cp.cuda.Stream.null.synchronize()
-        log.info('minus log time: %s', util.toc())
-        util.tic()
-
-        data = self.fbp_filter(data)
-        cp.cuda.Stream.null.synchronize()
-        log.info('fbp fitler time: %s', util.toc())
-        util.tic()
-
-        obj = self.backprojection(data, theta*np.pi/180)
-        cp.cuda.Stream.null.synchronize()
-        log.info('backprojection time: %s', util.toc())
-        return obj
 
     def recon_optimized(self, data, theta, ids, center, idx, idy, idz, fbpfilter, dbg=False):
         """Optimized reconstruction of the object
@@ -156,7 +144,7 @@ class Solver():
             len(ids) > self.ntheta//2)
 
         if(recompute_part):
-            # old part
+            # subtract old part
             self.obj -= self.recon(self.data[ids], self.theta[ids])    
 
         # update data in the buffer
@@ -168,8 +156,9 @@ class Solver():
         self.center = np.float32(center)
         self.fbpfilter = fbpfilter
         self.new_dark_flat = False
+
         if(recompute_part):
-            # new part
+            # add new part
             self.obj += self.recon(self.data[ids], self.theta[ids])    
         else:        
             self.obj = self.recon(self.data, self.theta)
