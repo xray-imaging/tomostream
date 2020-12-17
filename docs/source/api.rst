@@ -6,7 +6,7 @@ API reference
 .. toctree::
 
    api/pv_server
-   api/recon
+   api/tomostream
    api/solver
 
 .. automodule:: tomostream
