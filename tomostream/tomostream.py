@@ -8,7 +8,6 @@ import signal
 
 from tomostream import util
 from tomostream import log
-from tomostream import pv
 from tomostream import solver
 from epics import PV
 
