@@ -5,7 +5,7 @@ API reference
 
 .. toctree::
 
-   api/pv_server
+   api/kernels
    api/tomostream
    api/solver
 
