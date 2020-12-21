@@ -1,3 +1,8 @@
+"""
+CUDA Raw kernels for computing back-projection to orthogonal slices
+
+"""
+
 import cupy as cp
 
 source = """

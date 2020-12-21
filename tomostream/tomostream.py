@@ -19,7 +19,7 @@ class TomoStream():
         with direct discretization of the circular integral.
         Projection data is taken from the detector pv (pva type channel) 
         and stored in a queue, dark and flat fields are taken from the pv broadcasted 
-        by the server on the detector machine.
+        by the server on the detector machine (see tomoscan_stream.py from Tomoscan package).
         
         Parameters
         ----------
@@ -29,6 +29,7 @@ class TomoStream():
 
     def __init__(self, pv_files, macros):
 
+        # init pvs
         self.config_pvs = {}
         self.control_pvs = {}
         self.pv_prefixes = {}
@@ -55,8 +56,7 @@ class TomoStream():
         self.epics_pvs['PvaDark']        = pva.Channel(self.epics_pvs['DarkPVAName'].get())
         self.pva_dark = self.epics_pvs['PvaDark']
         self.epics_pvs['PvaFlat']        = pva.Channel(self.epics_pvs['FlatPVAName'].get())
-        self.pva_flat = self.epics_pvs['PvaFlat']
-        
+        self.pva_flat = self.epics_pvs['PvaFlat']   
         
         # pva type channel that contains projection and metadata
         image_pv_name = PV(self.epics_pvs['ImagePVAPName'].get()).get()
@@ -65,7 +65,7 @@ class TomoStream():
         self.pva_plugin_image = self.epics_pvs['PvaPImage']
         
         # create pva type pv for reconstrucion by copying metadata from the data pv, but replacing the sizes
-        # This way the ADViewer plugin can be also used for visualizing reconstructions.
+        # This way the ADViewer (NDViewer) plugin can be also used for visualizing reconstructions.
         pva_image_data = self.pva_plugin_image.get('')
         pva_image_dict = pva_image_data.getStructureDict()        
         self.pv_rec = pva.PvObject(pva_image_dict)
@@ -132,7 +132,7 @@ class TomoStream():
             self.pva_flat.isMonitorActive() or
             self.pva_plugin_image.isMonitorActive()):
             time.sleep(0.01)
-        time.sleep(0.5)# need wait for some reason?
+        time.sleep(0.5)# need to wait for some reason? to check
         # take new data sizes
         pva_image_data = self.pva_plugin_image.get('')
         width = pva_image_data['dimension'][0]['size']
