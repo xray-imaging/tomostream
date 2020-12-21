@@ -27,35 +27,38 @@ class Solver():
         # GPU storage for dark and flat fields
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
-        # data storages for array updates in the optimized reconstruction function
+        # GPU storages for the projection buffer, ortho-slices, and angles
         self.data = cp.zeros([ntheta, nz, n], dtype=data_type)  
-        self.obj = cp.zeros([n, 3*n], dtype='float32')
+        self.obj = cp.zeros([n, 3*n], dtype='float32')# ortho-slices are concatenated to one 2D array
         self.theta = cp.zeros([ntheta], dtype='float32')
+        
+        # reconstruction parameters
         self.center = center
         self.idx = idx
         self.idy = idy
         self.idz = idz
-        self.fbpfilter = fbpfilter        
+        self.fbpfilter = fbpfilter 
+        
+        # flag controlling appearance of new dark and flat fields   
         self.new_dark_flat = False
 
-        # manual handling of gpu memory deallocation with ctrl-c,ctrl-z signals
+        # manual handling of gpu memory deallocation with ctrl-c,ctrl-z signals (Cupy does not control correct deallocation)
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTSTP, self.signal_handler)
 
     def signal_handler(self, sig, frame):  
         """Free gpu memory after SIGINT, SIGSTSTP"""
-
         cp.get_default_memory_pool().free_all_blocks()
         sys.exit()
 
     def set_dark(self, data):
-        """Copy the average of dark fields to GPU"""
+        """Copy dark field (already averaged) to GPU"""
 
         self.dark = cp.array(data.astype('float32'))        
         self.new_dark_flat = True
     
     def set_flat(self, data):
-        """Copy the average of dark fields to GPU"""
+        """Copy flat field (already averaged) to GPU"""
 
         self.flat = cp.array(data.astype('float32'))
         self.new_dark_flat = True
@@ -63,7 +66,7 @@ class Solver():
     def backprojection(self, data, theta):
         """Compute backprojection to orthogonal slices"""
 
-        obj = cp.zeros([self.n, 3*self.n], dtype='float32')
+        obj = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array
         obj[:self.nz,         :self.n  ] = kernels.orthox(data, theta, self.center, self.idx)
         obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy)
         obj[:self.n , 2*self.n:3*self.n] = kernels.orthoz(data, theta, self.center, self.idz)
@@ -84,7 +87,7 @@ class Solver():
             wfilter = t / (1+pow(2*t,16)) # as in tomopy
 
         wfilter = cp.tile(wfilter, [self.nz, 1])    
-        for k in range(data.shape[0]):# work with 2D arrays to sae gpu memory
+        for k in range(data.shape[0]):# work with 2D arrays to save gpu memory
             data[k] = irfft(
                 wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
         return data
@@ -92,7 +95,7 @@ class Solver():
     def darkflat_correction(self, data):
         """Dark-flat field correction"""
 
-        for k in range(data.shape[0]):# work with 2D arrays to sae gpu memory
+        for k in range(data.shape[0]):# work with 2D arrays to save gpu memory
             data[k] = (data[k]-self.dark)/cp.maximum(self.flat-self.dark, 1e-6)
         return data
 
@@ -117,7 +120,9 @@ class Solver():
         """Optimized reconstruction of the object
         from the whole set of projections in the interval of size pi.
         Resulting reconstruction is obtained by replacing the reconstruction part corresponding to incoming projections, 
-        objnew = objold + recon(datanew) - recon(dataold)
+        objnew = objold + recon(datanew) - recon(dataold) whenever the number of incoming projections is less than half of the buffer size.
+        Reconstruction is done with using the whole buffer only when: the number of incoming projections is greater than half of the buffer size,
+        idx/idy/idz, center, fbpfilter are changed, or new dark/flat fields are acquired.
 
         Parameters
         ----------
