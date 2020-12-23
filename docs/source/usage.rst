@@ -89,4 +89,15 @@ Open the EPICS PV names configuration screen:
     :width: 50%
     :align: center
 
-to set the TomoScan prefix and the PVAccess names provided by `tomoScan`_ for projection (Image), dark and flat image broadcast. Here also set the Recon PVAccess name where the streaming reconstruction will served. Use the Recon PVAccess name to view the live reconstriction using the `EPICS_NTNDA_Viewer`_ ImageJ plug-in. 
+to set the TomoScan prefix and the PVAccess names provided by `tomoScan`_ for projection (Image), dark and flat image broadcast. Here also set the Recon PVAccess name where the streaming reconstruction will served. Use the Recon PVAccess name to view the live reconstriction using the `EPICS_NTNDA_Viewer`_ ImageJ plug-in:
+
+.. image:: img/EPICS_NTNDA_Viewer.png
+    :width: 70%
+    :align: center
+
+Finally press "Start Scan" in the tomoScan control screen and reconstructions will diplay live in ImageJ:
+
+.. image:: img/tomoStreamRecon.png
+    :width: 70%
+    :align: center
+

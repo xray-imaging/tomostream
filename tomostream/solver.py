@@ -42,12 +42,12 @@ class Solver():
         # flag controlling appearance of new dark and flat fields   
         self.new_dark_flat = False
 
-        # manual handling of gpu memory deallocation with ctrl-c,ctrl-z signals (Cupy does not control correct deallocation)
+        # manual handling of GPU memory deallocation with ctrl-c,ctrl-z signals (Cupy does not control correct deallocation)
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTSTP, self.signal_handler)
 
     def signal_handler(self, sig, frame):  
-        """Free gpu memory after SIGINT, SIGSTSTP"""
+        """Free GPU memory after SIGINT, SIGSTSTP"""
         cp.get_default_memory_pool().free_all_blocks()
         sys.exit()
 
@@ -87,7 +87,7 @@ class Solver():
             wfilter = t / (1+pow(2*t,16)) # as in tomopy
 
         wfilter = cp.tile(wfilter, [self.nz, 1])    
-        for k in range(data.shape[0]):# work with 2D arrays to save gpu memory
+        for k in range(data.shape[0]):# work with 2D arrays to save GPU memory
             data[k] = irfft(
                 wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
         return data
@@ -95,7 +95,7 @@ class Solver():
     def darkflat_correction(self, data):
         """Dark-flat field correction"""
 
-        for k in range(data.shape[0]):# work with 2D arrays to save gpu memory
+        for k in range(data.shape[0]):# work with 2D arrays to save GPU memory
             data[k] = (data[k]-self.dark)/cp.maximum(self.flat-self.dark, 1e-6)
         return data
 
@@ -114,7 +114,6 @@ class Solver():
         data = self.fbp_filter(data)
         obj = self.backprojection(data, theta*np.pi/180)
         return obj
-
 
     def recon_optimized(self, data, theta, ids, center, idx, idy, idz, fbpfilter, dbg=False):
         """Optimized reconstruction of the object

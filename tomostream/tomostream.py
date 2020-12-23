@@ -73,11 +73,11 @@ class TomoStream():
         recon_pva_name = self.epics_pvs['ReconPVAName'].get()
         self.server_rec = pva.PvaServer(recon_pva_name, self.pv_rec)
 
-        self.epics_pvs['StartStream'].put('Done')
-        self.epics_pvs['AbortStream'].put('Yes')
+        self.epics_pvs['StartRecon'].put('Done')
+        self.epics_pvs['AbortRecon'].put('Yes')
         
-        self.epics_pvs['StartStream'].add_callback(self.pv_callback)
-        self.epics_pvs['AbortStream'].add_callback(self.pv_callback)
+        self.epics_pvs['StartRecon'].add_callback(self.pv_callback)
+        self.epics_pvs['AbortRecon'].add_callback(self.pv_callback)
         
          # Set ^C interrupt to abort the scan
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -87,7 +87,6 @@ class TomoStream():
         thread.start()
         log.setup_custom_logger("./tomostream.log")
         
-
     def pv_callback(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed
 
@@ -99,10 +98,10 @@ class TomoStream():
       
         """
         log.debug('pv_callback pvName=%s, value=%s, char_value=%s', pvname, value, char_value)        
-        if (pvname.find('StartStream') != -1) and (value == 1):
+        if (pvname.find('StartRecon') != -1) and (value == 1):
             thread = threading.Thread(target=self.begin_stream, args=())
             thread.start()   
-        elif (pvname.find('AbortStream') != -1) and (value == 0):
+        elif (pvname.find('AbortRecon') != -1) and (value == 0):
             thread = threading.Thread(target=self.abort_stream, args=())
             thread.start()  
 
@@ -118,7 +117,6 @@ class TomoStream():
             self.epics_pvs['Watchdog'].put(5)
             time.sleep(3)        
         
-
     def reinit_monitors(self):
         """Reinit pv monitoring functions with updating data sizes"""
 
@@ -237,7 +235,7 @@ class TomoStream():
         """
         
         self.reinit_monitors()
-        self.epics_pvs['StreamStatus'].put('Running')
+        self.epics_pvs['ReconStatus'].put('Running')
         
         while(self.stream_is_running):
             # take parameters from the GUI                
@@ -275,13 +273,13 @@ class TomoStream():
             
             # write result to pv
             self.pv_rec['value'] = ({'floatValue': rec.flatten()},)     
-        self.epics_pvs['StartStream'].put('Done')           
-        self.epics_pvs['StreamStatus'].put('Stopped')
+        self.epics_pvs['StartRecon'].put('Done')           
+        self.epics_pvs['ReconStatus'].put('Stopped')
         
     def abort_stream(self):
         """Aborts streaming that is running.
         """
-        self.epics_pvs['StreamStatus'].put('Aborting reconstruction')
+        self.epics_pvs['ReconStatus'].put('Aborting reconstruction')
         self.stream_is_running = False
 
     def read_pv_file(self, pv_file_name, macros):
@@ -339,7 +337,6 @@ class TomoStream():
                 key = dictentry.replace('PVPrefix', '')
                 self.pv_prefixes[key] = pvprefix
             
-
     def show_pvs(self):
         """Prints the current values of all EPICS PVs in use.
 

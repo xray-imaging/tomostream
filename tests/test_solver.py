@@ -19,7 +19,7 @@ buffer_size = 719
 # init class
 slv = solver.Solver(buffer_size, width, height)
 
-# copy flat and and dark to gpu
+# copy flat and and dark to GPU
 slv.set_flat(flat)
 slv.set_dark(dark)
 

@@ -431,7 +431,7 @@ rectangle {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)StartStream"
+		chan="$(P)$(R)StartRecon"
 		clr=14
 		bclr=15
 	}
@@ -446,7 +446,7 @@ rectangle {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)AbortStream"
+		chan="$(P)$(R)AbortRecon"
 		clr=14
 		bclr=20
 	}
@@ -510,7 +510,7 @@ text {
 		height=20
 	}
 	monitor {
-		chan="$(P)$(R)StreamStatus"
+		chan="$(P)$(R)ReconStatus"
 		clr=14
 		bclr=51
 	}

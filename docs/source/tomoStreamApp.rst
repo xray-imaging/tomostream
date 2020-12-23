@@ -15,7 +15,6 @@ tomostream includes a complete example EPICS application, including:
 
 - A database file and corresponding autosave request file that contain only the PVs required by the tomoscan.py base class.
 - Database files and corresponding autosave request files that contain PVs used by the derived classes.
-- OPI screens for medm, edm, caQtDM, CSS/Boy, and CSS/Phoebus
 - An example IOC application that can be used to run the above databases.
   The databases are loaded in the IOC with the example substitutions file, 
   :doc:`tomoStream.substitutions`.
@@ -117,7 +116,7 @@ Stream status via Channel Access
   * - Record name
     - Record type
     - Description
-  * - $(P)$(R)StreamStatus
+  * - $(P)$(R)ReconStatus
     - waveform
     - This record will be updated with the stream reconstruction status while scanning.
   * - $(P)$(R)ReconTime
