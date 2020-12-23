@@ -40,5 +40,5 @@ $(P)$(R)OrthoZ
 ###################################
 # Stream control via Channel Access
 ###################################
-#controlPV $(P)$(R)StartStream
-#controlPV $(P)$(R)AbortStream
+#controlPV $(P)$(R)StartRecon
+#controlPV $(P)$(R)AbortRecon

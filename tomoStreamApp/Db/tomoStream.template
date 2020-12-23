@@ -117,7 +117,7 @@ record(bi, "$(P)$(R)ServerRunning")
 # Stream control via Channel Access
 ###################################
 
-record(busy,"$(P)$(R)StartStream")
+record(busy,"$(P)$(R)StartRecon")
 {
    field(ZNAM,"Done")
    field(ZSV, "NO_ALARM")
@@ -126,7 +126,7 @@ record(busy,"$(P)$(R)StartStream")
    field(VAL, "0")
 }
 
-record(bo,"$(P)$(R)AbortStream")
+record(bo,"$(P)$(R)AbortRecon")
 {
    field(ZNAM,"No")
    field(ONAM,"Yes")

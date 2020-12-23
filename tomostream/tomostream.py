@@ -73,11 +73,11 @@ class TomoStream():
         recon_pva_name = self.epics_pvs['ReconPVAName'].get()
         self.server_rec = pva.PvaServer(recon_pva_name, self.pv_rec)
 
-        self.epics_pvs['StartStream'].put('Done')
-        self.epics_pvs['AbortStream'].put('Yes')
+        self.epics_pvs['StartRecon'].put('Done')
+        self.epics_pvs['AbortRecon'].put('Yes')
         
-        self.epics_pvs['StartStream'].add_callback(self.pv_callback)
-        self.epics_pvs['AbortStream'].add_callback(self.pv_callback)
+        self.epics_pvs['StartRecon'].add_callback(self.pv_callback)
+        self.epics_pvs['AbortRecon'].add_callback(self.pv_callback)
         
          # Set ^C interrupt to abort the scan
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -99,10 +99,10 @@ class TomoStream():
       
         """
         log.debug('pv_callback pvName=%s, value=%s, char_value=%s', pvname, value, char_value)        
-        if (pvname.find('StartStream') != -1) and (value == 1):
+        if (pvname.find('StartRecon') != -1) and (value == 1):
             thread = threading.Thread(target=self.begin_stream, args=())
             thread.start()   
-        elif (pvname.find('AbortStream') != -1) and (value == 0):
+        elif (pvname.find('AbortRecon') != -1) and (value == 0):
             thread = threading.Thread(target=self.abort_stream, args=())
             thread.start()  
 
@@ -275,7 +275,7 @@ class TomoStream():
             
             # write result to pv
             self.pv_rec['value'] = ({'floatValue': rec.flatten()},)     
-        self.epics_pvs['StartStream'].put('Done')           
+        self.epics_pvs['StartRecon'].put('Done')           
         self.epics_pvs['StreamStatus'].put('Stopped')
         
     def abort_stream(self):
