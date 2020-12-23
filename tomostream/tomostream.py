@@ -235,7 +235,7 @@ class TomoStream():
         """
         
         self.reinit_monitors()
-        self.epics_pvs['StreamStatus'].put('Running')
+        self.epics_pvs['ReconStatus'].put('Running')
         
         while(self.stream_is_running):
             # take parameters from the GUI                
@@ -274,12 +274,12 @@ class TomoStream():
             # write result to pv
             self.pv_rec['value'] = ({'floatValue': rec.flatten()},)     
         self.epics_pvs['StartRecon'].put('Done')           
-        self.epics_pvs['StreamStatus'].put('Stopped')
+        self.epics_pvs['ReconStatus'].put('Stopped')
         
     def abort_stream(self):
         """Aborts streaming that is running.
         """
-        self.epics_pvs['StreamStatus'].put('Aborting reconstruction')
+        self.epics_pvs['ReconStatus'].put('Aborting reconstruction')
         self.stream_is_running = False
 
     def read_pv_file(self, pv_file_name, macros):

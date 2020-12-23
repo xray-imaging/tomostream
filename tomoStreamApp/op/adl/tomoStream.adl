@@ -510,7 +510,7 @@ text {
 		height=20
 	}
 	monitor {
-		chan="$(P)$(R)StreamStatus"
+		chan="$(P)$(R)ReconStatus"
 		clr=14
 		bclr=51
 	}

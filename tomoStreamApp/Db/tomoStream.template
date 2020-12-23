@@ -83,7 +83,7 @@ record(longout, "$(P)$(R)OrthoZ")
 # Stream status via Channel Access
 ##################################
 
-record(waveform,"$(P)$(R)StreamStatus") 
+record(waveform,"$(P)$(R)ReconStatus") 
 {
    field(FTVL, "UCHAR")
    field(NELM, "256")

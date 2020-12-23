@@ -116,7 +116,7 @@ Stream status via Channel Access
   * - Record name
     - Record type
     - Description
-  * - $(P)$(R)StreamStatus
+  * - $(P)$(R)ReconStatus
     - waveform
     - This record will be updated with the stream reconstruction status while scanning.
   * - $(P)$(R)ReconTime
