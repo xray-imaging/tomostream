@@ -4,9 +4,13 @@ Install directions
 
 .. _areadetector: https://cars9.uchicago.edu/software/epics/areaDetector.html
 
+The computer performing the tomographic reconstruction must have CUDA/GPU installed. **tomostream** consists of two modules
+TomoScanApp and tomostream tools.
 
 TomoScanApp
 ===========
+
+Provides all the EPICS PVs needed by **tomostream**. To install TomoScanApp follow these steps:
 
 Build a minimal synApps
 -----------------------
@@ -69,7 +73,7 @@ Testing the installation
 
 - Start the epics ioc and associated medm screen with::
 
-    $ cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoScan_13BM
+    $ cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream
     $ start_IOC
     $ start_medm
 
@@ -77,12 +81,17 @@ Testing the installation
 tomostream python tools
 =======================
 
-Run::
-	
-    $ git clone https://github.com/xray-imaging/tomostream.git
-    $ cd tomostream
+::
+
+    $ cd ~/epics/synApps/support/tomostream/
     $ python setup.py install
 
-on both the computer running `areadetector`_ and on a computer performing the tomographic reconstruction running CUDA/GPU.
+Testing the installation
+------------------------
+
+::
+
+    $ cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream
+    $ python -i start_tomostream.py
 
 
