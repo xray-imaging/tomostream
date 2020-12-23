@@ -87,7 +87,6 @@ class TomoStream():
         thread.start()
         log.setup_custom_logger("./tomostream.log")
         
-
     def pv_callback(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed
 
@@ -118,7 +117,6 @@ class TomoStream():
             self.epics_pvs['Watchdog'].put(5)
             time.sleep(3)        
         
-
     def reinit_monitors(self):
         """Reinit pv monitoring functions with updating data sizes"""
 
@@ -339,7 +337,6 @@ class TomoStream():
                 key = dictentry.replace('PVPrefix', '')
                 self.pv_prefixes[key] = pvprefix
             
-
     def show_pvs(self):
         """Prints the current values of all EPICS PVs in use.
 
