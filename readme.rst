@@ -24,7 +24,7 @@ All **tomostream** functionalies can be controlled from the tomoStream user inte
 All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be controlled from the tomoScan_2BM_stream user interface:
 
 .. image:: docs/source/img/tomoScan_2BM_stream.png
-    :width: 60%
+    :width: 50%
     :align: center
 
 The output of **tomostream** is a live reconstruction diplaying in ImageJ using the `EPICS_NTNDA_Viewer`_ plug-in:
