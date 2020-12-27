@@ -5,47 +5,99 @@ Usage
 .. _areadetector: https://cars9.uchicago.edu/software/epics/areaDetector.html
 .. _dxchange: https://dxfile.readthedocs.io/en/latest/source/xraytomo.html
 .. _EPICS_NTNDA_Viewer: https://cars9.uchicago.edu/software/epics/areaDetectorViewers.html
+.. _tomoScan: https://tomoscan.readthedocs.io
+.. _tomoscan_stream_2bm: https://tomoscan.readthedocs.io/en/latest/api/tomoscan_stream_2bm.html
 
-Using the tomostream-cli
-------------------------
+Using the tomoStream
+--------------------
 
-On the computer running `areadetector`_ run::
 
-    $ tomostream server
+Pre-requisites
+^^^^^^^^^^^^^^
 
-This command provides an EPICS PV containing flat and dark images as collected at the beginning of the scan. These images are used by the streaming engine to perform the tomographic reconstruction and will also be saved in each raw data saving cycle (on-demand capturing), so that the resulting data set will conform to the `dxchange`_ file format definition.
+Before running **tomostream** you need to install and run `tomoscan_stream_2bm`_ (see `tomoScan`_ for details) to provide:
 
-On the computer running the reconstruction and configured with one or more GPU cards, run::
+- Tomography instrument control
+- Projection, dark and flat image broadcast as PV access variables
+- On-demand retake of dark-flat field images
+- On-demand data capturing 
 
-    $ tomostream recon
+Once `tomoScan`_ is installed on the computer connected to the detector:
 
-This command starts the streaming reconstruction engine. The streaming reconstruction engine generates 3 selectable X-Y-Z orthogonal planes and makes them available as an EPICS PV viewable in ImageJ using the `EPICS_NTNDA_Viewer`_ plug-in. The name of this PV is set by entering the Recon PVA name in the tomoStreamEPICS_PVs configuration screen:
+- start area detector, e.g.::
+
+    user2bmb@lyra$  2bmbPG1 start
+
+- start tomoScan IOC, e.g.::
+
+    user2bmb@lyra$  cd /local/user2bmb/epics/synApps/support/tomoscan/iocBoot/iocTomoScan_2BM/
+    user2bmb@lyra$  ./start_IOC
+
+- start the instance of tomoscan.py supporting tomostream tasks at your beamline, e.g.::
+
+    user2bmb@lyra$  cd /local/user2bmb/epics/synApps/support/tomoscan/iocBoot/iocTomoScan_2BM/
+    user2bmb@lyra$  python -i start_tomoscan_stream.py
+
+- start tomoScan user interface, e.g.::
+
+    user2bmb@lyra$  cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
+    user2bmb@lyra$  ./start_medm
+
+.. image:: img/tomoScan.png
+    :width: 50%
+    :align: center
+
+Open the EPICS PV names configuration screen:
+
+.. image:: img/tomoScan_2BM.png
+    :width: 50%
+    :align: center
+
+and select Stream:
+
+.. image:: img/tomoScan_2BM_stream.png
+    :width: 60%
+    :align: center
+
+All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be controlled from the tomoScan_2BM_stream user interface.
+
+Run tomoStream
+^^^^^^^^^^^^^^
+
+- start tomoStream IOC, e.g.::
+
+    tomo@handyn$  cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
+    tomo@handyn$  ./start_IOC
+
+- start the tomostream.py supporting streaming reconstruction, e.g.::
+
+    tomo@handyn$ cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
+    tomo@handyn$ python -i start_tomostream.py
+
+- start tomoStream user interface, e.g.::
+
+    tomo@handyn$ cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
+    tomo@handyn$ ./start_medm
+
+.. image:: img/tomoStream.png
+    :width: 60%
+    :align: center
+
+Open the EPICS PV names configuration screen:
 
 .. image:: img/tomoStreamEPICS_PVs.png
-    :width: 60%
+    :width: 50%
     :align: center
 
-Simulation mode can be used to replace streaming data from the detector by the data from an h5 file.
-Streaming reconstruction in the simulation mode is done by providing an h5 file as a parameter for both the server and recon engines:
+to set the TomoScan prefix and the PVAccess names provided by `tomoScan`_ for projection (Image), dark and flat image broadcast. Here also set the Recon PVAccess name where the streaming reconstruction will served. Use the Recon PVAccess name to view the live reconstriction using the `EPICS_NTNDA_Viewer`_ ImageJ plug-in:
 
-    $ tomostream recon --simulate-h5file /local/data/2020-07/Nikitin/streaming_077.h5 
-
-    $ tomostream server --simulate-h5file /local/data/2020-07/Nikitin/streaming_077.h5 
-
-All **tomostream** functionalies can be controlled from the window below:
-
-.. image:: img/tomostream.png
-    :width: 60%
+.. image:: img/EPICS_NTNDA_Viewer.png
+    :width: 70%
     :align: center
 
-Data saving and retake of flat fields can be triggered at any time during streaming by pressing "Capture" and "Retake flat - Yes" respectively. 
+Finally press "Start Scan" in the tomoScan control screen and reconstructions will diplay live in ImageJ:
 
-For help::
-
-    $ tomostream -h
-    $ tomostream server -h
-    $ tomostream recon -h
-
-
-
+.. image:: img/tomoStreamRecon.png
+    :width: 70%
+    :align: center
 

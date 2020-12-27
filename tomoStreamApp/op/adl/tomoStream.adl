@@ -1,6 +1,6 @@
 
 file {
-	name="/local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/../../tomoStreamApp/op/adl/tomoStream.adl"
+	name="/local/tomo/conda/tomostream-decarlof/tomoStreamApp/op/adl/tomoStream.adl"
 	version=030111
 }
 display {
@@ -431,11 +431,11 @@ rectangle {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)StartStream"
+		chan="$(P)$(R)StartRecon"
 		clr=14
 		bclr=15
 	}
-	label="Start Stream"
+	label="Start Recon"
 	press_msg="1"
 }
 "message button" {
@@ -446,11 +446,11 @@ rectangle {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)AbortStream"
+		chan="$(P)$(R)AbortRecon"
 		clr=14
 		bclr=20
 	}
-	label="Abort Stream"
+	label="Abort Recon"
 	press_msg="1"
 	release_msg="0"
 }
@@ -510,7 +510,7 @@ text {
 		height=20
 	}
 	monitor {
-		chan="$(P)$(R)StreamStatus"
+		chan="$(P)$(R)ReconStatus"
 		clr=14
 		bclr=51
 	}
