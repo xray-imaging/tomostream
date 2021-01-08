@@ -39,17 +39,14 @@ class Solver():
         self.idz = idz
         self.fbpfilter = fbpfilter 
         
+
         # flag controlling appearance of new dark and flat fields   
         self.new_dark_flat = False
+    
+    def free(self):
+        """Free GPU memory"""
 
-        # manual handling of GPU memory deallocation with ctrl-c,ctrl-z signals (Cupy does not control correct deallocation)
-        signal.signal(signal.SIGINT, self.signal_handler)
-        signal.signal(signal.SIGTSTP, self.signal_handler)
-
-    def signal_handler(self, sig, frame):  
-        """Free GPU memory after SIGINT, SIGSTSTP"""
         cp.get_default_memory_pool().free_all_blocks()
-        sys.exit()
 
     def set_dark(self, data):
         """Copy dark field (already averaged) to GPU"""

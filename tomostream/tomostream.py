@@ -79,8 +79,10 @@ class TomoStream():
         self.epics_pvs['StartRecon'].add_callback(self.pv_callback)
         self.epics_pvs['AbortRecon'].add_callback(self.pv_callback)
         
-         # Set ^C interrupt to abort the scan
+         # Set ^C, ^Z interrupt to abort the stream reconstruction
         signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTSTP, self.signal_handler)
+
 
         # Start the watchdog timer thread
         thread = threading.Thread(target=self.reset_watchdog, args=(), daemon=True)
@@ -106,10 +108,9 @@ class TomoStream():
             thread.start()  
 
     def signal_handler(self, sig, frame):
-        """Calls abort_scan when ^C is typed"""
-        if sig == signal.SIGINT:
-            self.abort_stream()
-            self.slv.mempool.free_all_blocks()
+        """Calls abort_scan when ^C or ^Z is typed"""
+        if (sig == signal.SIGINT) or (sig == signal.SIGTSTP):
+            self.abort_stream()            
 
     def reset_watchdog(self):
         """Sets the watchdog timer to 5 every 3 seconds"""
@@ -280,6 +281,7 @@ class TomoStream():
         """Aborts streaming that is running.
         """
         self.epics_pvs['ReconStatus'].put('Aborting reconstruction')
+        self.slv.free()
         self.stream_is_running = False
 
     def read_pv_file(self, pv_file_name, macros):
