@@ -24,7 +24,7 @@ All **tomostream** functionalies can be controlled from the tomoStream user inte
 - Tomography instrument control
 - Projection, dark and flat image broadcast as PV access variables
 - On-demand retake of dark-flat field images
-- On-demand data capturing with saving in a `standard hdf5 `DXfile`_ file
+- On-demand data capturing with saving in a standard hdf5 `DXfile`_ file
 - Set a number of projectons collected before a triggered data capturing event to be also saved in the same hdf5 file
 
 
