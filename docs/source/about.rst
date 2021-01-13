@@ -25,7 +25,7 @@ All **tomostream** functionalies can be controlled from the tomoStream user inte
 - Projection, dark and flat image broadcast as PV access variables
 - On-demand retake of dark-flat field images
 - On-demand data capturing with saving in a standard hdf5 `DXfile`_ file
-- Set a number of projectons collected before a triggered data capturing event to be also saved in the same hdf5 file
+- Set a number of projectons (“Pre count”) collected before a triggered data capturing event to be also saved in the same hdf5 file
 
 
 All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be controlled from the tomoScan_2BM_stream user interface:
