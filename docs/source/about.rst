@@ -33,3 +33,12 @@ All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be contro
 .. image:: img/tomoScan_2BM_stream.png
     :width: 60%
     :align: center
+
+
+The output of **tomostream** is a live reconstruction diplaying in ImageJ using the `EPICS_NTNDA_Viewer`_ plug-in:
+
+.. image:: img/tomoStreamRecon.png
+    :width: 50%
+    :align: center
+    
+While the sample is rotating is possible to optimize instrument (alignment, focus, sample to detector distance etc.) and  beamline (energy etc.) conditions and monitor the effect live on the 3 orthogonal slices. It is also possible to automatically trigger data capturing based on events occurring in the sample and its environment as a result of segmentation or machine learning.
