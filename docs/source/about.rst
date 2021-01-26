@@ -34,7 +34,7 @@ All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be contro
 
 The output of **tomostream** is a live reconstruction diplaying in ImageJ using the `EPICS_NTNDA_Viewer`_ plug-in:
 
-.. image:: docs/source/img/tomoStreamRecon.png
+.. image:: img/tomoStreamRecon.png
     :width: 50%
     :align: center
     
