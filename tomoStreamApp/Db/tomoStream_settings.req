@@ -15,10 +15,11 @@ $(P)$(R)TomoScanPVPrefix
 ######################
 # tomoStream PVA names
 ######################
+$(P)$(R)ImagePVAPName
 $(P)$(R)DarkPVAName
 $(P)$(R)FlatPVAName
+$(P)$(R)ThetaPVAName
 $(P)$(R)ReconPVAName
-$(P)$(R)ImagePVAPName
 
 ############################
 # Streaming analysis control
