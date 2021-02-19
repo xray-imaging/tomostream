@@ -65,6 +65,9 @@ tomoStream PVA Names
   * - $(P)$(R)FlatPVAName
     - stringout
     - Contains the name of the TomoScan PVA where the flat images are stored
+  * - $(P)$(R)ThetaPVAName
+    - stringout
+    - Contains the name of the TomoScan PVA where the rotation angle positions are stored
   * - $(P)$(R)ReconPVAName
     - stringout
     - Contains the name of the TomoStream PVA where the the selected 3 orthogonal slices are stored
