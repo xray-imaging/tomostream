@@ -50,18 +50,20 @@ class TomoStream():
     
         self.epics_pvs['RotationStep']       = PV(prefix + 'RotationStep')
         
-        self.epics_pvs['PSOPVPrefix']        = PV(prefix + 'PSOPVPrefix')
-        if self.epics_pvs['PSOPVPrefix'].get(as_string=True) == None:
-            log.error("TomoScan is down")
-            log.error("Type exit() here and start TomoScan first")
-            return
-        self.epics_pvs['ThetaArray']         = PV(self.epics_pvs['PSOPVPrefix'].get(as_string=True) + 'motorPos.AVAL')
-    
+        # Replace PSOPVPrefix to link to check a TomoScanStream PV so it returns if scan IOC is down
+        # self.epics_pvs['PSOPVPrefix']        = PV(prefix + 'PSOPVPrefix')
+        # if self.epics_pvs['PSOPVPrefix'].get(as_string=True) == None:
+        #     log.error("TomoScan is down")
+        #     log.error("Type exit() here and start TomoScan first")
+        #     return
+  
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
         self.epics_pvs['PvaDark']        = pva.Channel(self.epics_pvs['DarkPVAName'].get())
         self.pva_dark = self.epics_pvs['PvaDark']
         self.epics_pvs['PvaFlat']        = pva.Channel(self.epics_pvs['FlatPVAName'].get())
         self.pva_flat = self.epics_pvs['PvaFlat']   
+        self.epics_pvs['PvaTheta']        = pva.Channel(self.epics_pvs['ThetaPVAName'].get())
+        self.pva_theta = self.epics_pvs['PvaTheta']   
         
         # pva type channel that contains projection and metadata
         image_pv_name = PV(self.epics_pvs['ImagePVAPName'].get()).get()
@@ -142,7 +144,10 @@ class TomoStream():
         height = pva_image_data['dimension'][1]['size']
         self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
                                     {'size': width, 'fullSize': width, 'binning': 1}]
-        self.theta = self.epics_pvs['ThetaArray'].get()[:self.epics_pvs['NumAngles'].get()]                
+        # self.theta = self.epics_pvs['ThetaArray'].get()[:self.epics_pvs['NumAngles'].get()]                
+        self.theta = self.pva_theta.get()['value']
+        print(self.theta)
+        #exit()
         # update limits on sliders
         # epics_pvs['OrthoXlimit'].put(width-1)
         # epics_pvs['OrthoYlimit'].put(width-1)
@@ -224,7 +229,9 @@ class TomoStream():
         if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with dark field has cocrrect sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_dark(data)
-            log.warning('new dark fields acquired')
+            print('Norm dark', np.linalg.norm(data))
+            log.error('new dark fields acquired')
+
     
     def add_flat(self, pv):
         """PV monitoring function for reading new flat fields from manually running pv server 
@@ -233,7 +240,8 @@ class TomoStream():
         if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with flat has correct sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_flat(data)
-            log.warning('new flat fields acquired')
+            print('Norm flat', np.linalg.norm(data))
+            log.error('new flat fields acquired')
     
     def begin_stream(self):
         """Run streaming reconstruction by sending new incoming projections from the queue to the solver class,

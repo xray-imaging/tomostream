@@ -30,6 +30,11 @@ record(stringout, "$(P)$(R)FlatPVAName")
    field(VAL,  "$(FLAT_PVA)")
 }
 
+record(stringout, "$(P)$(R)ThetaPVAName")
+{
+   field(VAL,  "$(THETA_PVA)")
+}
+
 record(stringout, "$(P)$(R)ReconPVAName")
 {
    field(VAL,  "$(RECON_PVA)")
