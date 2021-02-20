@@ -21,9 +21,9 @@ All **tomostream** functionalies can be controlled from the tomoStream user inte
 - On-demand retake of dark-flat field images
 - On-demand data capturing 
 
-All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be controlled from the tomoScan_2BM_stream user interface:
+All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be controlled from the tomoScanStream user interface marked in yellow:
 
-.. image:: docs/source/img/tomoScan_2BM_stream.png
+.. image:: docs/source/img/tomoScanStream.png
     :width: 50%
     :align: center
 

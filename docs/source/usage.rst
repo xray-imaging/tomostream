@@ -43,23 +43,11 @@ Once `tomoScan`_ is installed on the computer connected to the detector:
     user2bmb@lyra$  cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
     user2bmb@lyra$  ./start_medm
 
-.. image:: img/tomoScan.png
-    :width: 50%
-    :align: center
-
-Open the EPICS PV names configuration screen:
-
-.. image:: img/tomoScan_2BM.png
-    :width: 50%
-    :align: center
-
-and select Stream:
-
-.. image:: img/tomoScan_2BM_stream.png
+.. image:: img/tomoScanStream.png
     :width: 60%
     :align: center
 
-All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be controlled from the tomoScan_2BM_stream user interface.
+All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be controlled from the tomoScanStream user interface marked in yellow.
 
 Run tomoStream
 ^^^^^^^^^^^^^^
