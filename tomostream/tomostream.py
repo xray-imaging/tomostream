@@ -28,6 +28,8 @@ class TomoStream():
 
     def __init__(self, pv_files, macros):
 
+        log.setup_custom_logger("./tomostream.log")
+
         # init pvs
         self.config_pvs = {}
         self.control_pvs = {}
@@ -48,9 +50,13 @@ class TomoStream():
     
         self.epics_pvs['RotationStep']       = PV(prefix + 'RotationStep')
         
-        #self.epics_pvs['PSOPVPrefix']        = PV(prefix + 'PSOPVPrefix')
-        #self.epics_pvs['ThetaArray']         = PV(self.epics_pvs['PSOPVPrefix'].get(as_string=True) + 'motorPos.AVAL')
-    
+        # Replace PSOPVPrefix to link to check a TomoScanStream PV so it returns if scan IOC is down
+        # self.epics_pvs['PSOPVPrefix']        = PV(prefix + 'PSOPVPrefix')
+        # if self.epics_pvs['PSOPVPrefix'].get(as_string=True) == None:
+        #     log.error("TomoScan is down")
+        #     log.error("Type exit() here and start TomoScan first")
+        #     return
+  
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
         self.epics_pvs['PvaDark']        = pva.Channel(self.epics_pvs['DarkPVAName'].get())
         self.pva_dark = self.epics_pvs['PvaDark']
@@ -89,7 +95,6 @@ class TomoStream():
         # Start the watchdog timer thread
         thread = threading.Thread(target=self.reset_watchdog, args=(), daemon=True)
         thread.start()
-        log.setup_custom_logger("./tomostream.log")
         
     def pv_callback(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed
