@@ -2,5 +2,5 @@ file "$(TOP)/db/tomoStream.template"
 {
 pattern
 {  P,      R, TOMO_SCAN, IMAGE_P, DARK_PVA, FLAT_PVA, RECON_PVA, THETA_PVA}
-{2bmb:, TomoStream:, 2bmb:TomoScanStream:, 2bmb:TomoScanStream:PvaPluginPVPrefix, 2bmb:TomoScanStream:StreamDarkFields, 2bmb:TomoScanStream:StreamFlatFields, 2bmb:TomoStream:StreamRecon, 2bmb:TomoStream:StreamTheta}
+{7bmb:, TomoStream:, 7bmb:TomoScanStream:, 7bmb:TomoScanStream:PvaPluginPVPrefix, 7bmb:TomoScanStream:StreamDarkFields, 7bmb:TomoScanStream:StreamFlatFields, 7bmb:TomoStream:StreamRecon, 7bmb:TomoStream:StreamTheta}
 }
