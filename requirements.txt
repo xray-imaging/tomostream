@@ -1,0 +1,4 @@
+h5py
+cupy
+pyepics
+pvapy
