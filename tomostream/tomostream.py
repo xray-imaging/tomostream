@@ -178,6 +178,9 @@ class TomoStream():
         idx = self.epics_pvs['OrthoX'].get()
         idy = self.epics_pvs['OrthoY'].get()
         idz = self.epics_pvs['OrthoZ'].get()
+        rotx = self.epics_pvs['RotX'].get()
+        roty = self.epics_pvs['RotY'].get()
+        rotz = self.epics_pvs['RotZ'].get()
         fbpfilter = self.epics_pvs['FilterType'].get(as_string=True)        
         
         if hasattr(self,'width'): # update parameters for new sizes 
@@ -188,7 +191,7 @@ class TomoStream():
 
         ## create solver class on GPU        
         self.slv = solver.Solver(buffer_size, width, height, 
-            center, idx, idy, idz, fbpfilter, self.datatype)
+            center, idx, idy, idz, rotx, roty, rotz, fbpfilter, self.datatype)
         
         # temp buffers for storing data taken from the queue
         self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
@@ -259,6 +262,9 @@ class TomoStream():
             idx = self.epics_pvs['OrthoX'].get()
             idy = self.epics_pvs['OrthoY'].get()
             idz = self.epics_pvs['OrthoZ'].get()
+            rotx = self.epics_pvs['RotX'].get()
+            roty = self.epics_pvs['RotY'].get()
+            rotz = self.epics_pvs['RotZ'].get()
             fbpfilter = self.epics_pvs['FilterType'].get(as_string=True)
             # take items from the queue
             nitem = 0
@@ -275,16 +281,15 @@ class TomoStream():
             
             if(nitem == 0):
                 continue
-            idx = max(min(idx,self.width-1),0)
-            idy = max(min(idy,self.width-1),0)
-            idz = max(min(idz,self.height-1),0)
-            log.info('center %s: idx, idy, idz: %s %s %s, filter: %s',
-                     center, idx, idy, idz, fbpfilter)
+
+        
+            log.info('center %s: idx, idy, idz: %s %s %s, rotx, roty, rotz: %s %s %s, filter: %s',
+                     center, idx, idy, idz, rotx, roty, rotz, fbpfilter)
             
             # reconstruct on GPU
             util.tic()
             rec = self.slv.recon_optimized(
-                self.proj_buffer[:nitem], self.theta_buffer[:nitem], self.ids_buffer[:nitem], center, idx, idy, idz, fbpfilter)
+                self.proj_buffer[:nitem], self.theta_buffer[:nitem], self.ids_buffer[:nitem], center, idx, idy, idz, rotx, roty, rotz, fbpfilter)
             self.epics_pvs['ReconTime'].put(util.toc())
             
             # write result to pv

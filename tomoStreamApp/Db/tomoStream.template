@@ -84,6 +84,21 @@ record(longout, "$(P)$(R)OrthoZ")
    field(HOPR, "2448")
 }
 
+record(ao, "$(P)$(R)RotX")
+{
+   field(PREC, "3")   
+}
+
+record(ao, "$(P)$(R)RotY")
+{
+   field(PREC, "3")   
+}
+
+record(ao, "$(P)$(R)RotZ")
+{
+   field(PREC, "3")   
+}
+
 ##################################
 # Stream status via Channel Access
 ##################################

@@ -1,13 +1,13 @@
 
 file {
-	name="/local/tomo/conda/tomostream-decarlof/tomoStreamApp/op/adl/tomoStream.adl"
+	name="/home/beams19/USERTXM/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStream.adl"
 	version=030111
 }
 display {
 	object {
-		x=1743
-		y=377
-		width=700
+		x=4738
+		y=873
+		width=703
 		height=510
 	}
 	clr=14
@@ -111,140 +111,6 @@ rectangle {
 		bclr=4
 	}
 	format="% 8.2f"
-	limits {
-	}
-}
-valuator {
-	object {
-		x=223
-		y=150
-		width=470
-		height=25
-	}
-	control {
-		chan="$(P)$(R)OrthoX"
-		clr=14
-		bclr=4
-	}
-	dPrecision=1.000000
-	limits {
-		precSrc="default"
-		precDefault=1
-	}
-}
-valuator {
-	object {
-		x=223
-		y=175
-		width=470
-		height=25
-	}
-	control {
-		chan="$(P)$(R)OrthoY"
-		clr=14
-		bclr=4
-	}
-	dPrecision=1.000000
-	limits {
-	}
-}
-valuator {
-	object {
-		x=223
-		y=200
-		width=470
-		height=25
-	}
-	control {
-		chan="$(P)$(R)OrthoZ"
-		clr=14
-		bclr=4
-	}
-	dPrecision=1.000000
-	limits {
-	}
-}
-text {
-	object {
-		x=-23
-		y=163
-		width=140
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Ortho X"
-	align="horiz. right"
-}
-text {
-	object {
-		x=-23
-		y=188
-		width=140
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Orhto Y"
-	align="horiz. right"
-}
-text {
-	object {
-		x=-23
-		y=213
-		width=140
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Ortho Z"
-	align="horiz. right"
-}
-"text entry" {
-	object {
-		x=138
-		y=204
-		width=80
-		height=20
-	}
-	control {
-		chan="$(P)$(R)OrthoZ"
-		clr=14
-		bclr=51
-	}
-	limits {
-	}
-}
-"text entry" {
-	object {
-		x=138
-		y=179
-		width=80
-		height=20
-	}
-	control {
-		chan="$(P)$(R)OrthoY"
-		clr=14
-		bclr=51
-	}
-	limits {
-	}
-}
-"text entry" {
-	object {
-		x=138
-		y=154
-		width=80
-		height=20
-	}
-	control {
-		chan="$(P)$(R)OrthoX"
-		clr=14
-		bclr=51
-	}
 	limits {
 	}
 }
@@ -355,7 +221,7 @@ rectangle {
 	object {
 		x=5
 		y=42
-		width=690
+		width=692
 		height=65
 	}
 	"basic attribute" {
@@ -616,6 +482,268 @@ text {
 		bclr=51
 	}
 	format="string"
+	limits {
+	}
+}
+composite {
+	object {
+		x=290
+		y=150
+		width=400
+		height=75
+	}
+	"composite name"=""
+	children {
+		valuator {
+			object {
+				x=290
+				y=150
+				width=400
+				height=25
+			}
+			control {
+				chan="$(P)$(R)OrthoX"
+				clr=14
+				bclr=4
+			}
+			dPrecision=1.000000
+			limits {
+				precSrc="default"
+				precDefault=1
+			}
+		}
+		valuator {
+			object {
+				x=290
+				y=175
+				width=400
+				height=25
+			}
+			control {
+				chan="$(P)$(R)OrthoY"
+				clr=14
+				bclr=4
+			}
+			dPrecision=1.000000
+			limits {
+			}
+		}
+		valuator {
+			object {
+				x=290
+				y=200
+				width=400
+				height=25
+			}
+			control {
+				chan="$(P)$(R)OrthoZ"
+				clr=14
+				bclr=4
+			}
+			dPrecision=1.000000
+			limits {
+			}
+		}
+	}
+}
+composite {
+	object {
+		x=225
+		y=154
+		width=60
+		height=70
+	}
+	"composite name"=""
+	children {
+		"text entry" {
+			object {
+				x=225
+				y=204
+				width=60
+				height=20
+			}
+			control {
+				chan="$(P)$(R)OrthoZ"
+				clr=14
+				bclr=51
+			}
+			limits {
+			}
+		}
+		"text entry" {
+			object {
+				x=225
+				y=179
+				width=60
+				height=20
+			}
+			control {
+				chan="$(P)$(R)OrthoY"
+				clr=14
+				bclr=51
+			}
+			limits {
+			}
+		}
+		"text entry" {
+			object {
+				x=225
+				y=154
+				width=60
+				height=20
+			}
+			control {
+				chan="$(P)$(R)OrthoX"
+				clr=14
+				bclr=51
+			}
+			limits {
+			}
+		}
+	}
+}
+composite {
+	object {
+		x=135
+		y=153
+		width=80
+		height=70
+	}
+	"composite name"=""
+	children {
+		text {
+			object {
+				x=135
+				y=153
+				width=80
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Ortho X"
+			align="horiz. right"
+		}
+		text {
+			object {
+				x=135
+				y=178
+				width=80
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Orhto Y"
+			align="horiz. right"
+		}
+		text {
+			object {
+				x=135
+				y=203
+				width=80
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Ortho Z"
+			align="horiz. right"
+		}
+	}
+}
+composite {
+	object {
+		x=2
+		y=154
+		width=60
+		height=70
+	}
+	"composite name"=""
+	children {
+		text {
+			object {
+				x=2
+				y=154
+				width=60
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Rot X"
+			align="horiz. right"
+		}
+		text {
+			object {
+				x=2
+				y=179
+				width=60
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Rot Y"
+			align="horiz. right"
+		}
+		text {
+			object {
+				x=2
+				y=204
+				width=60
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Rot Z"
+			align="horiz. right"
+		}
+	}
+}
+"text entry" {
+	object {
+		x=75
+		y=204
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)RotZ"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=75
+		y=179
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)RotY"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=75
+		y=154
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)RotX"
+		clr=14
+		bclr=51
+	}
 	limits {
 	}
 }
