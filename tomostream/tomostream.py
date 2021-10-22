@@ -87,6 +87,8 @@ class TomoStream():
         self.epics_pvs['StartRecon'].add_callback(self.pv_callback)
         self.epics_pvs['AbortRecon'].add_callback(self.pv_callback)
         
+        self.slv = None
+        
          # Set ^C, ^Z interrupt to abort the stream reconstruction
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTSTP, self.signal_handler)
@@ -294,7 +296,8 @@ class TomoStream():
         """Aborts streaming that is running.
         """
         self.epics_pvs['ReconStatus'].put('Aborting reconstruction')
-        self.slv.free()
+        if(self.slv is not None):
+            self.slv.free()
         self.stream_is_running = False
 
     def read_pv_file(self, pv_file_name, macros):
