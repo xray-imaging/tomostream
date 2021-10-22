@@ -155,7 +155,6 @@ class Solver():
             or center != self.center or fbpfilter != self.fbpfilter or self.new_dark_flat or
             len(ids) > self.ntheta//2)        
         if(recompute_part):            
-            print(f'{recompute_part}')
             # subtract old part
             self.obj -= self.recon(self.data[ids], self.theta[ids])    
 
