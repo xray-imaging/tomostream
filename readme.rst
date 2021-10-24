@@ -4,7 +4,7 @@
 .. _ImageJ: https://imagej.nih.gov/ij/
 
 ================
- About
+TomoStream
 ================
 
 **tomostream** is Python module for supporting streaming analysis of tomographic data where all pre-processing and reconstruction procedures are performed in real time while images are collected and the rotary stage is moving.  **tomostream** provides this main functionality:
