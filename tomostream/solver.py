@@ -18,7 +18,7 @@ class Solver():
         The pixel width and height of the projection.
     """
 
-    def __init__(self, ntheta, n, nz, center, idx, idy, idz, fbpfilter, data_type):
+    def __init__(self, ntheta, n, nz, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, data_type):
         
         self.n = n
         self.nz = nz
@@ -33,12 +33,15 @@ class Solver():
         self.theta = cp.zeros([ntheta], dtype='float32')
         
         # reconstruction parameters
-        self.center = center
-        self.idx = idx
-        self.idy = idy
-        self.idz = idz
-        self.fbpfilter = fbpfilter 
-        
+ 
+        self.idx = np.int32(idx)
+        self.idy = np.int32(idy)
+        self.idz = np.int32(idz)
+        self.rotx = np.float32(rotx/180*np.pi)
+        self.roty = np.float32(roty/180*np.pi)
+        self.rotz = np.float32(rotz/180*np.pi)
+        self.center = np.float32(center)     
+        self.fbpfilter = fbpfilter         
 
         # flag controlling appearance of new dark and flat fields   
         self.new_dark_flat = False
@@ -64,9 +67,9 @@ class Solver():
         """Compute backprojection to orthogonal slices"""
 
         obj = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array
-        obj[:self.nz,         :self.n  ] = kernels.orthox(data, theta, self.center, self.idx)
-        obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy)
-        obj[:self.n , 2*self.n:3*self.n] = kernels.orthoz(data, theta, self.center, self.idz)
+        obj[:self.nz,         :self.n  ] = kernels.orthox(data, theta, self.center, self.idx, self.rotx)
+        obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy, self.roty)
+        obj[:self.n , 2*self.n:3*self.n] = kernels.orthoz(data, theta, self.center, self.idz, self.rotz)
         obj /= self.ntheta
         return obj
 
@@ -112,7 +115,7 @@ class Solver():
         obj = self.backprojection(data, theta*np.pi/180)
         return obj
 
-    def recon_optimized(self, data, theta, ids, center, idx, idy, idz, fbpfilter, dbg=False):
+    def recon_optimized(self, data, theta, ids, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dbg=False):
         """Optimized reconstruction of the object
         from the whole set of projections in the interval of size pi.
         Resulting reconstruction is obtained by replacing the reconstruction part corresponding to incoming projections, 
@@ -138,23 +141,33 @@ class Solver():
         obj: np.array(n,3*n) 
             Concatenated reconstructions for X-Y-Z orthoslices
         """
-        
+ 
+        idx = np.int32(idx)
+        idy = np.int32(idy)
+        idz = np.int32(idz)
+        rotx = np.float32(rotx/180*np.pi)
+        roty = np.float32(roty/180*np.pi)
+        rotz = np.float32(rotz/180*np.pi)
+        center = np.float32(center)       
         # recompute only by replacing a part of the data in the buffer, or by using the whole buffer
         recompute_part = not (idx != self.idx or idy != self.idy or idz != self.idz 
+            or rotx != self.rotx or roty != self.roty or rotz != self.rotz 
             or center != self.center or fbpfilter != self.fbpfilter or self.new_dark_flat or
-            len(ids) > self.ntheta//2)
-
-        if(recompute_part):
+            len(ids) > self.ntheta//2)        
+        if(recompute_part):            
             # subtract old part
             self.obj -= self.recon(self.data[ids], self.theta[ids])    
 
         # update data in the buffer
         self.data[ids] = cp.array(data.reshape(data.shape[0], self.nz, self.n))
         self.theta[ids] = cp.array(theta.astype('float32'))        
-        self.idx = np.int32(idx)
-        self.idy = np.int32(idy)
-        self.idz = np.int32(idz)
-        self.center = np.float32(center)
+        self.idx = idx
+        self.idy = idy
+        self.idz = idz
+        self.rotx = rotx
+        self.roty = roty
+        self.rotz = rotz
+        self.center = center
         self.fbpfilter = fbpfilter
         self.new_dark_flat = False
 
