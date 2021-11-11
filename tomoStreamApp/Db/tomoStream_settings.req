@@ -30,6 +30,9 @@ $(P)$(R)FilterType
 $(P)$(R)OrthoX
 $(P)$(R)OrthoY
 $(P)$(R)OrthoZ
+$(P)$(R)RotX
+$(P)$(R)RotY
+$(P)$(R)RotZ
 
 ##################################
 # Stream status via Channel Access
