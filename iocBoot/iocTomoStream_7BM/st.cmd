@@ -1,6 +1,6 @@
 < envPaths
 
-epicsEnvSet("P", "2bmb:")
+epicsEnvSet("P", "7bmb:")
 epicsEnvSet("R", "TomoStream:")
 
 ## Register all support components
