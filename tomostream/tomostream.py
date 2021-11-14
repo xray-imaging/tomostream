@@ -164,8 +164,7 @@ class TomoStream():
             buffer_size = np.where(self.theta-self.theta[0]>180-dtheta)[0][0]
         if(buffer_size*width*height>pow(2,32)):
             log.error('buffer_size %s not enough memory', buffer_size)
-            exit(0)
-        self.epics_pvs['BufferSize'].put(buffer_size)                
+            exit(0)        
         # queue
         self.data_queue = queue.Queue(maxsize=buffer_size)
         
@@ -182,6 +181,7 @@ class TomoStream():
         roty = self.epics_pvs['RotY'].get()
         rotz = self.epics_pvs['RotZ'].get()
         fbpfilter = self.epics_pvs['FilterType'].get(as_string=True)        
+        dezinger = self.epics_pvs['Dezinger'].get(as_string=False)        
         
         if hasattr(self,'width'): # update parameters for new sizes 
             self.epics_pvs['Center'].put(center*width/self.width)
@@ -191,7 +191,7 @@ class TomoStream():
 
         ## create solver class on GPU        
         self.slv = solver.Solver(buffer_size, width, height, 
-            center, idx, idy, idz, rotx, roty, rotz, fbpfilter, self.datatype)
+            center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, self.datatype)
         
         # temp buffers for storing data taken from the queue
         self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
@@ -266,6 +266,7 @@ class TomoStream():
             roty = self.epics_pvs['RotY'].get()
             rotz = self.epics_pvs['RotZ'].get()
             fbpfilter = self.epics_pvs['FilterType'].get(as_string=True)
+            dezinger = self.epics_pvs['Dezinger'].get(as_string=False)
             # take items from the queue
             nitem = 0
             while ((not self.data_queue.empty()) and (nitem < self.buffer_size)):
@@ -283,15 +284,15 @@ class TomoStream():
                 continue
 
         
-            log.info('center %s: idx, idy, idz: %s %s %s, rotx, roty, rotz: %s %s %s, filter: %s',
-                     center, idx, idy, idz, rotx, roty, rotz, fbpfilter)
+            log.info('center %s: idx, idy, idz: %s %s %s, rotx, roty, rotz: %s %s %s, filter: %s, dezinger: %s',
+                     center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger)
             
             # reconstruct on GPU
             util.tic()
             rec = self.slv.recon_optimized(
-                self.proj_buffer[:nitem], self.theta_buffer[:nitem], self.ids_buffer[:nitem], center, idx, idy, idz, rotx, roty, rotz, fbpfilter)
+                self.proj_buffer[:nitem], self.theta_buffer[:nitem], self.ids_buffer[:nitem], center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger)
             self.epics_pvs['ReconTime'].put(util.toc())
-            
+            self.epics_pvs['BufferSize'].put(f'{nitem}/{self.buffer_size}')                
             # write result to pv
             self.pv_rec['value'] = ({'floatValue': rec.flatten()},)     
         self.epics_pvs['StartRecon'].put('Done')           
