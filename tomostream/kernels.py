@@ -30,7 +30,7 @@ extern "C" {
             if ((s0 >= 0) & (s0 < n - 1))
                 f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
         }
-        f[ty + tz * n] = f0;
+        f[ty + tz * n] = f0*n;
     }
 
     void __global__ orthoy(float *f, float *g, float *theta, float center, float rot, int iy, int n, int nz, int ntheta)
@@ -57,7 +57,7 @@ extern "C" {
             if ((s0 >= 0) & (s0 < n - 1))
                 f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
         }
-        f[tx + tz * n] = f0;
+        f[tx + tz * n] = f0*n;
     }
 
     void __global__ orthoz(float *f, float *g, float *theta, float center, float rot, int iz, int n, int nz, int ntheta)
@@ -88,7 +88,7 @@ extern "C" {
             if ((s0 >= 0) & (s0 < n - 1))            
                 f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
         }
-        f[tx + ty * n] = f0;
+        f[tx + ty * n] = f0*n;
     }
 }
 """
