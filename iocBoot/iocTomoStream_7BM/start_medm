@@ -1,1 +1,1 @@
-medm -x -macro "P=7bmb:,R=TomoStream:" ../../tomoStreamApp/op/adl/tomoStream.adl &
+medm -x -macro "P=7bmtomo:,R=TomoStream:" ../../tomoStreamApp/op/adl/tomoStream.adl &
