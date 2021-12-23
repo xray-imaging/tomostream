@@ -42,20 +42,17 @@ class TomoStream():
         self.show_pvs()
         self.epics_pvs = {**self.config_pvs, **self.control_pvs}
         
+        
         prefix = self.pv_prefixes['TomoScan']
         # tomoscan pvs
         self.epics_pvs['FrameType']          = PV(prefix + 'FrameType')
         self.epics_pvs['NumAngles']          = PV(prefix + 'NumAngles')
     
         self.epics_pvs['RotationStep']       = PV(prefix + 'RotationStep')
+        # todo: add pvname,... to ioc
+        self.epics_pvs['LensSelect'] = PV('2bm:MCTOptics:LensSelect')
         
-        # Replace PSOPVPrefix to link to check a TomoScanStream PV so it returns if scan IOC is down
-        # self.epics_pvs['PSOPVPrefix']        = PV(prefix + 'PSOPVPrefix')
-        # if self.epics_pvs['PSOPVPrefix'].get(as_string=True) == None:
-        #     log.error("TomoScan is down")
-        #     log.error("Type exit() here and start TomoScan first")
-        #     return
-  
+        
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
         self.epics_pvs['PvaDark']        = pva.Channel(self.epics_pvs['DarkPVAName'].get())
         self.pva_dark = self.epics_pvs['PvaDark']
@@ -85,6 +82,10 @@ class TomoStream():
         
         self.epics_pvs['StartRecon'].add_callback(self.pv_callback)
         self.epics_pvs['AbortRecon'].add_callback(self.pv_callback)
+        self.epics_pvs['LensSelect'].add_callback(self.pv_callback)
+        
+
+        #
         
         self.slv = None
         
@@ -96,6 +97,11 @@ class TomoStream():
         # Start the watchdog timer thread
         thread = threading.Thread(target=self.reset_watchdog, args=(), daemon=True)
         thread.start()
+        
+        self.lens_cur = self.epics_pvs['LensSelect'].get()
+        self.stream_is_running = False
+        self.stream_pause = False
+        
         
     def pv_callback(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed
@@ -114,6 +120,10 @@ class TomoStream():
         elif (pvname.find('AbortRecon') != -1) and (value == 0):
             thread = threading.Thread(target=self.abort_stream, args=())
             thread.start()  
+        elif (pvname.find('LensSelect') != -1 and (value==0 or value==1 or value==2)):
+            thread = threading.Thread(target=self.lens_change_sync, args=())
+            thread.start()  
+        
 
     def signal_handler(self, sig, frame):
         """Calls abort_scan when ^C or ^Z is typed"""
@@ -213,7 +223,9 @@ class TomoStream():
         """PV monitoring function for adding projection data and corresponding angle to the queue"""
 
         frame_type = self.epics_pvs['FrameType'].get(as_string=True)
-        if(self.stream_is_running and self.epics_pvs['FrameType'].get(as_string=True) == 'Projection'):
+        if(self.stream_is_running and 
+            not self.stream_pause and
+            self.epics_pvs['FrameType'].get(as_string=True) == 'Projection'):
             cur_id = pv['uniqueId'] # unique projection id for determining angles and places in the buffers        
             # write projection, theta, and id into the queue
             data_item = {'projection': pv['value'][0][util.type_dict[self.datatype]],
@@ -256,6 +268,8 @@ class TomoStream():
         self.epics_pvs['ReconStatus'].put('Running')
         
         while(self.stream_is_running):
+            if(self.stream_pause):
+                continue
             # take parameters from the GUI                
             center = self.epics_pvs['Center'].get()
             idx = self.epics_pvs['OrthoX'].get()
@@ -293,6 +307,16 @@ class TomoStream():
             self.epics_pvs['ReconTime'].put(util.toc())
             self.epics_pvs['BufferSize'].put(f'{nitem}/{self.buffer_size}')                
             # write result to pv
+            rec[0:self.width,idx:idx+3] = np.nan
+            rec[idy:idy+3,0:self.width] = np.nan
+
+            rec[0:self.width,self.width+idx:self.width+idx+3] = np.nan
+            rec[idz:idz+3,self.width:2*self.width] = np.nan
+
+            rec[0:self.width,2*self.width+idy:2*self.width+idy+3] = np.nan
+            rec[idz:idz+3,2*self.width:3*self.width] = np.nan
+
+            
             self.pv_rec['value'] = ({'floatValue': rec.flatten()},)     
         self.epics_pvs['StartRecon'].put('Done')           
         self.epics_pvs['ReconStatus'].put('Stopped')
@@ -304,6 +328,41 @@ class TomoStream():
         if(self.slv is not None):
             self.slv.free()
         self.stream_is_running = False
+
+    def lens_change_sync(self):
+        stream_status = self.stream_is_running
+        self.stream_pause = True
+        log.info('Stop streaming while the lens is changing')        
+        time.sleep(1)
+        if (self.epics_pvs['LensChangeSync'].get(as_string=True)=='Yes'):            
+            log.info('Synchronize with orthoslices')
+            idx = self.epics_pvs['OrthoX'].get()
+            idy = self.epics_pvs['OrthoY'].get()
+            idz = self.epics_pvs['OrthoZ'].get()
+            
+            # to add pvs in init...
+            tomo0deg = PV("2bmS1:m2")
+            tomo90deg = PV("2bmS1:m1")
+            sampley = PV("2bmb:m57")
+            binning = PV('2bmbSP2:ROI1:BinX').get()            
+            magnification = [1.1037, 4.9425, 9.835]# to read from pv
+            pixel_size = 3.45/magnification[self.lens_cur]*binning/1000
+            log.info(f'{pixel_size=}')
+            log.info(f'{idx=} {idy=} {idz=}')
+            
+            sampley.put(sampley.get() + float(idz-self.height/2)*pixel_size)
+            tomo0deg.put(tomo0deg.get() + float(idx-self.width/2)*pixel_size)
+            tomo90deg.put(tomo90deg.get() - float(idy-self.width/2)*pixel_size)
+            self.epics_pvs['OrthoX'].put(self.width//2)
+            self.epics_pvs['OrthoY'].put(self.width//2)
+            self.epics_pvs['OrthoZ'].put(self.height//2)
+        #self.reinit_monitors()
+        waitpv = PV('2bmb:m1.DMOV')
+        self.lens_cur = self.epics_pvs['LensSelect'].get()
+        self.wait_pv(waitpv,1)# to read from pv
+        log.info('Recover streaming status')                
+        self.stream_pause = False
+        
 
     def read_pv_file(self, pv_file_name, macros):
         """Reads a file containing a list of EPICS PVs to be used by TomoScan.
@@ -388,3 +447,28 @@ class TomoStream():
         print('pv_prefixes:')
         for pv_prefix in self.pv_prefixes:
             print(pv_prefix, ':', self.pv_prefixes[pv_prefix])
+
+    def wait_pv(self, epics_pv, wait_val, timeout=-1):
+        """Wait on a pv to be a value until max_timeout (default forever)
+           delay for pv to change
+        """
+
+        time.sleep(.01)
+        start_time = time.time()
+        while True:
+            pv_val = epics_pv.get()
+            if isinstance(pv_val, float):
+                if abs(pv_val - wait_val) < EPSILON:
+                    return True
+            if pv_val != wait_val:
+                if timeout > -1:
+                    current_time = time.time()
+                    diff_time = current_time - start_time
+                    if diff_time >= timeout:
+                        log.error('  *** ERROR: DROPPED IMAGES ***')
+                        log.error('  *** wait_pv(%s, %d, %5.2f reached max timeout. Return False',
+                                      epics_pv.pvname, wait_val, timeout)
+                        return False
+                time.sleep(.01)
+            else:
+                return True
