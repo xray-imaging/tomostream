@@ -1,6 +1,6 @@
 
 file {
-	name="/home/beams/TOMO/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStream.adl"
+	name="/home/beams8/TOMO/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/../../tomoStreamApp/op/adl/tomoStream.adl"
 	version=030111
 }
 display {
@@ -914,5 +914,32 @@ text {
 		clr=14
 	}
 	textix="Slice rotation"
+	align="horiz. right"
+}
+"choice button" {
+	object {
+		x=591
+		y=67
+		width=90
+		height=25
+	}
+	control {
+		chan="$(P)$(R)LensChangeSync.VAL"
+		clr=14
+		bclr=51
+	}
+	stacking="column"
+}
+text {
+	object {
+		x=438
+		y=72
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Sync with lens selection"
 	align="horiz. right"
 }

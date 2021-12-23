@@ -69,9 +69,9 @@ class Solver():
         """Compute backprojection to orthogonal slices"""
 
         obj = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array
-        obj[:self.nz,         :self.n  ] = kernels.orthox(data, theta, self.center, self.idx, self.rotx)
+        obj[:self.n,         :self.n  ] = kernels.orthoz(data, theta, self.center, self.idz, self.rotz)
         obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy, self.roty)
-        obj[:self.n , 2*self.n:3*self.n] = kernels.orthoz(data, theta, self.center, self.idz, self.rotz)
+        obj[:self.nz , 2*self.n:3*self.n] = kernels.orthox(data, theta, self.center, self.idx, self.rotx)
         obj /= self.ntheta
         return obj
 

@@ -51,3 +51,8 @@ $(P)$(R)RotZ
 ###################################
 #controlPV $(P)$(R)StartRecon
 #controlPV $(P)$(R)AbortRecon
+
+##############################################
+# Lens change synchronization with orthoslices
+##############################################
+$(P)$(R)LensChangeSync
