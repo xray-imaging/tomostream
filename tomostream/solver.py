@@ -1,6 +1,7 @@
 import cupy as cp
 import numpy as np
 from cupyx.scipy.fft import rfft, irfft
+from cupyx.scipy import ndimage
 from tomostream import kernels
 from tomostream import util
 import signal
@@ -18,7 +19,7 @@ class Solver():
         The pixel width and height of the projection.
     """
 
-    def __init__(self, ntheta, n, nz, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, data_type):
+    def __init__(self, ntheta, n, nz, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, data_type):
         
         self.n = n
         self.nz = nz
@@ -42,6 +43,7 @@ class Solver():
         self.rotz = np.float32(rotz/180*np.pi)
         self.center = np.float32(center)     
         self.fbpfilter = fbpfilter         
+        self.dezinger = dezinger
 
         # flag controlling appearance of new dark and flat fields   
         self.new_dark_flat = False
@@ -67,9 +69,9 @@ class Solver():
         """Compute backprojection to orthogonal slices"""
 
         obj = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array
-        obj[:self.nz,         :self.n  ] = kernels.orthox(data, theta, self.center, self.idx, self.rotx)
+        obj[:self.n,         :self.n  ] = kernels.orthoz(data, theta, self.center, self.idz, self.rotz)
         obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy, self.roty)
-        obj[:self.n , 2*self.n:3*self.n] = kernels.orthoz(data, theta, self.center, self.idz, self.rotz)
+        obj[:self.nz , 2*self.n:3*self.n] = kernels.orthox(data, theta, self.center, self.idx, self.rotx)
         obj /= self.ntheta
         return obj
 
@@ -104,18 +106,28 @@ class Solver():
 
         data = -cp.log(cp.maximum(data, 1e-6))
         return data
+    
+    def remove_outliers(self, data):
+        """Remove outliers"""
+        if(int(self.dezinger)>0):
+            r = int(self.dezinger)            
+            fdata = ndimage.median_filter(data,[1,r,r])
+            ids = cp.where(cp.abs(fdata-data)>0.5*cp.abs(fdata))
+            data[ids] = fdata[ids]        
+        return data
 
     def recon(self, data, theta):
         """Reconstruction with the standard processing pipeline on GPU"""
 
         data = data.astype('float32')
         data = self.darkflat_correction(data)
+        data = self.remove_outliers(data)
         data = self.minus_log(data)
         data = self.fbp_filter(data)
         obj = self.backprojection(data, theta*np.pi/180)
         return obj
 
-    def recon_optimized(self, data, theta, ids, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dbg=False):
+    def recon_optimized(self, data, theta, ids, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, dbg=False):
         """Optimized reconstruction of the object
         from the whole set of projections in the interval of size pi.
         Resulting reconstruction is obtained by replacing the reconstruction part corresponding to incoming projections, 
@@ -135,6 +147,12 @@ class Solver():
             Rotation center for reconstruction            
         idx, idy, idz: int
             X-Y-Z ortho slices for reconstruction
+        rotx, roty, rotz: float
+            Rotation angles for X-Y-Z slices
+        fbpfilter: str
+            Reconstruction filter
+        dezinger: str
+            None or radius for removing outliers
 
         Return
         ----------
@@ -152,7 +170,7 @@ class Solver():
         # recompute only by replacing a part of the data in the buffer, or by using the whole buffer
         recompute_part = not (idx != self.idx or idy != self.idy or idz != self.idz 
             or rotx != self.rotx or roty != self.roty or rotz != self.rotz 
-            or center != self.center or fbpfilter != self.fbpfilter or self.new_dark_flat or
+            or center != self.center or fbpfilter != self.fbpfilter or dezinger != self.dezinger or self.new_dark_flat or
             len(ids) > self.ntheta//2)        
         if(recompute_part):            
             # subtract old part
@@ -169,6 +187,7 @@ class Solver():
         self.rotz = rotz
         self.center = center
         self.fbpfilter = fbpfilter
+        self.dezinger = dezinger
         self.new_dark_flat = False
 
         if(recompute_part):

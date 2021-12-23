@@ -26,6 +26,11 @@ $(P)$(R)ReconPVAName
 ############################
 $(P)$(R)BufferSize
 $(P)$(R)Center
+$(P)$(R)CenterTweak
+$(P)$(R)CenterTweakUp
+$(P)$(R)CenterTweakDown
+$(P)$(R)Dezinger
+$(P)$(R)RingRemoval
 $(P)$(R)FilterType
 $(P)$(R)OrthoX
 $(P)$(R)OrthoY
@@ -46,3 +51,8 @@ $(P)$(R)RotZ
 ###################################
 #controlPV $(P)$(R)StartRecon
 #controlPV $(P)$(R)AbortRecon
+
+##############################################
+# Lens change synchronization with orthoslices
+##############################################
+$(P)$(R)LensChangeSync
