@@ -42,7 +42,6 @@ class TomoStream():
         self.show_pvs()
         self.epics_pvs = {**self.config_pvs, **self.control_pvs}
         
-        
         prefix = self.pv_prefixes['TomoScan']
         # tomoscan pvs
         self.epics_pvs['FrameType']          = PV(prefix + 'FrameType')
