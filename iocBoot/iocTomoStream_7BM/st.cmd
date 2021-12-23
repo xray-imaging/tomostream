@@ -1,5 +1,4 @@
 < envPaths
-
 epicsEnvSet("P", "7bmtomo:")
 epicsEnvSet("R", "TomoStream:")
 
