@@ -805,7 +805,7 @@ menu {
 }
 text {
 	object {
-		x=313
+		x=219
 		y=377
 		width=140
 		height=20
@@ -813,12 +813,12 @@ text {
 	"basic attribute" {
 		clr=14
 	}
-	textix="Remove rings"
+	textix="Paganin filter"
 	align="horiz. right"
 }
 menu {
 	object {
-		x=468
+		x=367
 		y=378
 		width=150
 		height=20
@@ -941,5 +941,33 @@ text {
 		clr=14
 	}
 	textix="Sync with lens selection"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=593
+		y=375
+		width=98
+		height=25
+	}
+	control {
+		chan="$(P)$(R)RotX"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+text {
+	object {
+		x=445
+		y=378
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="alpha"
 	align="horiz. right"
 }

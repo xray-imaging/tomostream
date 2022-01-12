@@ -157,8 +157,7 @@ class TomoStream():
                                     {'size': width, 'fullSize': width, 'binning': 1}]
         # self.theta = self.epics_pvs['ThetaArray'].get()[:self.epics_pvs['NumAngles'].get()]                
         self.theta = self.pva_theta.get()['value']
-        print(self.theta)
-        #exit()
+        log.warning(f'new theta: {self.theta[:10]}...')
         # update limits on sliders
         # epics_pvs['OrthoXlimit'].put(width-1)
         # epics_pvs['OrthoYlimit'].put(width-1)
@@ -217,6 +216,8 @@ class TomoStream():
         self.pva_flat.monitor(self.add_flat,'')        
         # start monitoring projection data        
         self.pva_plugin_image.monitor(self.add_data,'')
+        # start monitoring projection data                
+        self.pva_theta.monitor(self.reinit_monitors,'')
         self.stream_is_running = True
 
     def add_data(self, pv):
