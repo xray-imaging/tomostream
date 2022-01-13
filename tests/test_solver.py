@@ -1,23 +1,29 @@
 from tomostream import solver
 from tomostream import util
 import numpy as np
-import dxchange
+import time
+import h5py
 
+file_name = '/local/data/test_fish_004.h5'
 
-file_name = '/local/data/2020-07/Nikitin/scan_648.h5'
-file_name_out = '/local/data/2020-07/Nikitin/rec/rec_648'
-
-proj, flat, dark, theta = dxchange.read_aps_32id(file_name, sino=(0, 2048))
+with h5py.File(file_name,'r') as fid:
+    proj = fid['/exchange/data'][:]
+    flat = np.mean(fid['/exchange/data_white'][:],axis=0)
+    dark = np.mean(fid['/exchange/data_dark'][:],axis=0)
+    theta = fid['/exchange/theta'][:]
+print(proj.shape)
+print(dark.shape)
+print(flat.shape)
 
 # parameters
-[ntheta,height,width] = proj.shape
-[idx,idy,idz] = [width//2+32,width//2-32,height//2]
+[ntheta,nz,n] = proj.shape
+[idx,idy,idz] = [n//2+32,n//2-32,nz//2]
 center = 1200
 
-buffer_size = 719
+buffer_size = 180
 
 # init class
-slv = solver.Solver(buffer_size, width, height)
+slv = solver.Solver(buffer_size, n, nz, center, idx, idy, idz, 0, 0, 0, 'Parzen', False, proj.dtype)
 
 # copy flat and and dark to GPU
 slv.set_flat(flat)
@@ -27,8 +33,9 @@ slv.set_dark(dark)
 proj_part = proj[:buffer_size]
 theta_part =  theta[:buffer_size]*180/np.pi
 
-rec = slv.recon(proj_part, theta_part, center, idx, idy, idz, dbg=True)
+ids = np.arange(buffer_size)
+t = time.time()
+rec = slv.recon_optimized(proj_part, theta_part, ids, center, idx, idy, idz, 0, 0, 0, 'Parzen', False, proj.dtype)
+print(time.time()-t)
 
-# write result
-dxchange.write_tiff(rec,file_name_out,overwrite=True)
-
+print(np.linalg.norm(rec))

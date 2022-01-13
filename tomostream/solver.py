@@ -6,7 +6,7 @@ from tomostream import kernels
 from tomostream import util
 import signal
 import sys
-
+import time
 class Solver():
     """Class for tomography reconstruction of ortho-slices through direct 
     discreatization of circular integrals in the Radon transform.
@@ -29,8 +29,9 @@ class Solver():
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
         # GPU storages for the projection buffer, ortho-slices, and angles
-        self.data = cp.zeros([ntheta, nz, n], dtype=data_type)  
+        self.data = cp.zeros([ntheta, nz, n], dtype='float32')
         self.obj = cp.zeros([n, 3*n], dtype='float32')# ortho-slices are concatenated to one 2D array
+        self.obj_tmp = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array
         self.theta = cp.zeros([ntheta], dtype='float32')
         
         # reconstruction parameters
@@ -65,15 +66,13 @@ class Solver():
         self.flat = cp.array(data.astype('float32'))
         self.new_dark_flat = True
     
-    def backprojection(self, data, theta):
+    def backprojection(self, obj, data, theta):
         """Compute backprojection to orthogonal slices"""
 
-        obj = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array
         obj[:self.n,         :self.n  ] = kernels.orthoz(data, theta, self.center, self.idz, self.rotz)
         obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy, self.roty)
         obj[:self.nz , 2*self.n:3*self.n] = kernels.orthox(data, theta, self.center, self.idx, self.rotx)
         obj /= self.ntheta
-        return obj
 
     def fbp_filter(self, data):
         """FBP filtering of projections"""
@@ -89,23 +88,22 @@ class Solver():
             wfilter = t / (1+pow(2*t,16)) # as in tomopy
 
         wfilter = cp.tile(wfilter, [self.nz, 1])    
+        #data[:] = irfft(
+           #wfilter*rfft(data,overwrite_x=True, axis=2), overwrite_x=True, axis=2)
         for k in range(data.shape[0]):# work with 2D arrays to save GPU memory
             data[k] = irfft(
                 wfilter*rfft(data[k], overwrite_x=True, axis=1), overwrite_x=True, axis=1)
-        return data
 
     def darkflat_correction(self, data):
         """Dark-flat field correction"""
-
+        tmp = cp.maximum(self.flat-self.dark, 1e-6)
         for k in range(data.shape[0]):# work with 2D arrays to save GPU memory
-            data[k] = (data[k]-self.dark)/cp.maximum(self.flat-self.dark, 1e-6)
-        return data
+            data[k] = (data[k]-self.dark)/tmp
 
     def minus_log(self, data):
         """Taking negative logarithm"""
-
-        data = -cp.log(cp.maximum(data, 1e-6))
-        return data
+        for k in range(data.shape[0]):# work with 2D arrays to save GPU memory
+            data[k] = -cp.log(cp.maximum(data[k], 1e-6))
     
     def remove_outliers(self, data):
         """Remove outliers"""
@@ -114,18 +112,33 @@ class Solver():
             fdata = ndimage.median_filter(data,[1,r,r])
             ids = cp.where(cp.abs(fdata-data)>0.5*cp.abs(fdata))
             data[ids] = fdata[ids]        
-        return data
 
     def recon(self, data, theta):
         """Reconstruction with the standard processing pipeline on GPU"""
 
-        data = data.astype('float32')
-        data = self.darkflat_correction(data)
-        data = self.remove_outliers(data)
-        data = self.minus_log(data)
-        data = self.fbp_filter(data)
-        obj = self.backprojection(data, theta*np.pi/180)
-        return obj
+        #times=np.zeros(5)    
+        #cp.cuda.stream.get_current_stream().synchronize()
+        #t = time.time()
+        self.darkflat_correction(data)
+        #cp.cuda.stream.get_current_stream().synchronize()
+        #times[0] = time.time()-t
+        #t = time.time()
+        self.remove_outliers(data)
+        #cp.cuda.stream.get_current_stream().synchronize()
+        #times[1] = time.time()-t
+        #t = time.time()
+        self.minus_log(data)
+        #cp.cuda.stream.get_current_stream().synchronize()
+        #times[2] = time.time()-t
+        #t = time.time()
+        self.fbp_filter(data)
+        #cp.cuda.stream.get_current_stream().synchronize()
+        #times[3] = time.time()-t
+        #t = time.time()        
+        self.backprojection(self.obj_tmp, data, theta*np.pi/180)
+        #cp.cuda.stream.get_current_stream().synchronize()
+        #times[4] = time.time()-t
+        #print([f'{t:.2f}' for t in times])
 
     def recon_optimized(self, data, theta, ids, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, dbg=False):
         """Optimized reconstruction of the object
@@ -174,10 +187,13 @@ class Solver():
             len(ids) > self.ntheta//2)        
         if(recompute_part):            
             # subtract old part
-            self.obj -= self.recon(self.data[ids], self.theta[ids])    
+            self.recon(self.data[ids], self.theta[ids])    
+            self.obj -= self.obj_tmp
 
         # update data in the buffer
-        self.data[ids] = cp.array(data.reshape(data.shape[0], self.nz, self.n))
+        #t = time.time()
+        self.data[ids] = cp.array(data.reshape(data.shape[0], self.nz, self.n)).astype('float32')
+        #print(f'{(time.time()-t):.2f}')
         self.theta[ids] = cp.array(theta.astype('float32'))        
         self.idx = idx
         self.idy = idy
@@ -192,8 +208,10 @@ class Solver():
 
         if(recompute_part):
             # add new part
-            self.obj += self.recon(self.data[ids], self.theta[ids])    
+            self.recon(self.data[ids], self.theta[ids])    
+            self.obj += self.obj_tmp
         else:        
-            self.obj = self.recon(self.data, self.theta)
+            self.recon(self.data, self.theta)
+            self.obj = self.obj_tmp
 
         return self.obj.get()
