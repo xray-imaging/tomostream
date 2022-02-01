@@ -4,9 +4,7 @@ from cupyx.scipy.fft import rfft, irfft
 from cupyx.scipy import ndimage
 from tomostream import kernels
 from tomostream import util
-import signal
-import sys
-import time
+
 class Solver():
     """Class for tomography reconstruction of ortho-slices through direct 
     discreatization of circular integrals in the Radon transform.
@@ -17,25 +15,34 @@ class Solver():
         The number of projections in the buffer (for simultaneous reconstruction)
     n, nz : int
         The pixel width and height of the projection.
+    idx, idy, idz : int
+        Ids of orthogonal slices.
+    rotx, roty, rotz : int
+        Rotation angles for slices.
+    fbpfilter: str
+        FBP filter for reconstruction (parzen, shepp, etc.)
+    dezinger: int
+        Dezinger size for removing outliers.
+    datatype: str
+        Detector data type.
     """
 
-    def __init__(self, ntheta, n, nz, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, data_type):
+    def __init__(self, ntheta, n, nz, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, datatype):
         
         self.n = n
         self.nz = nz
-        self.ntheta = ntheta
+        self.ntheta = ntheta        
         
+        #CPU storage for the buffer
+        self.data = np.zeros([ntheta, nz, n], dtype=datatype)
         # GPU storage for dark and flat fields
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
-        # GPU storages for the projection buffer, ortho-slices, and angles
-        self.data = cp.zeros([ntheta, nz, n], dtype='float32')
+        # GPU storages for ortho-slices, and angles        
         self.obj = cp.zeros([n, 3*n], dtype='float32')# ortho-slices are concatenated to one 2D array
-        self.obj_tmp = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array
         self.theta = cp.zeros([ntheta], dtype='float32')
         
-        # reconstruction parameters
- 
+        # reconstruction parameters 
         self.idx = np.int32(idx)
         self.idy = np.int32(idy)
         self.idz = np.int32(idz)
@@ -45,6 +52,11 @@ class Solver():
         self.center = np.float32(center)     
         self.fbpfilter = fbpfilter         
         self.dezinger = dezinger
+
+        # calculate chunk size fo gpu
+        mem = cp.cuda.Device().mem_info[1]
+        self.chunk = min(self.ntheta,int(np.ceil(mem/self.n/self.nz/8)))
+        print(f'chunk size {self.chunk}')
 
         # flag controlling appearance of new dark and flat fields   
         self.new_dark_flat = False
@@ -66,13 +78,15 @@ class Solver():
         self.flat = cp.array(data.astype('float32'))
         self.new_dark_flat = True
     
-    def backprojection(self, obj, data, theta):
+    def backprojection(self, data, theta):
         """Compute backprojection to orthogonal slices"""
 
+        obj = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array        
         obj[:self.n,         :self.n  ] = kernels.orthoz(data, theta, self.center, self.idz, self.rotz)
         obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy, self.roty)
         obj[:self.nz , 2*self.n:3*self.n] = kernels.orthox(data, theta, self.center, self.idx, self.rotx)
         obj /= self.ntheta
+        return obj
 
     def fbp_filter(self, data):
         """FBP filtering of projections"""
@@ -96,17 +110,20 @@ class Solver():
 
     def darkflat_correction(self, data):
         """Dark-flat field correction"""
+        
         tmp = cp.maximum(self.flat-self.dark, 1e-6)
         for k in range(data.shape[0]):# work with 2D arrays to save GPU memory
             data[k] = (data[k]-self.dark)/tmp
 
     def minus_log(self, data):
         """Taking negative logarithm"""
+        
         for k in range(data.shape[0]):# work with 2D arrays to save GPU memory
             data[k] = -cp.log(cp.maximum(data[k], 1e-6))
     
     def remove_outliers(self, data):
         """Remove outliers"""
+        
         if(int(self.dezinger)>0):
             r = int(self.dezinger)            
             fdata = ndimage.median_filter(data,[1,r,r])
@@ -115,31 +132,26 @@ class Solver():
 
     def recon(self, data, theta):
         """Reconstruction with the standard processing pipeline on GPU"""
-
-        #times=np.zeros(5)    
-        #cp.cuda.stream.get_current_stream().synchronize()
-        #t = time.time()
+        
         self.darkflat_correction(data)
-        #cp.cuda.stream.get_current_stream().synchronize()
-        #times[0] = time.time()-t
-        #t = time.time()
         self.remove_outliers(data)
-        #cp.cuda.stream.get_current_stream().synchronize()
-        #times[1] = time.time()-t
-        #t = time.time()
         self.minus_log(data)
-        #cp.cuda.stream.get_current_stream().synchronize()
-        #times[2] = time.time()-t
-        #t = time.time()
         self.fbp_filter(data)
-        #cp.cuda.stream.get_current_stream().synchronize()
-        #times[3] = time.time()-t
-        #t = time.time()        
-        self.backprojection(self.obj_tmp, data, theta*np.pi/180)
-        #cp.cuda.stream.get_current_stream().synchronize()
-        #times[4] = time.time()-t
-        #print([f'{t:.2f}' for t in times])
+        obj = self.backprojection(data, theta*np.pi/180)
+        return obj
 
+    def recon_by_chunks(self, data, theta):
+        """Reconstruction with splitting data by chunks processed on GPU"""
+    
+        obj = cp.zeros([self.n, 3*self.n], dtype='float32')# ortho-slices are concatenated to one 2D array                
+        nchunks = np.ceil(data.shape[0]/self.chunk)
+        for ichunk in range(nchunks):
+            data_gpu = cp.array(data[ichunk*self.chunk:min(ichunk*self.chunk,data.shape[0])]).astype('float32')
+            theta_gpu = theta[ichunk*self.chunk:min(ichunk*self.chunk,data.shape[0])].astype('float32')
+            obj += self.recon(data_gpu,theta_gpu)
+        
+        return obj
+        
     def recon_optimized(self, data, theta, ids, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, dbg=False):
         """Optimized reconstruction of the object
         from the whole set of projections in the interval of size pi.
@@ -187,14 +199,11 @@ class Solver():
             len(ids) > self.ntheta//2)        
         if(recompute_part):            
             # subtract old part
-            self.recon(self.data[ids], self.theta[ids])    
-            self.obj -= self.obj_tmp
+            self.obj -= self.recon_by_chunks(self.data[ids], self.theta[ids])    
 
         # update data in the buffer
-        #t = time.time()
-        self.data[ids] = cp.array(data.reshape(data.shape[0], self.nz, self.n)).astype('float32')
-        #print(f'{(time.time()-t):.2f}')
-        self.theta[ids] = cp.array(theta.astype('float32'))        
+        self.data[ids] = data.reshape(data.shape[0], self.nz, self.n)
+        self.theta[ids] = theta
         self.idx = idx
         self.idy = idy
         self.idz = idz
@@ -208,10 +217,8 @@ class Solver():
 
         if(recompute_part):
             # add new part
-            self.recon(self.data[ids], self.theta[ids])    
-            self.obj += self.obj_tmp
+            self.obj += self.recon_by_chunks(self.data[ids], self.theta[ids])    
         else:        
-            self.recon(self.data, self.theta)
-            self.obj = self.obj_tmp
+            self.obj = self.recon_by_chunks(self.data, self.theta)    
 
         return self.obj.get()

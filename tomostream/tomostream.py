@@ -2,7 +2,6 @@ import pvaccess as pva
 import numpy as np
 import queue
 import time
-import h5py
 import threading
 import signal
 
@@ -84,9 +83,6 @@ class TomoStream():
         self.epics_pvs['AbortRecon'].add_callback(self.pv_callback)
         self.epics_pvs['LensSelect'].add_callback(self.pv_callback)
         
-
-        #
-        
         self.slv = None
         
          # Set ^C, ^Z interrupt to abort the stream reconstruction
@@ -99,8 +95,8 @@ class TomoStream():
         thread.start()
         
         self.lens_cur = self.epics_pvs['LensSelect'].get()
-        self.stream_is_running = False
-        self.stream_pause = False
+        self.stream_is_running = False # stream is running or stopped
+        self.stream_pause = False # pause streaming when the lens is changing
         
         
     def pv_callback(self, pvname=None, value=None, char_value=None, **kw):
@@ -155,7 +151,6 @@ class TomoStream():
         height = pva_image_data['dimension'][1]['size']
         self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
                                     {'size': width, 'fullSize': width, 'binning': 1}]
-        # self.theta = self.epics_pvs['ThetaArray'].get()[:self.epics_pvs['NumAngles'].get()]                
         self.theta = self.pva_theta.get()['value']
         log.warning(f'new theta: {self.theta[:10]}...')
         # update limits on sliders
@@ -296,7 +291,6 @@ class TomoStream():
             
             if(nitem == 0):
                 continue
-
         
             log.info('center %s: idx, idy, idz: %s %s %s, rotx, roty, rotz: %s %s %s, filter: %s, dezinger: %s',
                      center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger)
@@ -307,7 +301,8 @@ class TomoStream():
                 self.proj_buffer[:nitem], self.theta_buffer[:nitem], self.ids_buffer[:nitem], center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger)
             self.epics_pvs['ReconTime'].put(util.toc())
             self.epics_pvs['BufferSize'].put(f'{nitem}/{self.buffer_size}')                
-            # write result to pv
+            
+            # orthogonal slices on
             rec[0:self.width,idx:idx+3] = np.nan
             rec[idy:idy+3,0:self.width] = np.nan
 
@@ -317,7 +312,7 @@ class TomoStream():
             rec[0:self.width,2*self.width+idy:2*self.width+idy+3] = np.nan
             rec[idz:idz+3,2*self.width:3*self.width] = np.nan
 
-            
+            # write result to pv
             self.pv_rec['value'] = ({'floatValue': rec.flatten()},)     
         self.epics_pvs['StartRecon'].put('Done')           
         self.epics_pvs['ReconStatus'].put('Stopped')
@@ -331,7 +326,6 @@ class TomoStream():
         self.stream_is_running = False
 
     def lens_change_sync(self):
-        stream_status = self.stream_is_running
         self.stream_pause = True
         log.info('Stop streaming while the lens is changing')        
         time.sleep(1)
