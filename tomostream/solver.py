@@ -35,12 +35,13 @@ class Solver():
         
         #CPU storage for the buffer
         self.data = np.zeros([ntheta, nz, n], dtype=datatype)
+        self.theta = np.zeros([ntheta], dtype='float32')
         # GPU storage for dark and flat fields
         self.dark = cp.array(cp.zeros([nz, n]), dtype='float32')
         self.flat = cp.array(cp.ones([nz, n]), dtype='float32')
         # GPU storages for ortho-slices, and angles        
         self.obj = cp.zeros([n, 3*n], dtype='float32')# ortho-slices are concatenated to one 2D array
-        self.theta = cp.zeros([ntheta], dtype='float32')
+        
         
         # reconstruction parameters 
         self.idx = np.int32(idx)
@@ -55,7 +56,7 @@ class Solver():
 
         # calculate chunk size fo gpu
         mem = cp.cuda.Device().mem_info[1]
-        self.chunk = min(self.ntheta,int(np.ceil(mem/self.n/self.nz/8)))
+        self.chunk = min(self.ntheta,int(np.ceil(mem/self.n/self.nz/32)))#cuda raw kernels do not work with huge sizes (issue in cupy?)
         print(f'chunk size {self.chunk}')
 
         # flag controlling appearance of new dark and flat fields   
@@ -144,12 +145,12 @@ class Solver():
         """Reconstruction with splitting data by chunks processed on GPU"""
     
         obj = cp.zeros([self.n, 3*self.n], dtype='float32')# ortho-slices are concatenated to one 2D array                
-        nchunks = np.ceil(data.shape[0]/self.chunk)
+        nchunks = int(np.ceil(data.shape[0]/self.chunk))
         for ichunk in range(nchunks):
-            data_gpu = cp.array(data[ichunk*self.chunk:min(ichunk*self.chunk,data.shape[0])]).astype('float32')
-            theta_gpu = theta[ichunk*self.chunk:min(ichunk*self.chunk,data.shape[0])].astype('float32')
+            data_gpu = cp.array(data[ichunk*self.chunk:min((ichunk+1)*self.chunk,data.shape[0])]).astype('float32')            
+            theta_gpu = cp.array(theta[ichunk*self.chunk:min((ichunk+1)*self.chunk,data.shape[0])]).astype('float32')
             obj += self.recon(data_gpu,theta_gpu)
-        
+            
         return obj
         
     def recon_optimized(self, data, theta, ids, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, dbg=False):
@@ -200,7 +201,6 @@ class Solver():
         if(recompute_part):            
             # subtract old part
             self.obj -= self.recon_by_chunks(self.data[ids], self.theta[ids])    
-
         # update data in the buffer
         self.data[ids] = data.reshape(data.shape[0], self.nz, self.n)
         self.theta[ids] = theta

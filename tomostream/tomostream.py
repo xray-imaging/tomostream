@@ -165,9 +165,9 @@ class TomoStream():
         else:        
             dtheta = self.theta[1]-self.theta[0]
             buffer_size = np.where(self.theta-self.theta[0]>180-dtheta)[0][0]
-        if(buffer_size*width*height>pow(2,32)):
-            log.error('buffer_size %s not enough memory', buffer_size)
-            exit(0)        
+        # if(buffer_size*width*height>pow(2,32)):
+        #     log.error('buffer_size %s not enough memory', buffer_size)
+        #     exit(0)        
         # queue
         self.data_queue = queue.Queue(maxsize=buffer_size)
         
@@ -211,8 +211,9 @@ class TomoStream():
         self.pva_flat.monitor(self.add_flat,'')        
         # start monitoring projection data        
         self.pva_plugin_image.monitor(self.add_data,'')
-        # start monitoring projection data                
-        self.pva_theta.monitor(self.reinit_monitors,'')
+        # start monitoring theta
+        self.pva_theta.monitor(self.add_theta,'')
+        self.update_theta = False
         self.stream_is_running = True
 
     def add_data(self, pv):
@@ -255,6 +256,11 @@ class TomoStream():
             print('Norm flat', np.linalg.norm(data))
             log.error('new flat fields acquired')
     
+    def add_theta(self,pv):
+        """Notify about theta update"""
+        
+        self.update_theta = True
+
     def begin_stream(self):
         """Run streaming reconstruction by sending new incoming projections from the queue to the solver class,
         and broadcasting the reconstruction result to a pv variable
@@ -281,8 +287,10 @@ class TomoStream():
             while ((not self.data_queue.empty()) and (nitem < self.buffer_size)):
                 item = self.data_queue.get()
                 # reinit if data sizes were updated (e.g. after data binning by ROI1)
-                if(len(item['projection'])!=self.width*self.height):
+                if(len(item['projection'])!=self.width*self.height) or (self.update_theta):
                     self.reinit_monitors()
+                    nitem = 0
+                    continue
 
                 self.proj_buffer[nitem] = item['projection']
                 self.theta_buffer[nitem] = item['theta']
