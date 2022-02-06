@@ -56,3 +56,8 @@ $(P)$(R)RotZ
 # Lens change synchronization with orthoslices
 ##############################################
 $(P)$(R)LensChangeSync
+
+################
+# mctOptics
+################
+$(P)$(R)MctOpticsPVPrefix

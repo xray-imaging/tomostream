@@ -206,3 +206,12 @@ record(bo,"$(P)$(R)LensChangeSync")
    field(ZNAM,"No")
    field(ONAM,"Yes")
 }
+
+################
+# mctOptics
+################
+
+record(stringout, "$(P)$(R)MctOpticsPVPrefix")
+{
+   field(VAL,  "$(MCT_OPTICS)")
+}

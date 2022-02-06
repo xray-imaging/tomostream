@@ -45,12 +45,13 @@ class TomoStream():
         prefix = self.pv_prefixes['TomoScan']
         # tomoscan pvs
         self.epics_pvs['FrameType']          = PV(prefix + 'FrameType')
-        self.epics_pvs['NumAngles']          = PV(prefix + 'NumAngles')
-    
+        self.epics_pvs['NumAngles']          = PV(prefix + 'NumAngles')        
         self.epics_pvs['RotationStep']       = PV(prefix + 'RotationStep')
-        # todo: add pvname,... to ioc
-        self.epics_pvs['LensSelect'] = PV('2bm:MCTOptics:LensSelect')
+        self.epics_pvs['FirstProjid']        = PV(prefix + 'FirstProjid')    
         
+        prefix = self.pv_prefixes['MctOptics']
+        # mctoptics pvs
+        self.epics_pvs['LensSelect'] = PV(prefix + 'LensSelect')                    
         
         # pva type channel for flat and dark fields pv broadcasted from the detector machine
         self.epics_pvs['PvaDark']        = pva.Channel(self.epics_pvs['DarkPVAName'].get())
@@ -136,6 +137,7 @@ class TomoStream():
         """Reinit pv monitoring functions with updating data sizes"""
 
         log.warning('reinit monitors with updating data sizes')
+        self.stream_is_running = False
         # stop monitors
         self.pva_dark.stopMonitor()
         self.pva_flat.stopMonitor()
@@ -152,7 +154,9 @@ class TomoStream():
         self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
                                     {'size': width, 'fullSize': width, 'binning': 1}]
         self.theta = self.pva_theta.get()['value']
-        log.warning(f'new theta: {self.theta[:10]}...')
+        self.first_projid = self.epics_pvs['FirstProjid'].get()
+        #log.warning(f'new theta: {self.theta[:1000]}...')
+        #log.warning(f'first proj id: {self.first_projid}...')
         # update limits on sliders
         # epics_pvs['OrthoXlimit'].put(width-1)
         # epics_pvs['OrthoYlimit'].put(width-1)
@@ -226,14 +230,14 @@ class TomoStream():
             cur_id = pv['uniqueId'] # unique projection id for determining angles and places in the buffers        
             # write projection, theta, and id into the queue
             data_item = {'projection': pv['value'][0][util.type_dict[self.datatype]],
-                        'theta': self.theta[min(cur_id,len(self.theta)-1)],
+                        'theta': self.theta[min(cur_id-self.first_projid,len(self.theta)-1)],
                         'id': np.mod(cur_id, self.buffer_size)
             }
             if(not self.data_queue.full()):
                 self.data_queue.put(data_item)
             else:
                 log.warning("queue is full, skip frame")
-            log.info('id: %s type %s queue size %s', cur_id, frame_type, self.data_queue.qsize())
+            log.info('id: %s, id after sync: %s, theta %s, type %s queue size %s', cur_id, cur_id-self.first_projid,self.theta[min(cur_id-self.first_projid,len(self.theta)-1)], frame_type, self.data_queue.qsize())
 
     def add_dark(self, pv):
         """PV monitoring function for reading new dark fields from manually running pv server 
@@ -288,13 +292,16 @@ class TomoStream():
                 item = self.data_queue.get()
                 # reinit if data sizes were updated (e.g. after data binning by ROI1)
                 if(len(item['projection'])!=self.width*self.height) or (self.update_theta):
+                    #time.sleep(2)
                     self.reinit_monitors()
+                    #time.sleep(2)
                     nitem = 0
-                    continue
+                    break
 
                 self.proj_buffer[nitem] = item['projection']
                 self.theta_buffer[nitem] = item['theta']
                 self.ids_buffer[nitem] = item['id']                    
+                log.warning(f'{nitem}, {self.theta_buffer[nitem]}, {self.ids_buffer[nitem]}')
                 nitem += 1
             
             if(nitem == 0):
@@ -334,37 +341,49 @@ class TomoStream():
         self.stream_is_running = False
 
     def lens_change_sync(self):
-        self.stream_pause = True
-        log.info('Stop streaming while the lens is changing')        
-        time.sleep(1)
-        if (self.epics_pvs['LensChangeSync'].get(as_string=True)=='Yes'):            
-            log.info('Synchronize with orthoslices')
-            idx = self.epics_pvs['OrthoX'].get()
-            idy = self.epics_pvs['OrthoY'].get()
-            idz = self.epics_pvs['OrthoZ'].get()
+        
+        if(self.stream_is_running):
+            log.info('Stop streaming while the lens is changing')        
+            self.stream_pause = True            
+            time.sleep(1)
+            if (self.epics_pvs['LensChangeSync'].get(as_string=True)=='Yes'):            
+                log.info('Synchronize with orthoslices')
+                idx = self.epics_pvs['OrthoX'].get()
+                idy = self.epics_pvs['OrthoY'].get()
+                idz = self.epics_pvs['OrthoZ'].get()
+                
+                
+                # TODO: to add pvs in init...
+                tomo0deg = PV("2bmS1:m2")
+                tomo90deg = PV("2bmS1:m1")
+                sampley = PV("2bmb:m25")
+                binning = PV('2bmbSP2:ROI1:BinX').get()            
+                magnification = [1.1037, 4.9425, 9.835]# to read from pv
+                # TODO: Pixel size should be read from mctoptics, however, mctoptics doesnt update it when the lens is changed
+                pixel_size = 3.45/magnification[self.lens_cur]*binning/1000
+                # TODO: end
+
+
+                print(f'{binning},{pixel_size},{float(idx-self.width/2)*pixel_size}')
+                log.info(f'{pixel_size=}')
+                log.info(f'{idx=} {idy=} {idz=}')
+                
+                sampley.put(sampley.get() + float(idz-self.height/2)*pixel_size)
+                tomo0deg.put(tomo0deg.get() + float(idx-self.width/2)*pixel_size)
+                tomo90deg.put(tomo90deg.get() - float(idy-self.width/2)*pixel_size)
+                self.epics_pvs['OrthoX'].put(self.width//2)
+                self.epics_pvs['OrthoY'].put(self.width//2)
+                self.epics_pvs['OrthoZ'].put(self.height//2)
+            self.reinit_monitors()
             
-            # to add pvs in init...
-            tomo0deg = PV("2bmS1:m2")
-            tomo90deg = PV("2bmS1:m1")
-            sampley = PV("2bmb:m57")
-            binning = PV('2bmbSP2:ROI1:BinX').get()            
-            magnification = [1.1037, 4.9425, 9.835]# to read from pv
-            pixel_size = 3.45/magnification[self.lens_cur]*binning/1000
-            log.info(f'{pixel_size=}')
-            log.info(f'{idx=} {idy=} {idz=}')
+            # TODO: to add pvs in init...
+            waitpv = PV('2bmb:m1.DMOV')
+            # TODO: end
             
-            sampley.put(sampley.get() + float(idz-self.height/2)*pixel_size)
-            tomo0deg.put(tomo0deg.get() + float(idx-self.width/2)*pixel_size)
-            tomo90deg.put(tomo90deg.get() - float(idy-self.width/2)*pixel_size)
-            self.epics_pvs['OrthoX'].put(self.width//2)
-            self.epics_pvs['OrthoY'].put(self.width//2)
-            self.epics_pvs['OrthoZ'].put(self.height//2)
-        #self.reinit_monitors()
-        waitpv = PV('2bmb:m1.DMOV')
-        self.lens_cur = self.epics_pvs['LensSelect'].get()
-        self.wait_pv(waitpv,1)# to read from pv
-        log.info('Recover streaming status')                
-        self.stream_pause = False
+            self.lens_cur = self.epics_pvs['LensSelect'].get()
+            self.wait_pv(waitpv,1)# to read from pv
+            log.info('Recover streaming status')                
+            self.stream_pause = False
         
 
     def read_pv_file(self, pv_file_name, macros):
