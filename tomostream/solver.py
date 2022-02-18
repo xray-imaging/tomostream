@@ -3,7 +3,7 @@ import numpy as np
 from cupyx.scipy.fft import rfft, irfft
 from cupyx.scipy import ndimage
 from tomostream import kernels
-from tomostream import util
+from tomostream import retrieve_phase
 
 class Solver():
     """Class for tomography reconstruction of ortho-slices through direct 
@@ -15,19 +15,30 @@ class Solver():
         The number of projections in the buffer (for simultaneous reconstruction)
     n, nz : int
         The pixel width and height of the projection.
-    idx, idy, idz : int
-        Ids of orthogonal slices.
-    rotx, roty, rotz : int
-        Rotation angles for slices.
-    fbpfilter: str
-        FBP filter for reconstruction (parzen, shepp, etc.)
-    dezinger: int
-        Dezinger size for removing outliers.
+    pars: dictionary contatining:
+        center : float32
+            Rotation center for reconstruction            
+        idx, idy, idz: int32
+            X-Y-Z ortho slices for reconstruction
+        rotx, roty, rotz: float32
+            Rotation angles for X-Y-Z slices
+        fbpfilter: str
+            Reconstruction filter
+        dezinger: str
+            None or radius for removing outliers
+        energy: float32
+            Beam energy
+        dist: float32
+            Source-detector distance
+        alpha: float32
+            Tuning parameter for phase retrieval
+        pixelsize: float32
+            Detector pixel size
     datatype: str
         Detector data type.
     """
 
-    def __init__(self, ntheta, n, nz, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, datatype):
+    def __init__(self, ntheta, n, nz, pars, datatype):
         
         self.n = n
         self.nz = nz
@@ -42,17 +53,8 @@ class Solver():
         # GPU storages for ortho-slices, and angles        
         self.obj = cp.zeros([n, 3*n], dtype='float32')# ortho-slices are concatenated to one 2D array
         
-        
         # reconstruction parameters 
-        self.idx = np.int32(idx)
-        self.idy = np.int32(idy)
-        self.idz = np.int32(idz)
-        self.rotx = np.float32(rotx/180*np.pi)
-        self.roty = np.float32(roty/180*np.pi)
-        self.rotz = np.float32(rotz/180*np.pi)
-        self.center = np.float32(center)     
-        self.fbpfilter = fbpfilter         
-        self.dezinger = dezinger
+        self.pars = pars
 
         # calculate chunk size fo gpu
         mem = cp.cuda.Device().mem_info[1]
@@ -131,11 +133,20 @@ class Solver():
             ids = cp.where(cp.abs(fdata-data)>0.5*cp.abs(fdata))
             data[ids] = fdata[ids]        
 
+    def phase(self, data):
+        """Retrieve phase"""
+
+        if(self.pars['alpha']>0):
+            print('retrieve phase')
+            data = retrieve_phase.paganin_filter(
+                data,  self.pars['pixel_size']*1e-4, self.pars['dist']/10, self.pars['energy'], self.pars['alpha'])
+  
     def recon(self, data, theta):
         """Reconstruction with the standard processing pipeline on GPU"""
         
         self.darkflat_correction(data)
         self.remove_outliers(data)
+        self.phase(data)
         self.minus_log(data)
         self.fbp_filter(data)
         obj = self.backprojection(data, theta*np.pi/180)
@@ -153,7 +164,7 @@ class Solver():
             
         return obj
         
-    def recon_optimized(self, data, theta, ids, center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, dbg=False):
+    def recon_optimized(self, data, theta, ids, pars):
         """Optimized reconstruction of the object
         from the whole set of projections in the interval of size pi.
         Resulting reconstruction is obtained by replacing the reconstruction part corresponding to incoming projections, 
@@ -169,16 +180,25 @@ class Solver():
             Angles corresponding to the projection data
         ids : np.array(nproj)
             Ids of the data in the circular buffer array
-        center : float
-            Rotation center for reconstruction            
-        idx, idy, idz: int
-            X-Y-Z ortho slices for reconstruction
-        rotx, roty, rotz: float
-            Rotation angles for X-Y-Z slices
-        fbpfilter: str
-            Reconstruction filter
-        dezinger: str
-            None or radius for removing outliers
+        pars: dictionary contatining:
+            center : float32
+                Rotation center for reconstruction            
+            idx, idy, idz: int32
+                X-Y-Z ortho slices for reconstruction
+            rotx, roty, rotz: float32
+                Rotation angles for X-Y-Z slices
+            fbpfilter: str
+                Reconstruction filter
+            dezinger: str
+                None or radius for removing outliers
+            energy: float32
+                Beam energy
+            dist: float32
+                Source-detector distance
+            alpha: float32
+                Tuning parameter for phase retrieval
+            pixelsize: float32
+                Detector pixel size
 
         Return
         ----------
@@ -186,33 +206,15 @@ class Solver():
             Concatenated reconstructions for X-Y-Z orthoslices
         """
  
-        idx = np.int32(idx)
-        idy = np.int32(idy)
-        idz = np.int32(idz)
-        rotx = np.float32(rotx/180*np.pi)
-        roty = np.float32(roty/180*np.pi)
-        rotz = np.float32(rotz/180*np.pi)
-        center = np.float32(center)       
         # recompute only by replacing a part of the data in the buffer, or by using the whole buffer
-        recompute_part = not (idx != self.idx or idy != self.idy or idz != self.idz 
-            or rotx != self.rotx or roty != self.roty or rotz != self.rotz 
-            or center != self.center or fbpfilter != self.fbpfilter or dezinger != self.dezinger or self.new_dark_flat or
-            len(ids) > self.ntheta//2)        
+        recompute_part = not (pars!=self.pars or self.new_dark_flat or len(ids) > self.ntheta//2)        
         if(recompute_part):            
             # subtract old part
             self.obj -= self.recon_by_chunks(self.data[ids], self.theta[ids])    
         # update data in the buffer
         self.data[ids] = data.reshape(data.shape[0], self.nz, self.n)
         self.theta[ids] = theta
-        self.idx = idx
-        self.idy = idy
-        self.idz = idz
-        self.rotx = rotx
-        self.roty = roty
-        self.rotz = rotz
-        self.center = center
-        self.fbpfilter = fbpfilter
-        self.dezinger = dezinger
+        self.pars = pars
         self.new_dark_flat = False
 
         if(recompute_part):

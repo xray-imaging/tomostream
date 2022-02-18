@@ -144,6 +144,34 @@ record(ao, "$(P)$(R)RotZ")
    field(HOPR, "180") 
 }
 
+record(ao, "$(P)$(R)Energy")
+{
+   field(PREC, "2")  
+   field(LOPR, "1")
+   field(HOPR, "100") 
+}
+
+record(ao, "$(P)$(R)Distance")
+{
+   field(PREC, "1")  
+   field(LOPR, "0")
+   field(HOPR, "5000") 
+}
+
+record(ao, "$(P)$(R)Alpha")
+{
+   field(PREC, "8")  
+   field(LOPR, "0")
+   field(HOPR, "10000") 
+}
+
+record(ao, "$(P)$(R)PixelSize")
+{
+   field(PREC, "3")  
+   field(LOPR, "1e-5")
+   field(HOPR, "100") 
+}
+
 ##################################
 # Stream status via Channel Access
 ##################################

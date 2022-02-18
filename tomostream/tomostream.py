@@ -1,14 +1,13 @@
+from tomostream import util
+from tomostream import log
+from tomostream import solver
+from epics import PV
 import pvaccess as pva
 import numpy as np
 import queue
 import time
 import threading
 import signal
-
-from tomostream import util
-from tomostream import log
-from tomostream import solver
-from epics import PV
 
 class TomoStream():
     """ Class for streaming reconstuction of ortho-slices on a machine with GPU.
@@ -58,7 +57,7 @@ class TomoStream():
         self.pva_dark = self.epics_pvs['PvaDark']
         self.epics_pvs['PvaFlat']        = pva.Channel(self.epics_pvs['FlatPVAName'].get())
         self.pva_flat = self.epics_pvs['PvaFlat']   
-        self.epics_pvs['PvaTheta']        = pva.Channel(self.epics_pvs['ThetaPVAName'].get())
+        self.epics_pvs['PvaTheta']       = pva.Channel(self.epics_pvs['ThetaPVAName'].get())
         self.pva_theta = self.epics_pvs['PvaTheta']   
         
         # pva type channel that contains projection and metadata
@@ -137,7 +136,6 @@ class TomoStream():
         """Reinit pv monitoring functions with updating data sizes"""
 
         log.warning('reinit monitors with updating data sizes')
-        self.stream_is_running = False
         # stop monitors
         self.pva_dark.stopMonitor()
         self.pva_flat.stopMonitor()
@@ -179,26 +177,30 @@ class TomoStream():
         datatype_list = self.epics_pvs['PvaPDataType_RBV'].get()['value']   
         self.datatype = datatype_list['choices'][datatype_list['index']].lower()                
         
-        # update parameters from in the GUI
-        center = self.epics_pvs['Center'].get()
-        idx = self.epics_pvs['OrthoX'].get()
-        idy = self.epics_pvs['OrthoY'].get()
-        idz = self.epics_pvs['OrthoZ'].get()
-        rotx = self.epics_pvs['RotX'].get()
-        roty = self.epics_pvs['RotY'].get()
-        rotz = self.epics_pvs['RotZ'].get()
-        fbpfilter = self.epics_pvs['FilterType'].get(as_string=True)        
-        dezinger = self.epics_pvs['Dezinger'].get(as_string=False)        
-        
+        pars = {}
+        pars['center'] = np.float32(self.epics_pvs['Center'].get())
+        pars['idx'] = np.int32(self.epics_pvs['OrthoX'].get())
+        pars['idy'] = np.int32(self.epics_pvs['OrthoY'].get())
+        pars['idz'] = np.int32(self.epics_pvs['OrthoZ'].get())
+        pars['rotx'] = np.float32(self.epics_pvs['RotX'].get()/180*np.pi)
+        pars['roty'] = np.float32(self.epics_pvs['RotY'].get()/180*np.pi)
+        pars['rotz'] = np.float32(self.epics_pvs['RotZ'].get()/180*np.pi)
+        pars['fbpfilter'] = self.epics_pvs['FilterType'].get(as_string=True)
+        pars['dezinger'] = self.epics_pvs['Dezinger'].get(as_string=False)
+        # phase retrieval
+        pars['energy'] = np.float32(self.epics_pvs['Energy'].get())
+        pars['dist'] = np.float32(self.epics_pvs['Distance'].get())
+        pars['alpha'] = np.float32(self.epics_pvs['Alpha'].get())
+        pars['pixelsize'] = np.float32(self.epics_pvs['PixelSize'].get())
+        # update parameters from in the GUI        
         if hasattr(self,'width'): # update parameters for new sizes 
-            self.epics_pvs['Center'].put(center*width/self.width)
-            self.epics_pvs['OrthoX'].put(int(idx*width/self.width))
-            self.epics_pvs['OrthoY'].put(int(idy*width/self.width))
-            self.epics_pvs['OrthoZ'].put(int(idz*width/self.width))
+            self.epics_pvs['Center'].put(pars['center']*width/self.width)
+            self.epics_pvs['OrthoX'].put(int(pars['idx']*width/self.width))
+            self.epics_pvs['OrthoY'].put(int(pars['idy']*width/self.width))
+            self.epics_pvs['OrthoZ'].put(int(pars['idz']*width/self.width))
 
         ## create solver class on GPU        
-        self.slv = solver.Solver(buffer_size, width, height, 
-            center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger, self.datatype)
+        self.slv = solver.Solver(buffer_size, width, height, pars, self.datatype)
         
         # temp buffers for storing data taken from the queue
         self.proj_buffer = np.zeros([buffer_size, width*height], dtype=self.datatype)
@@ -218,7 +220,6 @@ class TomoStream():
         # start monitoring theta
         self.pva_theta.monitor(self.add_theta,'')
         self.update_theta = False
-        self.stream_is_running = True
 
     def add_data(self, pv):
         """PV monitoring function for adding projection data and corresponding angle to the queue"""
@@ -246,7 +247,6 @@ class TomoStream():
         if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with dark field has cocrrect sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_dark(data)
-            print('Norm dark', np.linalg.norm(data))
             log.error('new dark fields acquired')
 
     
@@ -257,7 +257,6 @@ class TomoStream():
         if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with flat has correct sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_flat(data)
-            print('Norm flat', np.linalg.norm(data))
             log.error('new flat fields acquired')
     
     def add_theta(self,pv):
@@ -272,20 +271,26 @@ class TomoStream():
         
         self.reinit_monitors()
         self.epics_pvs['ReconStatus'].put('Running')
-        
+        self.stream_is_running = True
+        pars = {}
         while(self.stream_is_running):
             if(self.stream_pause):
                 continue
             # take parameters from the GUI                
-            center = self.epics_pvs['Center'].get()
-            idx = self.epics_pvs['OrthoX'].get()
-            idy = self.epics_pvs['OrthoY'].get()
-            idz = self.epics_pvs['OrthoZ'].get()
-            rotx = self.epics_pvs['RotX'].get()
-            roty = self.epics_pvs['RotY'].get()
-            rotz = self.epics_pvs['RotZ'].get()
-            fbpfilter = self.epics_pvs['FilterType'].get(as_string=True)
-            dezinger = self.epics_pvs['Dezinger'].get(as_string=False)
+            pars['center'] = np.float32(self.epics_pvs['Center'].get())
+            pars['idx'] = np.int32(self.epics_pvs['OrthoX'].get())
+            pars['idy'] = np.int32(self.epics_pvs['OrthoY'].get())
+            pars['idz'] = np.int32(self.epics_pvs['OrthoZ'].get())
+            pars['rotx'] = np.float32(self.epics_pvs['RotX'].get()/180*np.pi)
+            pars['roty'] = np.float32(self.epics_pvs['RotY'].get()/180*np.pi)
+            pars['rotz'] = np.float32(self.epics_pvs['RotZ'].get()/180*np.pi)
+            pars['fbpfilter'] = self.epics_pvs['FilterType'].get(as_string=True)
+            pars['dezinger'] = self.epics_pvs['Dezinger'].get(as_string=False)
+            # phase retrieval
+            pars['energy'] = np.float32(self.epics_pvs['Energy'].get())
+            pars['dist'] = np.float32(self.epics_pvs['Distance'].get())
+            pars['alpha'] = np.float32(self.epics_pvs['Alpha'].get())
+            pars['pixelsize'] = np.float32(self.epics_pvs['PixelSize'].get())
             # take items from the queue
             nitem = 0
             while ((not self.data_queue.empty()) and (nitem < self.buffer_size)):
@@ -307,41 +312,37 @@ class TomoStream():
             if(nitem == 0):
                 continue
         
-            log.info('center %s: idx, idy, idz: %s %s %s, rotx, roty, rotz: %s %s %s, filter: %s, dezinger: %s',
-                     center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger)
+            log.info(pars)
             
             # reconstruct on GPU
             util.tic()
             rec = self.slv.recon_optimized(
-                self.proj_buffer[:nitem], self.theta_buffer[:nitem], self.ids_buffer[:nitem], center, idx, idy, idz, rotx, roty, rotz, fbpfilter, dezinger)
+                self.proj_buffer[:nitem], self.theta_buffer[:nitem], self.ids_buffer[:nitem], pars)
             self.epics_pvs['ReconTime'].put(util.toc())
             self.epics_pvs['BufferSize'].put(f'{nitem}/{self.buffer_size}')                
             
             # orthogonal slices on
-            rec[0:self.width,idx:idx+3] = np.nan
-            rec[idy:idy+3,0:self.width] = np.nan
-
-            rec[0:self.width,self.width+idx:self.width+idx+3] = np.nan
-            rec[idz:idz+3,self.width:2*self.width] = np.nan
-
-            rec[0:self.width,2*self.width+idy:2*self.width+idy+3] = np.nan
-            rec[idz:idz+3,2*self.width:3*self.width] = np.nan
+            rec = util.ortholines(rec, pars)  
 
             # write result to pv
             self.pv_rec['value'] = ({'floatValue': rec.flatten()},)     
+
         self.epics_pvs['StartRecon'].put('Done')           
         self.epics_pvs['ReconStatus'].put('Stopped')
         
     def abort_stream(self):
         """Aborts streaming that is running.
         """
+        
         self.epics_pvs['ReconStatus'].put('Aborting reconstruction')
         if(self.slv is not None):
             self.slv.free()
         self.stream_is_running = False
 
     def lens_change_sync(self):
-        
+        """Set the zooming position
+        """
+
         if(self.stream_is_running):
             log.info('Stop streaming while the lens is changing')        
             self.stream_pause = True            
@@ -388,7 +389,6 @@ class TomoStream():
 
     def read_pv_file(self, pv_file_name, macros):
         """Reads a file containing a list of EPICS PVs to be used by TomoScan.
-
 
         Parameters
         ----------
