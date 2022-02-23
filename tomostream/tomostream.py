@@ -97,7 +97,6 @@ class TomoStream():
         """Callback function that is called by pyEpics when certain EPICS PVs are changed
         """
         log.debug('pv_callback pvName=%s, value=%s, char_value=%s', pvname, value, char_value)        
-        
         if (pvname.find('StartRecon') != -1) and (value == 1):
             thread = threading.Thread(target=self.begin_stream, args=())
             thread.start()   
@@ -146,6 +145,8 @@ class TomoStream():
         
         ## create a queue to store projections
         # find max size of the queue, the size is equal to the number of angles in the interval of size pi
+        if(len(self.theta)==0):
+            self.abort_stream()
         if(max(self.theta)<180):
             buffer_size = len(self.theta)
         else:        
@@ -231,7 +232,7 @@ class TomoStream():
         if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with dark field has cocrrect sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_dark(data)
-            log.error('new dark fields acquired')
+            log.warning('new dark fields acquired')
 
     
     def add_flat(self, pv):
@@ -241,7 +242,7 @@ class TomoStream():
         if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with flat has correct sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_flat(data)
-            log.error('new flat fields acquired')
+            log.warning('new flat fields acquired')
     
     def add_theta(self,pv):
         """Notify about theta update"""
@@ -252,7 +253,6 @@ class TomoStream():
         """Run streaming reconstruction by sending new incoming projections from the queue to the solver class,
         and broadcasting the reconstruction result to a pv variable
         """
-        
         self.reinit_monitors()
         self.epics_pvs['ReconStatus'].put('Running')
         self.stream_is_running = True
@@ -292,7 +292,6 @@ class TomoStream():
                 self.ids_buffer[nitem] = item['id']                    
                 log.warning(f'{nitem}, {self.theta_buffer[nitem]}, {self.ids_buffer[nitem]}')
                 nitem += 1
-            
             if(nitem == 0):
                 continue
         

@@ -15,11 +15,11 @@ class TomoStream_2BM(TomoStream):
         prefix = self.pv_prefixes['MctOptics']
         # mctoptics pvs
         self.epics_pvs['LensSelect'] = PV(prefix + 'LensSelect')                    
-        self.epics_pvs['LensSelect'].add_callback(self.pv_callback)
+        self.epics_pvs['LensSelect'].add_callback(self.pv_callback_2bm)
         self.lens_cur = self.epics_pvs['LensSelect'].get()        
         
         
-    def pv_callback(self, pvname=None, value=None, char_value=None, **kw):
+    def pv_callback_2bm(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed      
         """
         log.debug('pv_callback pvName=%s, value=%s, char_value=%s', pvname, value, char_value)        
