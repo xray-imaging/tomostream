@@ -38,6 +38,10 @@ $(P)$(R)OrthoZ
 $(P)$(R)RotX
 $(P)$(R)RotY
 $(P)$(R)RotZ
+$(P)$(R)Energy
+$(P)$(R)Distance
+$(P)$(R)Alpha
+$(P)$(R)PixelSize
 
 ##################################
 # Stream status via Channel Access
@@ -56,3 +60,8 @@ $(P)$(R)RotZ
 # Lens change synchronization with orthoslices
 ##############################################
 $(P)$(R)LensChangeSync
+
+################
+# mctOptics
+################
+$(P)$(R)MctOpticsPVPrefix
