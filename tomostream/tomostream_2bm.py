@@ -49,7 +49,9 @@ class TomoStream_2BM(TomoStream):
                 tomo90deg = PV("2bmS1:m1")
                 sampley = PV("2bmb:m25")
                 binning = PV('2bmbSP2:ROI1:BinX').get()            
-                magnification = [1.1037, 4.9425, 9.835]# to read from pv
+                # magnification = [1.1037, 4.9425, 9.835]# to read from pv
+                #magnification = [1.1037, 1.95, 4.9325]# to read from pv
+                magnification = [1.11, 1.98, 4.97]# to read from pv
                 # TODO: Pixel size should be read from mctoptics, however, mctoptics doesnt update it when the lens is changed
                 pixel_size = 3.45/magnification[self.lens_cur]*binning/1000
                 # TODO: end
