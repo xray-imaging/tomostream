@@ -208,7 +208,7 @@ class TomoStream():
         # take datatype        
         # datatype_list = self.epics_pvs['PvaPDataType_RBV'].get()['value']   
         # self.datatype = datatype_list['choices'][datatype_list['index']].lower()                
-        self.datatype=self.epics_pvs['PvaPDataType_RBV'].get().lower()
+        self.datatype=self.epics_pvs['PvaPDataType_RBV'].get(as_string=True).lower()
 
         pars = {}
         pars['center'] = np.float32(self.epics_pvs['Center'].get())
