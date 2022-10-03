@@ -5,13 +5,16 @@ import queue
 import time
 import threading
 from epics import PV
-
 import sys
+
+#EXAMPLE
+#     python test_pva.py server 3   -  3GB/s broadcast
+#     python test_pva.py client 10   -  GB/s, average acquistion speed during 10s
+
 class Simulate():
     def __init__(self,stype):
 
         [ntheta,nz,n] = [1024,1024,1024]
-        rate = 5*1024**3#GB/s
         buffer_size = 100000
         # queue
         self.data_queue = queue.Queue(maxsize=buffer_size)
@@ -26,6 +29,7 @@ class Simulate():
         # This way the ADViewer (NDViewer) plugin can be also used for visualizing reconstructions.
         pva_image_data = self.pva_plugin_image.get('')
         pva_image_dict = pva_image_data.getStructureDict()        
+
         self.pv_rec = pva.PvObject(pva_image_dict)
       
         # run server for reconstruction pv
@@ -59,12 +63,14 @@ class Simulate():
     def add_data(self, pv):
         """PV monitoring function for adding projection data and corresponding angle to the queue"""
         # write projection, theta, and id into the queue
-        self.tmp[:] = pv['value'][0]['ushortValue']
+       # self.tmp[:] = pv['value'][0]['ushortValue']
+        #print(sys.getsizeof(pv))
         self.cur_id+=1
         
     def set_data(self,rate):
         a = np.zeros([self.height,self.width],dtype='uint16').flatten()
         s = 2*self.height*self.width/rate/1024**3
+        print(f'corresponds to exposure {s}s')
         while(True):
             self.pv_rec['value'] = ({'ushortValue': a},)     
             time.sleep(s)
@@ -81,9 +87,12 @@ class Simulate():
 
 
 if __name__ == "__main__":
+    
     if sys.argv[1] =='client':
         s = Simulate('client')
         s.run_client()
     else:
+        print(f'broadcast speed: {sys.argv[2]} GB/s')
         Simulate('server').run_server(float(sys.argv[2]))
-    
+
+

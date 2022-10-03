@@ -8,7 +8,7 @@ import queue
 import time
 import threading
 import signal
-
+import os
 class TomoStream():
     """ Class for streaming reconstuction of ortho-slices on a machine with GPU.
         The class creates and broadcasts a pva type pv for concatenated reconstructions 
@@ -59,7 +59,7 @@ class TomoStream():
         # pva type channel that contains projection and metadata
         image_pv_name = PV(self.epics_pvs['ImagePVAPName'].get()).get()
         self.epics_pvs['PvaPImage']          = pva.Channel(image_pv_name + 'Image')
-        self.epics_pvs['PvaPDataType_RBV']   = pva.Channel(image_pv_name + 'DataType_RBV')
+        self.epics_pvs['PvaPDataType_RBV']   = PV(image_pv_name + 'DataType_RBV')
         self.pva_plugin_image = self.epics_pvs['PvaPImage']
         
         # create pva type pv for reconstrucion by copying metadata from the data pv, but replacing the sizes
@@ -79,6 +79,8 @@ class TomoStream():
         self.epics_pvs['AbortRecon'].add_callback(self.pv_callback)
         
         self.slv = None
+        self.first_projid = 0
+        self.last_id = 0 # control the 65535 issue
         
          # Set ^C, ^Z interrupt to abort the stream reconstruction
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -88,16 +90,51 @@ class TomoStream():
         # Start the watchdog timer thread
         thread = threading.Thread(target=self.reset_watchdog, args=(), daemon=True)
         thread.start()
+        thread_clck = threading.Thread(target=self.monitor_click, args=(), daemon=True)
+        thread_clck.start()
+
+        
                 
         self.stream_is_running = False # stream is running or stopped
         self.stream_pause = False # pause streaming 
         
-        
+
+    def monitor_click(self):
+        log.info('thread click')
+        st = os.stat('/data/click_imagej.csv').st_mtime
+        while(True):
+            if self.stream_is_running and st!=os.stat('/data/click_imagej.csv').st_mtime:
+                with open('/data/click_imagej.csv', "rb") as file:
+                    try:
+                        file.seek(-2, os.SEEK_END)
+                        while file.read(1) != b'\n':
+                            file.seek(-2, os.SEEK_CUR)
+                    except OSError:
+                        file.seek(0)
+                    last_line = file.readline().decode()
+                    try:
+                        x,y = last_line[:-1].split(',')[1:]
+                        x = int(x)
+                        y = int(y)
+                        log.info(f'click {x=},{y=}')
+                        if x<self.width:
+                            self.epics_pvs['OrthoX'].put(x)
+                            self.epics_pvs['OrthoY'].put(y)
+                        if x>=self.width and x<2*self.width:
+                            self.epics_pvs['OrthoX'].put(x-self.width)
+                            self.epics_pvs['OrthoZ'].put(y)
+                        if x>=2*self.width:
+                            self.epics_pvs['OrthoY'].put(x-2*self.width)
+                            self.epics_pvs['OrthoZ'].put(y)
+                    except:
+                        continue
+                st=os.stat('/data/click_imagej.csv').st_mtime
+                
+    
     def pv_callback(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed
         """
         log.debug('pv_callback pvName=%s, value=%s, char_value=%s', pvname, value, char_value)        
-        
         if (pvname.find('StartRecon') != -1) and (value == 1):
             thread = threading.Thread(target=self.begin_stream, args=())
             thread.start()   
@@ -136,31 +173,43 @@ class TomoStream():
         self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
                                     {'size': width, 'fullSize': width, 'binning': 1}]
         self.theta = self.pva_theta.get()['value']
-        self.first_projid = self.epics_pvs['FirstProjid'].get()
-        #log.warning(f'new theta: {self.theta[:1000]}...')
-        #log.warning(f'first proj id: {self.first_projid}...')
+
+
+
+        # some fix of the issue with 65535, sometimes may not work
+        if self.first_projid != self.epics_pvs['FirstProjid'].get():
+            self.first_projid = self.epics_pvs['FirstProjid'].get()
+            #self.mul  = self.first_projid//65535
+
+        if len(self.theta)==0:
+            self.abort_stream()
+        
+        log.warning(f'new theta: {self.theta[:400]}...')
+        log.warning(f'first proj id: {self.first_projid}...')
         # update limits on sliders
         # epics_pvs['OrthoXlimit'].put(width-1)
         # epics_pvs['OrthoYlimit'].put(width-1)
         # epics_pvs['OrthoZlimit'].put(height-1)        
         
-        ## create a queue to store projections
-        # find max size of the queue, the size is equal to the number of angles in the interval of size pi
-        if(max(self.theta)<180):
-            buffer_size = len(self.theta)
-        else:        
-            dtheta = self.theta[1]-self.theta[0]
-            buffer_size = np.where(self.theta-self.theta[0]>180-dtheta)[0][0]
-        # if(buffer_size*width*height>pow(2,32)):
-        #     log.error('buffer_size %s not enough memory', buffer_size)
-        #     exit(0)        
-        # queue
+
+        span_size = np.argmax(self.theta[1:]-self.theta[:-1]<0)
+        if span_size==0:
+            self.scan_type = 'continuous'
+            buffer_size = np.argmax(self.theta-self.theta[0]>180-(self.theta[1]-self.theta[0]))
+            if buffer_size==0:
+                buffer_size = len(self.theta)        
+        else:
+            self.scan_type = 'backforth'        
+            buffer_size = min(span_size,np.argmax(self.theta-self.theta[0]>180-(self.theta[1]-self.theta[0])))
+        log.info(f'{buffer_size=},{span_size=}')
+        ## create a queue to store projections            
         self.data_queue = queue.Queue(maxsize=buffer_size)
         
         # take datatype        
-        datatype_list = self.epics_pvs['PvaPDataType_RBV'].get()['value']   
-        self.datatype = datatype_list['choices'][datatype_list['index']].lower()                
-        
+        # datatype_list = self.epics_pvs['PvaPDataType_RBV'].get()['value']   
+        # self.datatype = datatype_list['choices'][datatype_list['index']].lower()                
+        self.datatype=self.epics_pvs['PvaPDataType_RBV'].get(as_string=True).lower()
+
         pars = {}
         pars['center'] = np.float32(self.epics_pvs['Center'].get())
         pars['idx'] = np.int32(self.epics_pvs['OrthoX'].get())
@@ -194,6 +243,7 @@ class TomoStream():
         self.width = width
         self.height = height
         self.buffer_size = buffer_size
+        self.span_size = span_size
         
         ## start PV monitoring
         # start monitoring dark and flat fields pv
@@ -212,18 +262,27 @@ class TomoStream():
         if(self.stream_is_running and 
             not self.stream_pause and
             self.epics_pvs['FrameType'].get(as_string=True) == 'Projection'):
-            cur_id = pv['uniqueId'] # unique projection id for determining angles and places in the buffers        
+            cur_id = np.uint32(pv['uniqueId'])-1 # unique projection id for determining angles and places in the buffers        , it starts from 1?
+            cur_id+=65535*self.mul
+            if self.last_id>cur_id:
+                print('change id')
+                self.mul+=1       
+                cur_id +=65535
+                self.last_id = cur_id     
             # write projection, theta, and id into the queue
             data_item = {'projection': pv['value'][0][util.type_dict[self.datatype]],
                         'theta': self.theta[min(cur_id-self.first_projid,len(self.theta)-1)],
-                        'id': np.mod(cur_id, self.buffer_size)
+                        'id': cur_id%self.buffer_size
             }
+            if self.scan_type == 'backforth' and (cur_id//self.span_size)%2 == 1:#filling the buffer array in the opposite direction
+                data_item['id'] = (self.span_size - cur_id%self.span_size - 1)%self.buffer_size
+
             if(not self.data_queue.full()):
                 self.data_queue.put(data_item)
             else:
                 log.warning("queue is full, skip frame")
-            log.info('id: %s, id after sync: %s, theta %s, type %s queue size %s', cur_id, cur_id-self.first_projid,self.theta[min(cur_id-self.first_projid,len(self.theta)-1)], frame_type, self.data_queue.qsize())
-
+            log.info('id: %s, id after sync: %s, id in queue %s, first_projid %s, mul %s, theta %s, type %s queue size %s', cur_id, cur_id-self.first_projid, data_item['id'], self.first_projid, self.mul, self.theta[min(cur_id-self.first_projid,len(self.theta)-1)], frame_type, self.data_queue.qsize())
+            
     def add_dark(self, pv):
         """PV monitoring function for reading new dark fields from manually running pv server 
         on the detector machine"""
@@ -231,7 +290,7 @@ class TomoStream():
         if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with dark field has cocrrect sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_dark(data)
-            log.error('new dark fields acquired')
+            log.warning('new dark fields acquired')
 
     
     def add_flat(self, pv):
@@ -241,7 +300,7 @@ class TomoStream():
         if(self.stream_is_running and len(pv['value'])==self.width*self.height):  # if pv with flat has correct sizes
             data = pv['value'].reshape(self.height, self.width)
             self.slv.set_flat(data)
-            log.error('new flat fields acquired')
+            log.warning('new flat fields acquired')
     
     def add_theta(self,pv):
         """Notify about theta update"""
@@ -252,8 +311,12 @@ class TomoStream():
         """Run streaming reconstruction by sending new incoming projections from the queue to the solver class,
         and broadcasting the reconstruction result to a pv variable
         """
-        
+
+        # handling unique ids bigger than 65535 -> it would be better to fix this in tomoscanstream  instead
+        self.mul = 0
+
         self.reinit_monitors()
+
         self.epics_pvs['ReconStatus'].put('Running')
         self.stream_is_running = True
         pars = {}
@@ -290,13 +353,12 @@ class TomoStream():
                 self.proj_buffer[nitem] = item['projection']
                 self.theta_buffer[nitem] = item['theta']
                 self.ids_buffer[nitem] = item['id']                    
-                log.warning(f'{nitem}, {self.theta_buffer[nitem]}, {self.ids_buffer[nitem]}')
+               # log.warning(f'{nitem}, {self.theta_buffer[nitem]}, {self.ids_buffer[nitem]}')
                 nitem += 1
-            
             if(nitem == 0):
                 continue
         
-            log.info(pars)
+           # log.info(pars)
             
             # reconstruct on GPU
             util.tic()

@@ -4,6 +4,7 @@ from cupyx.scipy.fft import rfft, irfft
 from cupyx.scipy import ndimage
 from tomostream import kernels
 from tomostream import retrieve_phase
+from tomostream import log
 
 class Solver():
     """Class for tomography reconstruction of ortho-slices through direct 
@@ -59,7 +60,7 @@ class Solver():
         # calculate chunk size fo gpu
         mem = cp.cuda.Device().mem_info[1]
         self.chunk = min(self.ntheta,int(np.ceil(mem/self.n/self.nz/32)))#cuda raw kernels do not work with huge sizes (issue in cupy?)
-        print(f'chunk size {self.chunk}')
+        log.warning(f'chunk size {self.chunk}')
 
         # flag controlling appearance of new dark and flat fields   
         self.new_dark_flat = False
@@ -85,9 +86,9 @@ class Solver():
         """Compute backprojection to orthogonal slices"""
 
         obj = cp.zeros([self.n, 3*self.n], dtype='float32') # ortho-slices are concatenated to one 2D array        
-        obj[:self.n,         :self.n  ] = kernels.orthoz(data, theta, self.center, self.idz, self.rotz)
-        obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.center, self.idy, self.roty)
-        obj[:self.nz , 2*self.n:3*self.n] = kernels.orthox(data, theta, self.center, self.idx, self.rotx)
+        obj[:self.n,         :self.n  ] = kernels.orthoz(data, theta, self.pars['center'], self.pars['idz'], self.pars['rotz'])
+        obj[:self.nz, self.n  :2*self.n] = kernels.orthoy(data, theta, self.pars['center'], self.pars['idy'], self.pars['roty'])
+        obj[:self.nz , 2*self.n:3*self.n] = kernels.orthox(data, theta, self.pars['center'], self.pars['idx'], self.pars['rotx'])
         obj /= self.ntheta
         return obj
 
@@ -95,13 +96,13 @@ class Solver():
         """FBP filtering of projections"""
 
         t = cp.fft.rfftfreq(self.n)
-        if (self.fbpfilter=='Parzen'):
+        if (self.pars['fbpfilter']=='Parzen'):
             wfilter = t * (1 - t * 2)**3    
-        elif (self.fbpfilter=='Ramp'):
+        elif (self.pars['fbpfilter']=='Ramp'):
             wfilter = t
-        elif (self.fbpfilter=='Shepp-logan'):
+        elif (self.pars['fbpfilter']=='Shepp-logan'):
             wfilter = np.sin(t)
-        elif (self.fbpfilter=='Butterworth'):# todo: replace by other
+        elif (self.pars['fbpfilter']=='Butterworth'):# todo: replace by other
             wfilter = t / (1+pow(2*t,16)) # as in tomopy
 
         wfilter = cp.tile(wfilter, [self.nz, 1])    
@@ -127,8 +128,8 @@ class Solver():
     def remove_outliers(self, data):
         """Remove outliers"""
         
-        if(int(self.dezinger)>0):
-            r = int(self.dezinger)            
+        if(int(self.pars['dezinger'])>0):
+            r = int(self.pars['dezinger'])            
             fdata = ndimage.median_filter(data,[1,r,r])
             ids = cp.where(cp.abs(fdata-data)>0.5*cp.abs(fdata))
             data[ids] = fdata[ids]        
@@ -137,9 +138,9 @@ class Solver():
         """Retrieve phase"""
 
         if(self.pars['alpha']>0):
-            print('retrieve phase')
+            #print('retrieve phase')
             data = retrieve_phase.paganin_filter(
-                data,  self.pars['pixel_size']*1e-4, self.pars['dist']/10, self.pars['energy'], self.pars['alpha'])
+                data,  self.pars['pixelsize']*1e-4, self.pars['dist']/10, self.pars['energy'], self.pars['alpha'])
   
     def recon(self, data, theta):
         """Reconstruction with the standard processing pipeline on GPU"""
@@ -207,6 +208,7 @@ class Solver():
         """
  
         # recompute only by replacing a part of the data in the buffer, or by using the whole buffer
+        
         recompute_part = not (pars!=self.pars or self.new_dark_flat or len(ids) > self.ntheta//2)        
         if(recompute_part):            
             # subtract old part
@@ -214,7 +216,7 @@ class Solver():
         # update data in the buffer
         self.data[ids] = data.reshape(data.shape[0], self.nz, self.n)
         self.theta[ids] = theta
-        self.pars = pars
+        self.pars = pars.copy()
         self.new_dark_flat = False
 
         if(recompute_part):

@@ -18,7 +18,7 @@ type_dict = {
 }
 
 def ortholines(rec, pars):
-    width = rec.shape[1]
+    width = rec.shape[0]
     rec[0:width,pars['idx']:pars['idx']+3] = np.nan
     rec[pars['idy']:pars['idy']+3,0:width] = np.nan
 
