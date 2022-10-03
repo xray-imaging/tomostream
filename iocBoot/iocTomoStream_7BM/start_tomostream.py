@@ -3,4 +3,4 @@
 #     python -i start_tomostream.py
 # The -i is needed to keep Python running, otherwise it will create the object and exit
 from tomostream.tomostream import TomoStream
-ts = TomoStream(["../../db/tomoStream_settings.req","../../db/tomoStream_settings.req"], {"$(P)":"7bmb:", "$(R)":"TomoStream:"})
+ts = TomoStream(["../../db/tomoStream_settings.req","../../db/tomoStream_settings.req"], {"$(P)":"7bmtomo:", "$(R)":"TomoStream:"})

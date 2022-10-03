@@ -1,14 +1,14 @@
 
 file {
-	name="/home/beams19/USERTXM/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStream.adl"
+	name="/home/beams/TOMO/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStream.adl"
 	version=030111
 }
 display {
 	object {
-		x=4738
-		y=873
+		x=1452
+		y=977
 		width=703
-		height=510
+		height=674
 	}
 	clr=14
 	bclr=4
@@ -98,27 +98,11 @@ rectangle {
 		clr=2
 	}
 }
-"wheel switch" {
-	object {
-		x=138
-		y=230
-		width=80
-		height=50
-	}
-	control {
-		chan="$(P)$(R)Center"
-		clr=14
-		bclr=4
-	}
-	format="% 8.2f"
-	limits {
-	}
-}
 menu {
 	object {
-		x=436
-		y=248
-		width=150
+		x=301
+		y=304
+		width=120
 		height=20
 	}
 	control {
@@ -129,21 +113,21 @@ menu {
 }
 text {
 	object {
-		x=-23
-		y=249
+		x=26
+		y=302
 		width=140
 		height=20
 	}
 	"basic attribute" {
 		clr=14
 	}
-	textix="Center"
+	textix="Rotation center"
 	align="horiz. right"
 }
 text {
 	object {
-		x=276
-		y=248
+		x=149
+		y=303
 		width=140
 		height=20
 	}
@@ -151,19 +135,6 @@ text {
 		clr=14
 	}
 	textix="Filter type"
-	align="horiz. right"
-}
-text {
-	object {
-		x=35
-		y=450
-		width=160
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Recon time (s)"
 	align="horiz. right"
 }
 text {
@@ -179,21 +150,10 @@ text {
 	textix="Stream Reconstruction $(P)$(R)"
 	align="horiz. centered"
 }
-rectangle {
-	object {
-		x=290
-		y=47
-		width=120
-		height=20
-	}
-	"basic attribute" {
-		clr=2
-	}
-}
 "related display" {
 	object {
-		x=160
-		y=82
+		x=552
+		y=641
 		width=50
 		height=20
 	}
@@ -207,8 +167,8 @@ rectangle {
 }
 text {
 	object {
-		x=15
-		y=84
+		x=407
+		y=643
 		width=140
 		height=20
 	}
@@ -219,35 +179,10 @@ text {
 }
 rectangle {
 	object {
-		x=5
+		x=9
 		y=42
-		width=692
-		height=65
-	}
-	"basic attribute" {
-		clr=14
-		fill="outline"
-	}
-}
-text {
-	object {
-		x=325
-		y=47
-		width=50
-		height=20
-	}
-	"basic attribute" {
-		clr=54
-	}
-	textix="Setup"
-	align="horiz. centered"
-}
-rectangle {
-	object {
-		x=5
-		y=112
 		width=690
-		height=175
+		height=375
 	}
 	"basic attribute" {
 		clr=14
@@ -256,8 +191,8 @@ rectangle {
 }
 rectangle {
 	object {
-		x=226
-		y=117
+		x=230
+		y=47
 		width=260
 		height=20
 	}
@@ -267,8 +202,8 @@ rectangle {
 }
 text {
 	object {
-		x=266
-		y=117
+		x=270
+		y=47
 		width=180
 		height=20
 	}
@@ -278,227 +213,20 @@ text {
 	textix="Streaming Control"
 	align="horiz. centered"
 }
-rectangle {
-	object {
-		x=211
-		y=299
-		width=300
-		height=20
-	}
-	"basic attribute" {
-		clr=2
-	}
-}
-"message button" {
-	object {
-		x=250
-		y=333
-		width=120
-		height=20
-	}
-	control {
-		chan="$(P)$(R)StartRecon"
-		clr=14
-		bclr=15
-	}
-	label="Start Recon"
-	press_msg="1"
-}
-"message button" {
-	object {
-		x=375
-		y=333
-		width=120
-		height=20
-	}
-	control {
-		chan="$(P)$(R)AbortRecon"
-		clr=14
-		bclr=20
-	}
-	label="Abort Recon"
-	press_msg="1"
-	release_msg="0"
-}
-rectangle {
-	object {
-		x=5
-		y=293
-		width=690
-		height=70
-	}
-	"basic attribute" {
-		clr=14
-		fill="outline"
-	}
-}
-rectangle {
-	object {
-		x=5
-		y=368
-		width=690
-		height=135
-	}
-	"basic attribute" {
-		clr=14
-		fill="outline"
-	}
-}
-rectangle {
-	object {
-		x=314
-		y=374
-		width=90
-		height=20
-	}
-	"basic attribute" {
-		clr=2
-	}
-}
-text {
-	object {
-		x=35
-		y=400
-		width=160
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Recon status"
-	align="horiz. right"
-}
-"text update" {
-	object {
-		x=201
-		y=400
-		width=400
-		height=20
-	}
-	monitor {
-		chan="$(P)$(R)ReconStatus"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
-text {
-	object {
-		x=35
-		y=425
-		width=160
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Buffer size"
-	align="horiz. right"
-}
-"text update" {
-	object {
-		x=201
-		y=425
-		width=400
-		height=20
-	}
-	monitor {
-		chan="$(P)$(R)BufferSize"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
-text {
-	object {
-		x=35
-		y=475
-		width=160
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Python server"
-	align="horiz. right"
-}
-"text update" {
-	object {
-		x=199
-		y=475
-		width=400
-		height=20
-	}
-	monitor {
-		chan="$(P)$(R)ServerRunning"
-		clr=14
-		bclr=2
-	}
-	clrmod="alarm"
-	format="string"
-	limits {
-	}
-}
-text {
-	object {
-		x=284
-		y=299
-		width=150
-		height=20
-	}
-	"basic attribute" {
-		clr=54
-	}
-	textix="Tomography Reconstruction"
-	align="horiz. centered"
-}
-text {
-	object {
-		x=323
-		y=374
-		width=72
-		height=20
-	}
-	"basic attribute" {
-		clr=54
-	}
-	textix="Status"
-	align="horiz. centered"
-}
-"text update" {
-	object {
-		x=201
-		y=450
-		width=400
-		height=20
-	}
-	monitor {
-		chan="$(P)$(R)ReconTime"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
 composite {
 	object {
-		x=290
-		y=150
-		width=400
+		x=184
+		y=93
+		width=420
 		height=75
 	}
 	"composite name"=""
 	children {
 		valuator {
 			object {
-				x=290
-				y=150
-				width=400
+				x=184
+				y=93
+				width=420
 				height=25
 			}
 			control {
@@ -514,9 +242,9 @@ composite {
 		}
 		valuator {
 			object {
-				x=290
-				y=175
-				width=400
+				x=184
+				y=118
+				width=420
 				height=25
 			}
 			control {
@@ -530,9 +258,9 @@ composite {
 		}
 		valuator {
 			object {
-				x=290
-				y=200
-				width=400
+				x=184
+				y=143
+				width=420
 				height=25
 			}
 			control {
@@ -548,8 +276,8 @@ composite {
 }
 composite {
 	object {
-		x=225
-		y=154
+		x=104
+		y=98
 		width=60
 		height=70
 	}
@@ -557,8 +285,8 @@ composite {
 	children {
 		"text entry" {
 			object {
-				x=225
-				y=204
+				x=104
+				y=148
 				width=60
 				height=20
 			}
@@ -572,8 +300,8 @@ composite {
 		}
 		"text entry" {
 			object {
-				x=225
-				y=179
+				x=104
+				y=123
 				width=60
 				height=20
 			}
@@ -587,8 +315,8 @@ composite {
 		}
 		"text entry" {
 			object {
-				x=225
-				y=154
+				x=104
+				y=98
 				width=60
 				height=20
 			}
@@ -604,8 +332,8 @@ composite {
 }
 composite {
 	object {
-		x=135
-		y=153
+		x=14
+		y=97
 		width=80
 		height=70
 	}
@@ -613,8 +341,8 @@ composite {
 	children {
 		text {
 			object {
-				x=135
-				y=153
+				x=14
+				y=97
 				width=80
 				height=20
 			}
@@ -626,8 +354,8 @@ composite {
 		}
 		text {
 			object {
-				x=135
-				y=178
+				x=14
+				y=122
 				width=80
 				height=20
 			}
@@ -639,8 +367,8 @@ composite {
 		}
 		text {
 			object {
-				x=135
-				y=203
+				x=14
+				y=147
 				width=80
 				height=20
 			}
@@ -654,63 +382,255 @@ composite {
 }
 composite {
 	object {
-		x=2
-		y=154
-		width=60
-		height=70
+		x=7
+		y=498
+		width=690
+		height=135
 	}
 	"composite name"=""
 	children {
 		text {
 			object {
-				x=2
-				y=154
-				width=60
+				x=37
+				y=580
+				width=160
 				height=20
 			}
 			"basic attribute" {
 				clr=14
 			}
-			textix="Rot X"
+			textix="Recon time (s)"
 			align="horiz. right"
+		}
+		rectangle {
+			object {
+				x=316
+				y=504
+				width=90
+				height=20
+			}
+			"basic attribute" {
+				clr=2
+			}
 		}
 		text {
 			object {
-				x=2
-				y=179
-				width=60
+				x=37
+				y=530
+				width=160
 				height=20
 			}
 			"basic attribute" {
 				clr=14
 			}
-			textix="Rot Y"
+			textix="Recon status"
 			align="horiz. right"
+		}
+		"text update" {
+			object {
+				x=203
+				y=530
+				width=400
+				height=20
+			}
+			monitor {
+				chan="$(P)$(R)ReconStatus"
+				clr=14
+				bclr=51
+			}
+			format="string"
+			limits {
+			}
 		}
 		text {
 			object {
-				x=2
-				y=204
-				width=60
+				x=37
+				y=555
+				width=160
 				height=20
 			}
 			"basic attribute" {
 				clr=14
 			}
-			textix="Rot Z"
+			textix="Buffer size"
 			align="horiz. right"
+		}
+		"text update" {
+			object {
+				x=203
+				y=555
+				width=400
+				height=20
+			}
+			monitor {
+				chan="$(P)$(R)BufferSize"
+				clr=14
+				bclr=51
+			}
+			format="string"
+			limits {
+			}
+		}
+		text {
+			object {
+				x=37
+				y=605
+				width=160
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Python server"
+			align="horiz. right"
+		}
+		"text update" {
+			object {
+				x=201
+				y=605
+				width=400
+				height=20
+			}
+			monitor {
+				chan="$(P)$(R)ServerRunning"
+				clr=14
+				bclr=2
+			}
+			clrmod="alarm"
+			format="string"
+			limits {
+			}
+		}
+		text {
+			object {
+				x=325
+				y=504
+				width=72
+				height=20
+			}
+			"basic attribute" {
+				clr=54
+			}
+			textix="Status"
+			align="horiz. centered"
+		}
+		"text update" {
+			object {
+				x=203
+				y=580
+				width=400
+				height=20
+			}
+			monitor {
+				chan="$(P)$(R)ReconTime"
+				clr=14
+				bclr=51
+			}
+			format="string"
+			limits {
+			}
+		}
+		rectangle {
+			object {
+				x=7
+				y=498
+				width=690
+				height=135
+			}
+			"basic attribute" {
+				clr=14
+				fill="outline"
+			}
+		}
+	}
+}
+composite {
+	object {
+		x=7
+		y=423
+		width=690
+		height=70
+	}
+	"composite name"=""
+	children {
+		rectangle {
+			object {
+				x=7
+				y=423
+				width=690
+				height=70
+			}
+			"basic attribute" {
+				clr=14
+				fill="outline"
+			}
+		}
+		rectangle {
+			object {
+				x=230
+				y=431
+				width=300
+				height=20
+			}
+			"basic attribute" {
+				clr=2
+			}
+		}
+		"message button" {
+			object {
+				x=249
+				y=463
+				width=120
+				height=20
+			}
+			control {
+				chan="$(P)$(R)StartRecon"
+				clr=14
+				bclr=15
+			}
+			label="Start Recon"
+			press_msg="1"
+		}
+		"message button" {
+			object {
+				x=377
+				y=463
+				width=120
+				height=20
+			}
+			control {
+				chan="$(P)$(R)AbortRecon"
+				clr=14
+				bclr=20
+			}
+			label="Abort Recon"
+			press_msg="1"
+			release_msg="0"
+		}
+		text {
+			object {
+				x=304
+				y=430
+				width=150
+				height=20
+			}
+			"basic attribute" {
+				clr=54
+			}
+			textix="Tomography Reconstruction"
+			align="horiz. centered"
 		}
 	}
 }
 "text entry" {
 	object {
-		x=75
-		y=204
+		x=105
+		y=203
 		width=60
 		height=20
 	}
 	control {
-		chan="$(P)$(R)RotZ"
+		chan="$(P)$(R)RotX"
 		clr=14
 		bclr=51
 	}
@@ -719,8 +639,8 @@ composite {
 }
 "text entry" {
 	object {
-		x=75
-		y=179
+		x=105
+		y=228
 		width=60
 		height=20
 	}
@@ -734,13 +654,388 @@ composite {
 }
 "text entry" {
 	object {
-		x=75
-		y=154
+		x=105
+		y=253
 		width=60
 		height=20
 	}
 	control {
-		chan="$(P)$(R)RotX"
+		chan="$(P)$(R)RotZ"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+composite {
+	object {
+		x=32
+		y=203
+		width=60
+		height=70
+	}
+	"composite name"=""
+	children {
+		text {
+			object {
+				x=32
+				y=203
+				width=60
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Rot X"
+			align="horiz. right"
+		}
+		text {
+			object {
+				x=32
+				y=228
+				width=60
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Rot Y"
+			align="horiz. right"
+		}
+		text {
+			object {
+				x=32
+				y=253
+				width=60
+				height=20
+			}
+			"basic attribute" {
+				clr=14
+			}
+			textix="Rot Z"
+			align="horiz. right"
+		}
+	}
+}
+"message button" {
+	object {
+		x=35
+		y=361
+		width=25
+		height=36
+	}
+	control {
+		chan="$(P)$(R)CenterTweakDown.PROC"
+		clr=14
+		bclr=51
+	}
+	label="<"
+	press_msg="1"
+}
+"text entry" {
+	object {
+		x=61
+		y=361
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)CenterTweak"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"message button" {
+	object {
+		x=122
+		y=361
+		width=25
+		height=36
+	}
+	control {
+		chan="$(P)$(R)CenterTweakUp.PROC"
+		clr=14
+		bclr=51
+	}
+	label=">"
+	press_msg="1"
+}
+"text entry" {
+	object {
+		x=42
+		y=331
+		width=98
+		height=25
+	}
+	control {
+		chan="$(P)$(R)Center.VAL"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+text {
+	object {
+		x=148
+		y=342
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Dezinger"
+	align="horiz. right"
+}
+menu {
+	object {
+		x=298
+		y=339
+		width=120
+		height=20
+	}
+	control {
+		chan="$(P)$(R)Dezinger"
+		clr=14
+		bclr=51
+	}
+}
+text {
+	object {
+		x=487
+		y=280
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Paganin filter"
+	align="horiz. right"
+}
+composite {
+	object {
+		x=184
+		y=199
+		width=420
+		height=75
+	}
+	"composite name"=""
+	children {
+		valuator {
+			object {
+				x=184
+				y=199
+				width=420
+				height=25
+			}
+			control {
+				chan="$(P)$(R)RotX"
+				clr=14
+				bclr=4
+			}
+			dPrecision=1.000000
+			limits {
+				precSrc="default"
+				precDefault=1
+			}
+		}
+		valuator {
+			object {
+				x=184
+				y=224
+				width=420
+				height=25
+			}
+			control {
+				chan="$(P)$(R)RotY"
+				clr=14
+				bclr=4
+			}
+			dPrecision=1.000000
+			limits {
+			}
+		}
+		valuator {
+			object {
+				x=184
+				y=249
+				width=420
+				height=25
+			}
+			control {
+				chan="$(P)$(R)RotZ"
+				clr=14
+				bclr=4
+			}
+			dPrecision=1.000000
+			limits {
+			}
+		}
+	}
+}
+text {
+	object {
+		x=100
+		y=73
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Orthogonal slices"
+	align="horiz. right"
+}
+text {
+	object {
+		x=79
+		y=175
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Slice rotation"
+	align="horiz. right"
+}
+"choice button" {
+	object {
+		x=591
+		y=67
+		width=90
+		height=25
+	}
+	control {
+		chan="$(P)$(R)LensChangeSync.VAL"
+		clr=14
+		bclr=51
+	}
+	stacking="column"
+}
+text {
+	object {
+		x=438
+		y=72
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Sync with lens selection"
+	align="horiz. right"
+}
+text {
+	object {
+		x=433
+		y=308
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Energy [keV]"
+	align="horiz. right"
+}
+text {
+	object {
+		x=431
+		y=336
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Distance [mm]"
+	align="horiz. right"
+}
+text {
+	object {
+		x=432
+		y=390
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Alpha"
+	align="horiz. right"
+}
+text {
+	object {
+		x=433
+		y=363
+		width=140
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Pixel size [um]"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=585
+		y=303
+		width=110
+		height=25
+	}
+	control {
+		chan="$(P)$(R)Energy"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=584
+		y=331
+		width=110
+		height=25
+	}
+	control {
+		chan="$(P)$(R)Distance"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=582
+		y=359
+		width=110
+		height=25
+	}
+	control {
+		chan="$(P)$(R)PixelSize"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=580
+		y=387
+		width=110
+		height=25
+	}
+	control {
+		chan="$(P)$(R)Alpha"
 		clr=14
 		bclr=51
 	}

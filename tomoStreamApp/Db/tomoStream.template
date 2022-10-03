@@ -44,14 +44,32 @@ record(stringout, "$(P)$(R)ReconPVAName")
 # Streaming analysis control
 ############################
 
-record(longout, "$(P)$(R)BufferSize")
+record(stringout, "$(P)$(R)BufferSize")
 {
 }
 
 record(ao, "$(P)$(R)Center")
 {
    field(PREC, "3")
-   field(HOPR, "2448")
+}
+
+record(ao,"$(P)$(R)CenterTweak") {
+    field(VAL, "3")
+    field(PREC,"3")
+}
+
+record(calcout,"$(P)$(R)CenterTweakUp") {
+    field(INPA,"$(P)$(R)CenterTweak NPP NMS")
+    field(INPB,"$(P)$(R)Center NPP NMS")
+    field(CALC,"B+A")
+    field(OUT, "$(P)$(R)Center PP NMS")
+}
+
+record(calcout,"$(P)$(R)CenterTweakDown") {
+    field(INPA,"$(P)$(R)CenterTweak NPP NMS")
+    field(INPB,"$(P)$(R)Center NPP NMS")
+    field(CALC,"B-A")
+    field(OUT, "$(P)$(R)Center PP NMS")
 }
 
 record(mbbo, "$(P)$(R)FilterType")
@@ -65,6 +83,27 @@ record(mbbo, "$(P)$(R)FilterType")
    field(THVL, "3")
    field(THST, "Butterworth")
 }
+
+record(mbbo, "$(P)$(R)Dezinger")
+{
+   field(ZRVL, "0")
+   field(ZRST, "None")
+   field(ONVL, "2")
+   field(ONST, "Radius 2")
+   field(TWVL, "3")
+   field(TWST, "Radius 3")
+   field(THVL, "4")
+   field(THST, "Radius 4")
+}
+
+record(mbbo, "$(P)$(R)RingRemoval")
+{
+   field(ZRVL, "0")
+   field(ZRST, "None")
+   field(ONVL, "1")
+   field(ONST, "fw")   
+}
+
 
 record(longout, "$(P)$(R)OrthoX")
 {
@@ -86,17 +125,51 @@ record(longout, "$(P)$(R)OrthoZ")
 
 record(ao, "$(P)$(R)RotX")
 {
-   field(PREC, "3")   
+   field(PREC, "1")   
+   field(LOPR, "-180")
+   field(HOPR, "180")
 }
 
 record(ao, "$(P)$(R)RotY")
 {
-   field(PREC, "3")   
+   field(PREC, "1")   
+   field(LOPR, "-180")
+   field(HOPR, "180")
 }
 
 record(ao, "$(P)$(R)RotZ")
 {
-   field(PREC, "3")   
+   field(PREC, "1")  
+   field(LOPR, "-180")
+   field(HOPR, "180") 
+}
+
+record(ao, "$(P)$(R)Energy")
+{
+   field(PREC, "2")  
+   field(LOPR, "1")
+   field(HOPR, "100") 
+}
+
+record(ao, "$(P)$(R)Distance")
+{
+   field(PREC, "1")  
+   field(LOPR, "0")
+   field(HOPR, "5000") 
+}
+
+record(ao, "$(P)$(R)Alpha")
+{
+   field(PREC, "8")  
+   field(LOPR, "0")
+   field(HOPR, "10000") 
+}
+
+record(ao, "$(P)$(R)PixelSize")
+{
+   field(PREC, "3")  
+   field(LOPR, "1e-5")
+   field(HOPR, "100") 
 }
 
 ##################################
@@ -150,4 +223,23 @@ record(bo,"$(P)$(R)AbortRecon")
 {
    field(ZNAM,"No")
    field(ONAM,"Yes")
+}
+
+##############################################
+# Lens change synchronization with orthoslices
+##############################################
+
+record(bo,"$(P)$(R)LensChangeSync")
+{
+   field(ZNAM,"No")
+   field(ONAM,"Yes")
+}
+
+################
+# mctOptics
+################
+
+record(stringout, "$(P)$(R)MctOpticsPVPrefix")
+{
+   field(VAL,  "$(MCT_OPTICS)")
 }

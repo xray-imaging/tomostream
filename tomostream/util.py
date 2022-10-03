@@ -1,4 +1,5 @@
 import time
+import numpy as np
 
 def tic():
     #Homemade version of matlab tic and toc functions
@@ -16,3 +17,14 @@ type_dict = {
 # add others
 }
 
+def ortholines(rec, pars):
+    width = rec.shape[0]
+    rec[0:width,pars['idx']:pars['idx']+3] = np.nan
+    rec[pars['idy']:pars['idy']+3,0:width] = np.nan
+
+    rec[0:width,width+pars['idx']:width+pars['idx']+3] = np.nan
+    rec[pars['idz']:pars['idz']+3,width:2*width] = np.nan
+
+    rec[0:width,2*width+pars['idy']:2*width+pars['idy']+3] = np.nan
+    rec[pars['idz']:pars['idz']+3,2*width:3*width] = np.nan
+    return rec
