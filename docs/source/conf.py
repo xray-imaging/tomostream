@@ -311,15 +311,17 @@ texinfo_documents = [
 # http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_mock_imports
 
 autodoc_mock_imports = [
-    'cupyx',
-    'cupy',
-    'h5py',
-    'time',
-    'numpy',
-    'scipy',
-    'signal',
-    'pvaccess',
-    'epics',
     'argparse',
     'configparser',
+    'cupy',
+    'cupyx',
+    'epics',
+    'queue',
+    'h5py',
+    'numpy',
+    'os',
+    'pvaccess',
+    'signal',
+    'threading',
+    'time',
 ]
