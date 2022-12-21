@@ -487,7 +487,6 @@ class TomoStream():
                     current_time = time.time()
                     diff_time = current_time - start_time
                     if diff_time >= timeout:
-                        log.error('  *** ERROR: DROPPED IMAGES ***')
                         log.error('  *** wait_pv(%s, %d, %5.2f reached max timeout. Return False',
                                       epics_pv.pvname, wait_val, timeout)
                         return False
