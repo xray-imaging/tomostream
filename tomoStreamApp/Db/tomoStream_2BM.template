@@ -1,0 +1,49 @@
+# Database for EPICS PVS for tomography data streaming software
+# This database contains all of the PVs used by the tomostream base class.
+
+##############################################
+# Lens change synchronization with orthoslices
+##############################################
+
+record(bo,"$(P)$(R)LensChangeSync")
+{
+   field(ZNAM,"No")
+   field(ONAM,"Yes")
+}
+
+################
+# mctOptics
+################
+
+record(stringout, "$(P)$(R)MctOpticsPVPrefix")
+{
+   field(VAL,  "$(MCT_OPTICS)")
+}
+
+##########################################################
+# sample tomo0, tomo90 deg and translation motors PV names
+##########################################################
+
+record(stringout, "$(P)$(R)SampleTomo0degPVName")
+{
+   field(VAL,  "$(TOMO_0_DEG)")
+}
+
+record(stringout, "$(P)$(R)SampleTomo90degPVName")
+{
+   field(VAL,  "$(TOMO_90_DEG)")
+}
+
+record(stringout, "$(P)$(R)SampleYPVName")
+{
+   field(VAL,  "$(SAMPLE_Y)")
+}
+
+######################
+# Roi Plugin PV Prefix
+######################
+
+record(stringout, "$(P)$(R)RoiPluginPVPrefix")
+{
+   field(VAL,  "$(ROI_PLUGIN)")
+}

@@ -40,7 +40,7 @@ class TomoStream():
         self.show_pvs()
         self.epics_pvs = {**self.config_pvs, **self.control_pvs}
         
-        
+
         prefix = self.pv_prefixes['TomoScan']
         # tomoscan pvs
         self.epics_pvs['FrameType']          = PV(prefix + 'FrameType')
@@ -176,9 +176,10 @@ class TomoStream():
 
 
 
+        self.first_projid = self.epics_pvs['FirstProjid'].get()
         # some fix of the issue with 65535, sometimes may not work
-        if self.first_projid != self.epics_pvs['FirstProjid'].get():
-            self.first_projid = self.epics_pvs['FirstProjid'].get()
+        #if self.first_projid != self.epics_pvs['FirstProjid'].get():
+            #self.first_projid = self.epics_pvs['FirstProjid'].get()
             #self.mul  = self.first_projid//65535
 
         if len(self.theta)==0:
@@ -263,12 +264,12 @@ class TomoStream():
             not self.stream_pause and
             self.epics_pvs['FrameType'].get(as_string=True) == 'Projection'):
             cur_id = np.uint32(pv['uniqueId'])-1 # unique projection id for determining angles and places in the buffers        , it starts from 1?
-            cur_id+=65535*self.mul
-            if self.last_id>cur_id:
-                print('change id')
-                self.mul+=1       
-                cur_id +=65535
-                self.last_id = cur_id     
+            #cur_id+=65535*self.mul
+            #if self.last_id>cur_id:
+                #print('change id')
+                #self.mul+=1       
+                #cur_id +=65535
+                #self.last_id = cur_id     
             # write projection, theta, and id into the queue
             data_item = {'projection': pv['value'][0][util.type_dict[self.datatype]],
                         'theta': self.theta[min(cur_id-self.first_projid,len(self.theta)-1)],
@@ -281,7 +282,7 @@ class TomoStream():
                 self.data_queue.put(data_item)
             else:
                 log.warning("queue is full, skip frame")
-            log.info('id: %s, id after sync: %s, id in queue %s, first_projid %s, mul %s, theta %s, type %s queue size %s', cur_id, cur_id-self.first_projid, data_item['id'], self.first_projid, self.mul, self.theta[min(cur_id-self.first_projid,len(self.theta)-1)], frame_type, self.data_queue.qsize())
+            log.info('id: %s, id after sync: %s, id in queue %s, first_projid %s, theta %s, type %s queue size %s', cur_id, cur_id-self.first_projid, data_item['id'], self.first_projid, self.theta[min(cur_id-self.first_projid,len(self.theta)-1)], frame_type, self.data_queue.qsize())
             
     def add_dark(self, pv):
         """PV monitoring function for reading new dark fields from manually running pv server 
@@ -313,7 +314,7 @@ class TomoStream():
         """
 
         # handling unique ids bigger than 65535 -> it would be better to fix this in tomoscanstream  instead
-        self.mul = 0
+        #self.mul = 0
 
         self.reinit_monitors()
 
@@ -486,7 +487,6 @@ class TomoStream():
                     current_time = time.time()
                     diff_time = current_time - start_time
                     if diff_time >= timeout:
-                        log.error('  *** ERROR: DROPPED IMAGES ***')
                         log.error('  *** wait_pv(%s, %d, %5.2f reached max timeout. Return False',
                                       epics_pv.pvname, wait_val, timeout)
                         return False

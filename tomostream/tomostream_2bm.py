@@ -11,14 +11,33 @@ class TomoStream_2BM(TomoStream):
     def __init__(self, pv_files, macros):
 
         super().__init__(pv_files, macros)
-        
-        prefix = self.pv_prefixes['MctOptics']
-        # mctoptics pvs
-        self.epics_pvs['LensSelect'] = PV(prefix + 'LensSelect')                    
-        self.epics_pvs['LensSelect'].add_callback(self.pv_callback_2bm)
-        self.lens_cur = self.epics_pvs['LensSelect'].get()        
-        
-        
+
+        # # Define PVs we will need from the sample tomo0deg, tomo90deg, y motors, which is on another IOC
+        self.epics_pvs['SampleTomo0degPosition']  = PV(self.epics_pvs['SampleTomo0degPVName'].get())
+        self.epics_pvs['SampleTomo90degPosition'] = PV(self.epics_pvs['SampleTomo90degPVName'].get())
+        self.epics_pvs['SampleYPosition']         = PV(self.epics_pvs['SampleYPVName'].get())
+
+        #Define PVs from the camera IOC that we will need
+        if 'RoiPlugin' in self.pv_prefixes:
+            prefix = self.pv_prefixes['RoiPlugin']
+ 
+            self.epics_pvs['ROIBinX']            = PV(prefix + 'BinX')        
+            self.epics_pvs['ROIBinY']            = PV(prefix + 'BinY')
+
+        if 'MctOptics' in self.pv_prefixes:
+            prefix = self.pv_prefixes['MctOptics']
+
+            self.epics_pvs['DetectorPixelSize'] = PV(prefix + 'DetectorPixelSize')
+            self.epics_pvs['CameraObjective']   = PV(prefix + 'CameraObjective')
+            self.epics_pvs['LensSelect']        = PV(prefix + 'LensSelect')
+            self.epics_pvs['LensMotorPVName']   = PV(prefix + 'LensMotorPVName') 
+
+            lens_motor_pv_name                  = str(self.epics_pvs['LensMotorPVName'].get())
+            self.epics_pvs['LensMotorDmov']     = PV(lens_motor_pv_name + '.DMOV')
+            self.epics_pvs['LensSelect'].add_callback(self.pv_callback_2bm)
+            self.lens_cur = self.epics_pvs['LensSelect'].get()
+
+    
     def pv_callback_2bm(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed      
         """
@@ -43,21 +62,17 @@ class TomoStream_2BM(TomoStream):
                 idy = self.epics_pvs['OrthoY'].get()
                 idz = self.epics_pvs['OrthoZ'].get()
                 
-                
-                # TODO: to add pvs in init...
-                tomo0deg = PV("2bmS1:m2")
-                tomo90deg = PV("2bmS1:m1")
-                sampley = PV("2bmb:m25")
-                binning = PV('2bmbSP2:ROI1:BinX').get()            
-                # magnification = [1.1037, 4.9425, 9.835]# to read from pv
-                #magnification = [1.1037, 1.95, 4.9325]# to read from pv
-                magnification = [1.11, 1.98, 4.97]# to read from pv
-                # TODO: Pixel size should be read from mctoptics, however, mctoptics doesnt update it when the lens is changed
-                pixel_size = 3.45/magnification[self.lens_cur]*binning/1000
-                # TODO: end
+                tomo0deg            = self.epics_pvs['SampleTomo0degPosition']
+                tomo90deg           = self.epics_pvs['SampleTomo90degPosition']
+                sampley             = self.epics_pvs['SampleYPosition']
+                binning             = self.epics_pvs['ROIBinX'].get()  
+                magnification       = self.epics_pvs['CameraObjective'].get()
+                detector_pixel_size = self.epics_pvs['DetectorPixelSize'].get()
 
+                log.info(f'{binning=}')
+                pixel_size = detector_pixel_size/magnification*binning/1000
 
-                print(f'{binning},{pixel_size},{float(idx-self.width/2)*pixel_size}')
+                log.info(f'{binning},{pixel_size},{float(idx-self.width/2)*pixel_size}')
                 log.info(f'{pixel_size=}')
                 log.info(f'{idx=} {idy=} {idz=}')
                 
@@ -69,12 +84,10 @@ class TomoStream_2BM(TomoStream):
                 self.epics_pvs['OrthoZ'].put(self.height//2)
             self.reinit_monitors()
             
-            # TODO: to add pvs in init...
-            waitpv = PV('2bmb:m1.DMOV')
-            # TODO: end
+            waitpv = self.epics_pvs['LensMotorDmov']
             
             self.lens_cur = self.epics_pvs['LensSelect'].get()
-            self.wait_pv(waitpv,1)# to read from pv
+            self.wait_pv(waitpv,1)
             log.info('Recover streaming status')                
             self.stream_pause = False
         

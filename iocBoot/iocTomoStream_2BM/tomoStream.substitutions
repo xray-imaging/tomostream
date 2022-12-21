@@ -1,6 +1,13 @@
 file "$(TOP)/db/tomoStream.template"
 {
 pattern
-{  P,      R, TOMO_SCAN, IMAGE_P, DARK_PVA, FLAT_PVA, RECON_PVA, THETA_PVA, MCT_OPTICS}
-{2bmb:, TomoStream:, 2bmb:TomoScanStream:, 2bmb:TomoScanStream:PvaPluginPVPrefix, 2bmb:TomoScanStream:StreamDarkFields, 2bmb:TomoScanStream:StreamFlatFields, 2bmb:TomoStream:StreamRecon, 2bmb:TomoScanStream:StreamTheta, 2bm:MCTOptics:}
+{  P,      R, TOMO_SCAN, IMAGE_P, DARK_PVA, FLAT_PVA, RECON_PVA, THETA_PVA}
+{2bmb:, TomoStream:, 2bmb:TomoScanStream:, 2bmb:TomoScanStream:PvaPluginPVPrefix, 2bmb:TomoScanStream:StreamDarkFields, 2bmb:TomoScanStream:StreamFlatFields, 2bmb:TomoStream:StreamRecon, 2bmb:TomoScanStream:StreamTheta}
+}
+
+file "$(TOP)/db/tomoStream_2BM.template"
+{
+pattern
+{ P,    R,           MCT_OPTICS,     TOMO_0_DEG, TOMO_90_DEG, SAMPLE_Y, ROI_PLUGIN}
+{2bmb:, TomoStream:, 2bm:MCTOptics:, 2bmS1:m2,   2bmS1:m1,    2bmb:m25, 2bmbSP1:ROI1:}
 }
