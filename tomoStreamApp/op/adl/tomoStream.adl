@@ -1,14 +1,14 @@
 
 file {
-	name="/home/beams/TOMO/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStream.adl"
+	name="/home/beams8/TOMO/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStream.adl"
 	version=030111
 }
 display {
 	object {
-		x=1452
-		y=977
+		x=1442
+		y=969
 		width=703
-		height=674
+		height=730
 	}
 	clr=14
 	bclr=4
@@ -100,8 +100,8 @@ rectangle {
 }
 menu {
 	object {
-		x=301
-		y=304
+		x=296
+		y=382
 		width=120
 		height=20
 	}
@@ -113,8 +113,8 @@ menu {
 }
 text {
 	object {
-		x=26
-		y=302
+		x=21
+		y=380
 		width=140
 		height=20
 	}
@@ -126,8 +126,8 @@ text {
 }
 text {
 	object {
-		x=149
-		y=303
+		x=144
+		y=381
 		width=140
 		height=20
 	}
@@ -152,8 +152,8 @@ text {
 }
 "related display" {
 	object {
-		x=552
-		y=641
+		x=160
+		y=81
 		width=50
 		height=20
 	}
@@ -167,8 +167,8 @@ text {
 }
 text {
 	object {
-		x=407
-		y=643
+		x=15
+		y=81
 		width=140
 		height=20
 	}
@@ -179,8 +179,8 @@ text {
 }
 rectangle {
 	object {
-		x=9
-		y=42
+		x=5
+		y=120
 		width=690
 		height=375
 	}
@@ -191,8 +191,8 @@ rectangle {
 }
 rectangle {
 	object {
-		x=230
-		y=47
+		x=225
+		y=125
 		width=260
 		height=20
 	}
@@ -202,8 +202,8 @@ rectangle {
 }
 text {
 	object {
-		x=270
-		y=47
+		x=265
+		y=125
 		width=180
 		height=20
 	}
@@ -215,8 +215,8 @@ text {
 }
 composite {
 	object {
-		x=184
-		y=93
+		x=179
+		y=171
 		width=420
 		height=75
 	}
@@ -224,8 +224,8 @@ composite {
 	children {
 		valuator {
 			object {
-				x=184
-				y=93
+				x=179
+				y=171
 				width=420
 				height=25
 			}
@@ -242,8 +242,8 @@ composite {
 		}
 		valuator {
 			object {
-				x=184
-				y=118
+				x=179
+				y=196
 				width=420
 				height=25
 			}
@@ -258,8 +258,8 @@ composite {
 		}
 		valuator {
 			object {
-				x=184
-				y=143
+				x=179
+				y=221
 				width=420
 				height=25
 			}
@@ -276,8 +276,8 @@ composite {
 }
 composite {
 	object {
-		x=104
-		y=98
+		x=99
+		y=176
 		width=60
 		height=70
 	}
@@ -285,8 +285,8 @@ composite {
 	children {
 		"text entry" {
 			object {
-				x=104
-				y=148
+				x=99
+				y=226
 				width=60
 				height=20
 			}
@@ -300,8 +300,8 @@ composite {
 		}
 		"text entry" {
 			object {
-				x=104
-				y=123
+				x=99
+				y=201
 				width=60
 				height=20
 			}
@@ -315,8 +315,8 @@ composite {
 		}
 		"text entry" {
 			object {
-				x=104
-				y=98
+				x=99
+				y=176
 				width=60
 				height=20
 			}
@@ -332,8 +332,8 @@ composite {
 }
 composite {
 	object {
-		x=14
-		y=97
+		x=9
+		y=175
 		width=80
 		height=70
 	}
@@ -341,8 +341,8 @@ composite {
 	children {
 		text {
 			object {
-				x=14
-				y=97
+				x=9
+				y=175
 				width=80
 				height=20
 			}
@@ -354,8 +354,8 @@ composite {
 		}
 		text {
 			object {
-				x=14
-				y=122
+				x=9
+				y=200
 				width=80
 				height=20
 			}
@@ -367,8 +367,8 @@ composite {
 		}
 		text {
 			object {
-				x=14
-				y=147
+				x=9
+				y=225
 				width=80
 				height=20
 			}
@@ -382,8 +382,8 @@ composite {
 }
 composite {
 	object {
-		x=7
-		y=498
+		x=5
+		y=585
 		width=690
 		height=135
 	}
@@ -391,8 +391,8 @@ composite {
 	children {
 		text {
 			object {
-				x=37
-				y=580
+				x=35
+				y=667
 				width=160
 				height=20
 			}
@@ -404,8 +404,8 @@ composite {
 		}
 		rectangle {
 			object {
-				x=316
-				y=504
+				x=314
+				y=591
 				width=90
 				height=20
 			}
@@ -415,8 +415,8 @@ composite {
 		}
 		text {
 			object {
-				x=37
-				y=530
+				x=35
+				y=617
 				width=160
 				height=20
 			}
@@ -428,8 +428,8 @@ composite {
 		}
 		"text update" {
 			object {
-				x=203
-				y=530
+				x=201
+				y=617
 				width=400
 				height=20
 			}
@@ -444,8 +444,8 @@ composite {
 		}
 		text {
 			object {
-				x=37
-				y=555
+				x=35
+				y=642
 				width=160
 				height=20
 			}
@@ -457,8 +457,8 @@ composite {
 		}
 		"text update" {
 			object {
-				x=203
-				y=555
+				x=201
+				y=642
 				width=400
 				height=20
 			}
@@ -473,8 +473,8 @@ composite {
 		}
 		text {
 			object {
-				x=37
-				y=605
+				x=35
+				y=692
 				width=160
 				height=20
 			}
@@ -486,8 +486,8 @@ composite {
 		}
 		"text update" {
 			object {
-				x=201
-				y=605
+				x=199
+				y=692
 				width=400
 				height=20
 			}
@@ -503,8 +503,8 @@ composite {
 		}
 		text {
 			object {
-				x=325
-				y=504
+				x=323
+				y=591
 				width=72
 				height=20
 			}
@@ -516,8 +516,8 @@ composite {
 		}
 		"text update" {
 			object {
-				x=203
-				y=580
+				x=201
+				y=667
 				width=400
 				height=20
 			}
@@ -532,8 +532,8 @@ composite {
 		}
 		rectangle {
 			object {
-				x=7
-				y=498
+				x=5
+				y=585
 				width=690
 				height=135
 			}
@@ -546,8 +546,8 @@ composite {
 }
 composite {
 	object {
-		x=7
-		y=423
+		x=5
+		y=505
 		width=690
 		height=70
 	}
@@ -555,8 +555,8 @@ composite {
 	children {
 		rectangle {
 			object {
-				x=7
-				y=423
+				x=5
+				y=505
 				width=690
 				height=70
 			}
@@ -567,8 +567,8 @@ composite {
 		}
 		rectangle {
 			object {
-				x=230
-				y=431
+				x=228
+				y=513
 				width=300
 				height=20
 			}
@@ -578,8 +578,8 @@ composite {
 		}
 		"message button" {
 			object {
-				x=249
-				y=463
+				x=247
+				y=545
 				width=120
 				height=20
 			}
@@ -593,8 +593,8 @@ composite {
 		}
 		"message button" {
 			object {
-				x=377
-				y=463
+				x=375
+				y=545
 				width=120
 				height=20
 			}
@@ -609,8 +609,8 @@ composite {
 		}
 		text {
 			object {
-				x=304
-				y=430
+				x=302
+				y=512
 				width=150
 				height=20
 			}
@@ -624,8 +624,8 @@ composite {
 }
 "text entry" {
 	object {
-		x=105
-		y=203
+		x=100
+		y=281
 		width=60
 		height=20
 	}
@@ -639,8 +639,8 @@ composite {
 }
 "text entry" {
 	object {
-		x=105
-		y=228
+		x=100
+		y=306
 		width=60
 		height=20
 	}
@@ -654,8 +654,8 @@ composite {
 }
 "text entry" {
 	object {
-		x=105
-		y=253
+		x=100
+		y=331
 		width=60
 		height=20
 	}
@@ -669,8 +669,8 @@ composite {
 }
 composite {
 	object {
-		x=32
-		y=203
+		x=27
+		y=281
 		width=60
 		height=70
 	}
@@ -678,8 +678,8 @@ composite {
 	children {
 		text {
 			object {
-				x=32
-				y=203
+				x=27
+				y=281
 				width=60
 				height=20
 			}
@@ -691,8 +691,8 @@ composite {
 		}
 		text {
 			object {
-				x=32
-				y=228
+				x=27
+				y=306
 				width=60
 				height=20
 			}
@@ -704,8 +704,8 @@ composite {
 		}
 		text {
 			object {
-				x=32
-				y=253
+				x=27
+				y=331
 				width=60
 				height=20
 			}
@@ -719,8 +719,8 @@ composite {
 }
 "message button" {
 	object {
-		x=35
-		y=361
+		x=30
+		y=439
 		width=25
 		height=36
 	}
@@ -734,8 +734,8 @@ composite {
 }
 "text entry" {
 	object {
-		x=61
-		y=361
+		x=56
+		y=439
 		width=60
 		height=20
 	}
@@ -749,8 +749,8 @@ composite {
 }
 "message button" {
 	object {
-		x=122
-		y=361
+		x=117
+		y=439
 		width=25
 		height=36
 	}
@@ -764,8 +764,8 @@ composite {
 }
 "text entry" {
 	object {
-		x=42
-		y=331
+		x=37
+		y=409
 		width=98
 		height=25
 	}
@@ -779,8 +779,8 @@ composite {
 }
 text {
 	object {
-		x=148
-		y=342
+		x=143
+		y=420
 		width=140
 		height=20
 	}
@@ -792,8 +792,8 @@ text {
 }
 menu {
 	object {
-		x=298
-		y=339
+		x=293
+		y=417
 		width=120
 		height=20
 	}
@@ -805,8 +805,8 @@ menu {
 }
 text {
 	object {
-		x=487
-		y=280
+		x=482
+		y=358
 		width=140
 		height=20
 	}
@@ -818,8 +818,8 @@ text {
 }
 composite {
 	object {
-		x=184
-		y=199
+		x=179
+		y=277
 		width=420
 		height=75
 	}
@@ -827,8 +827,8 @@ composite {
 	children {
 		valuator {
 			object {
-				x=184
-				y=199
+				x=179
+				y=277
 				width=420
 				height=25
 			}
@@ -845,8 +845,8 @@ composite {
 		}
 		valuator {
 			object {
-				x=184
-				y=224
+				x=179
+				y=302
 				width=420
 				height=25
 			}
@@ -861,8 +861,8 @@ composite {
 		}
 		valuator {
 			object {
-				x=184
-				y=249
+				x=179
+				y=327
 				width=420
 				height=25
 			}
@@ -879,8 +879,8 @@ composite {
 }
 text {
 	object {
-		x=100
-		y=73
+		x=95
+		y=151
 		width=140
 		height=20
 	}
@@ -892,8 +892,8 @@ text {
 }
 text {
 	object {
-		x=79
-		y=175
+		x=74
+		y=253
 		width=140
 		height=20
 	}
@@ -905,8 +905,8 @@ text {
 }
 "choice button" {
 	object {
-		x=591
-		y=67
+		x=586
+		y=145
 		width=90
 		height=25
 	}
@@ -919,8 +919,8 @@ text {
 }
 text {
 	object {
-		x=438
-		y=72
+		x=433
+		y=150
 		width=140
 		height=20
 	}
@@ -932,8 +932,8 @@ text {
 }
 text {
 	object {
-		x=433
-		y=308
+		x=428
+		y=386
 		width=140
 		height=20
 	}
@@ -945,8 +945,8 @@ text {
 }
 text {
 	object {
-		x=431
-		y=336
+		x=426
+		y=414
 		width=140
 		height=20
 	}
@@ -958,8 +958,8 @@ text {
 }
 text {
 	object {
-		x=432
-		y=390
+		x=427
+		y=468
 		width=140
 		height=20
 	}
@@ -971,8 +971,8 @@ text {
 }
 text {
 	object {
-		x=433
-		y=363
+		x=428
+		y=441
 		width=140
 		height=20
 	}
@@ -984,8 +984,8 @@ text {
 }
 "text entry" {
 	object {
-		x=585
-		y=303
+		x=580
+		y=381
 		width=110
 		height=25
 	}
@@ -999,8 +999,8 @@ text {
 }
 "text entry" {
 	object {
-		x=584
-		y=331
+		x=579
+		y=409
 		width=110
 		height=25
 	}
@@ -1014,8 +1014,8 @@ text {
 }
 "text entry" {
 	object {
-		x=582
-		y=359
+		x=577
+		y=437
 		width=110
 		height=25
 	}
@@ -1029,8 +1029,8 @@ text {
 }
 "text entry" {
 	object {
-		x=580
-		y=387
+		x=575
+		y=465
 		width=110
 		height=25
 	}
@@ -1041,4 +1041,67 @@ text {
 	}
 	limits {
 	}
+}
+rectangle {
+	object {
+		x=287
+		y=52
+		width=120
+		height=20
+	}
+	"basic attribute" {
+		clr=2
+	}
+}
+text {
+	object {
+		x=322
+		y=52
+		width=50
+		height=20
+	}
+	"basic attribute" {
+		clr=54
+	}
+	textix="Setup"
+	align="horiz. centered"
+}
+rectangle {
+	object {
+		x=5
+		y=47
+		width=690
+		height=65
+	}
+	"basic attribute" {
+		clr=14
+		fill="outline"
+	}
+}
+text {
+	object {
+		x=250
+		y=82
+		width=250
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Beamline-specific display"
+}
+"related display" {
+	object {
+		x=505
+		y=81
+		width=100
+		height=20
+	}
+	display[0] {
+		label="Beamline-specific display"
+		name="$(BEAMLINE).adl"
+		args="P=$(P), R=$(R), BEAMLINE=$(BEAMLINE)"
+	}
+	clr=14
+	bclr=51
 }

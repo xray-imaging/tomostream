@@ -1,14 +1,14 @@
 
 file {
-	name="/home/beams/TOMO/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStreamEPICS_PVs.adl"
+	name="/home/beams/TOMO/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStream_2BM.adl"
 	version=030111
 }
 display {
 	object {
-		x=1084
-		y=846
-		width=456
-		height=205
+		x=605
+		y=615
+		width=465
+		height=230
 	}
 	clr=14
 	bclr=4
@@ -87,12 +87,128 @@ display {
 		1a7309,
 	}
 }
+text {
+	object {
+		x=90
+		y=55
+		width=130
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="MCTOptics prefix"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=230
+		y=55
+		width=225
+		height=20
+	}
+	control {
+		chan="$(P)$(R)MctOpticsPVPrefix"
+		clr=14
+		bclr=51
+	}
+	format="string"
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=230
+		y=80
+		width=225
+		height=20
+	}
+	control {
+		chan="$(P)$(R)SampleTomo0degPVName"
+		clr=14
+		bclr=51
+	}
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=110
+		y=80
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Sample tomo 0 deg PV"
+	align="horiz. right"
+}
+text {
+	object {
+		x=111
+		y=105
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Sample tomo 90 deg PV"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=230
+		y=105
+		width=225
+		height=20
+	}
+	control {
+		chan="$(P)$(R)SampleTomo90degPVName"
+		clr=14
+		bclr=51
+	}
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=110
+		y=130
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Sample Y PV"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=230
+		y=130
+		width=225
+		height=20
+	}
+	control {
+		chan="$(P)$(R)SampleYPVName"
+		clr=14
+		bclr=51
+	}
+	format="string"
+	limits {
+	}
+}
 rectangle {
 	object {
-		x=60
-		y=9
-		width=335
-		height=24
+		x=5
+		y=5
+		width=455
+		height=30
 	}
 	"basic attribute" {
 		clr=2
@@ -100,22 +216,23 @@ rectangle {
 }
 text {
 	object {
-		x=89
-		y=10
-		width=276
-		height=25
+		x=5
+		y=5
+		width=455
+		height=30
 	}
 	"basic attribute" {
 		clr=54
 	}
-	textix="Epics Process Variables"
+	textix="$(P)$(R)"
+	align="horiz. centered"
 }
 rectangle {
 	object {
 		x=5
-		y=40
-		width=445
-		height=160
+		y=41
+		width=455
+		height=185
 	}
 	"basic attribute" {
 		clr=14
@@ -124,171 +241,26 @@ rectangle {
 }
 text {
 	object {
-		x=80
-		y=50
-		width=130
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="TomoScan prefix"
-	align="horiz. right"
-}
-"text entry" {
-	object {
-		x=220
-		y=50
-		width=225
-		height=20
-	}
-	control {
-		chan="$(P)$(R)TomoScanPVPrefix"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
-text {
-	object {
-		x=30
-		y=100
-		width=180
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Dark PVA"
-	align="horiz. right"
-}
-"text entry" {
-	object {
-		x=220
-		y=100
-		width=225
-		height=20
-	}
-	control {
-		chan="$(P)$(R)DarkPVAName"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
-"text entry" {
-	object {
-		x=220
-		y=125
-		width=225
-		height=20
-	}
-	control {
-		chan="$(P)$(R)FlatPVAName"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
-text {
-	object {
-		x=100
-		y=125
+		x=110
+		y=155
 		width=110
 		height=20
 	}
 	"basic attribute" {
 		clr=14
 	}
-	textix="Flat PVA"
-	align="horiz. right"
-}
-text {
-	object {
-		x=100
-		y=75
-		width=110
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Image PVA prefix"
+	textix="ROI plugin prefix"
 	align="horiz. right"
 }
 "text entry" {
 	object {
-		x=220
-		y=75
+		x=230
+		y=155
 		width=225
 		height=20
 	}
 	control {
-		chan="$(P)$(R)ImagePVAPName"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
-"text entry" {
-	object {
-		x=220
-		y=175
-		width=225
-		height=20
-	}
-	control {
-		chan="$(P)$(R)ReconPVAName"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
-text {
-	object {
-		x=100
-		y=175
-		width=110
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Recon PVA"
-	align="horiz. right"
-}
-text {
-	object {
-		x=101
-		y=150
-		width=110
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Theta PVA"
-	align="horiz. right"
-}
-"text entry" {
-	object {
-		x=220
-		y=150
-		width=225
-		height=20
-	}
-	control {
-		chan="$(P)$(R)ThetaPVAName"
+		chan="$(P)$(R)RoiPluginPVPrefix"
 		clr=14
 		bclr=51
 	}
