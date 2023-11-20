@@ -56,7 +56,6 @@ class TomoStream():
         # pva type channel that contains projection and metadata
         image_pv_name = self.epics_pvs['ImagePVAPName'].get()
         self.epics_pvs['PvaPImage'] = pva.Channel(image_pv_name + 'Image')
-        # self.epics_pvs['PvaPDataType_RBV']   = PV(image_pv_name + 'DataType_RBV')
         self.pva_plugin_image = self.epics_pvs['PvaPImage']
 
         # create pva type pv for reconstrucion by copying metadata from the data pv, but replacing the sizes
@@ -76,6 +75,8 @@ class TomoStream():
         self.epics_pvs['AbortRecon'].add_callback(self.pv_callback)
 
         self.slv = None
+        
+        self.first_projid = 0 # can be used for inherited classed (e.g. at 2-BM when the rotation speed is changed)
 
         # create empty csv file to save clicking positions from ImageJ
         with open('/tmp/click_imagej.csv', 'w') as fp:
@@ -258,7 +259,7 @@ class TomoStream():
             cur_id = np.uint32(pv['uniqueId'])-1
             # write projection, theta, and id into the queue
             data_item = {'projection': pv['value'][0][util.type_dict[self.datatype]],
-                         'theta': self.theta[min(cur_id, len(self.theta)-1)],
+                         'theta': self.theta[min(cur_id-self.first_projid, len(self.theta)-1)],
                          'id': cur_id % self.buffer_size
                          }
             # filling the buffer array in the opposite direction
@@ -270,8 +271,8 @@ class TomoStream():
                 self.data_queue.put(data_item)
             else:
                 log.warning("queue is full, skip frame")
-            log.info('id: %s, id after sync: %s, id in queue %s, theta %s, type %s queue size %s', cur_id, cur_id,
-                     data_item['id'], self.theta[min(cur_id, len(self.theta)-1)], frame_type, self.data_queue.qsize())
+            log.info('id: %s, id after sync: %s, id in queue %s, first_projid %s, theta %s, type %s queue size %s', cur_id, cur_id-self.first_projid,
+                     data_item['id'], self.first_projid, self.theta[min(cur_id-self.first_projid, len(self.theta)-1)], frame_type, self.data_queue.qsize())
 
     def add_dark(self, pv):
         """PV monitoring function for reading new dark fields from manually running pv server 
@@ -302,9 +303,6 @@ class TomoStream():
         """Run streaming reconstruction by sending new incoming projections from the queue to the solver class,
         and broadcasting the reconstruction result to a pv variable
         """
-
-        # handling unique ids bigger than 65535 -> it would be better to fix this in tomoscanstream  instead
-        # self.mul = 0
 
         self.reinit_monitors()
 

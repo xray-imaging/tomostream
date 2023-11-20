@@ -7,6 +7,13 @@
 # but they are used by tomostream.  
 # These PVs are not saved in the tomostream configuration file.
 
+
+
+########################
+# tomoStream PV Prefixes
+########################
+$(P)$(R)TomoScanPVPrefix
+
 ##############################################
 # Lens change synchronization with orthoslices
 ##############################################

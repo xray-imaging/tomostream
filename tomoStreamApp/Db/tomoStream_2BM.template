@@ -1,6 +1,15 @@
 # Database for EPICS PVS for tomography data streaming software
 # This database contains all of the PVs used by the tomostream base class.
 
+########################
+# tomoStream PV Prefixes
+########################
+
+record(stringout, "$(P)$(R)TomoScanPVPrefix")
+{
+   field(VAL,  "$(TOMO_SCAN)")
+}
+
 ##############################################
 # Lens change synchronization with orthoslices
 ##############################################

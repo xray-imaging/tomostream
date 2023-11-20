@@ -36,7 +36,17 @@ class TomoStream_2BM(TomoStream):
             self.epics_pvs['LensMotorDmov']     = PV(lens_motor_pv_name + '.DMOV')
             self.epics_pvs['LensSelect'].add_callback(self.pv_callback_2bm)
             self.lens_cur = self.epics_pvs['LensSelect'].get()
+        
+        if 'Tomoscan' in self.pv_prefixes:
+            prefix = self.pv_prefixes['Tomoscan']
+            self.epics_pvs['FirstProjid']        = PV(prefix + 'FirstProjid')    
 
+    def reinit_monitors(self):
+        """
+        Change id of the first projection, used when the rotation speed is changed on the fly
+        """
+        self.first_projid = self.epics_pvs['FirstProjid'].get()
+        super().reinit_monitors()        
     
     def pv_callback_2bm(self, pvname=None, value=None, char_value=None, **kw):
         """Callback function that is called by pyEpics when certain EPICS PVs are changed      
