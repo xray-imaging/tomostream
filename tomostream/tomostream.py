@@ -165,9 +165,16 @@ class TomoStream():
             time.sleep(0.01)
         time.sleep(0.5)  # need to wait for some reason? to check
         # take new data sizes
-        pva_image_data = self.pva_plugin_image.get('')
-        width = pva_image_data['dimension'][0]['size']
-        height = pva_image_data['dimension'][1]['size']
+        while True:
+            try:
+                pva_image_data = self.pva_plugin_image.get('')
+                width = pva_image_data['dimension'][0]['size']
+                height = pva_image_data['dimension'][1]['size']
+                break
+            except:
+                time.sleep(0.5)
+                log.warning('waiting for data')
+                pass
         self.pv_rec['dimension'] = [{'size': 3*width, 'fullSize': 3*width, 'binning': 1},
                                     {'size': width, 'fullSize': width, 'binning': 1}]
         self.theta = self.pva_theta.get()['value']
@@ -175,7 +182,7 @@ class TomoStream():
         if len(self.theta) == 0:
             self.abort_stream()
 
-        log.warning(f'new theta: {self.theta[:400]}...')
+        log.warning(f'new theta: {self.theta[:]}...')
         # update limits on sliders
         # epics_pvs['OrthoXlimit'].put(width-1)
         # epics_pvs['OrthoYlimit'].put(width-1)

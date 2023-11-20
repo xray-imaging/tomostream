@@ -27,7 +27,7 @@ class PVABroadcast:
         # setup server for data using ntnda arrays
         self.pva_server = pvaccess.PvaServer()
         self.pva_server.addRecord(broadcast_proj_pv, pvaccess.NtNdArray())
-
+                
         # setup servers for dark,flat, and theta
         self.pva_stream_dark = pvaccess.PvObject({'value': [pvaccess.pvaccess.ScalarType.FLOAT],
                                                   'sizex': pvaccess.pvaccess.ScalarType.INT,
@@ -97,6 +97,8 @@ class PVABroadcast:
         """
         log.info(f'broadcast projection {frame_id}')
         epics.caput(frame_type_pv, 0)
+        # frame_data[frame_data.shape[0]//2-1:frame_data.shape[0]//2+1,:] = 0
+        # frame_data[:,frame_data.shape[1]//2-1:frame_data.shape[1]//2+1] = 0
         self.pva_server.update(
             broadcast_proj_pv, self.generateNtNdArray2D(frame_id+1, frame_data))# note we start from 1 in tomostream
 
@@ -105,8 +107,7 @@ class PVABroadcast:
         '''
         frame_data, frame_id, frame_key, param_dict = self.zmq_stream.read_from_zmq()
         self.update_ancillary_pvs(param_dict)
-        
-        
+                
         # temporal solution for flat and dark fields
         # angles for reconstruction in tomostream are taken as theta[frame_id], however we also get frame_ids for flat and dark fields.
         # therefore we subtract the number of flat and dark frames from frame_id before broadcasting.
@@ -137,6 +138,8 @@ class PVABroadcast:
                 # add to subtraction
                 subtract_id += nwhite
                 self.broadcast_white(utils.binning(frame_data_s, bin_level))
+                self.update_ancillary_pvs(param_dict)           
+        
                 
             elif frame_key == 2:
                 ndark = 0
@@ -147,7 +150,6 @@ class PVABroadcast:
                     ndark += 1                    
                     log.info(f'collecting dark fields {ndark}')
                     frame_data, frame_id, frame_key, param_dict = self.zmq_stream.read_from_zmq()
-
                 # normalize and broadcast dark fields
                 frame_data_s /= ndark
                 # add to subtraction
