@@ -7,11 +7,6 @@
 # but they are used by tomostream.  
 # These PVs are not saved in the tomostream configuration file.
 
-########################
-# tomoStream PV Prefixes
-########################
-$(P)$(R)TomoScanPVPrefix
-
 ######################
 # tomoStream PVA names
 ######################
@@ -20,6 +15,12 @@ $(P)$(R)DarkPVAName
 $(P)$(R)FlatPVAName
 $(P)$(R)ThetaPVAName
 $(P)$(R)ReconPVAName
+
+#####################
+# tomoStream PV names
+#####################
+$(P)$(R)DataTypePVName
+$(P)$(R)FrameTypePVName
 
 ############################
 # Streaming analysis control

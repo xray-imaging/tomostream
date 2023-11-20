@@ -1,0 +1,21 @@
+# Database for EPICS PVS for tomography data streaming software
+# This database contains all of the PVs used by the tomostream base class.
+
+##############################################
+# Variables usually given by TomoScanStream
+##############################################
+
+record(mbbo, "$(P)$(R)FrameType")
+{
+   field(ZRVL, "0")
+   field(ZRST, "Projection")
+   field(ONVL, "1")
+   field(ONST, "Flat")
+   field(TWVL, "2")
+   field(TWST, "Dark")
+}
+
+record(stringout, "$(P)$(R)DataType")
+{
+   field(VAL, "uint16")
+}

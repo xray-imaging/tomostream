@@ -1,14 +1,14 @@
 
 file {
-	name="/home/beams/TOMO/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStreamEPICS_PVs.adl"
-	version=030111
+	name="/home/bl832user/service/tomostream_epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStreamEPICS_PVs.adl"
+	version=030115
 }
 display {
 	object {
-		x=1084
-		y=846
+		x=1074
+		y=838
 		width=456
-		height=205
+		height=238
 	}
 	clr=14
 	bclr=4
@@ -115,7 +115,7 @@ rectangle {
 		x=5
 		y=40
 		width=445
-		height=160
+		height=190
 	}
 	"basic attribute" {
 		clr=14
@@ -124,37 +124,8 @@ rectangle {
 }
 text {
 	object {
-		x=80
-		y=50
-		width=130
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="TomoScan prefix"
-	align="horiz. right"
-}
-"text entry" {
-	object {
-		x=220
-		y=50
-		width=225
-		height=20
-	}
-	control {
-		chan="$(P)$(R)TomoScanPVPrefix"
-		clr=14
-		bclr=51
-	}
-	format="string"
-	limits {
-	}
-}
-text {
-	object {
 		x=30
-		y=100
+		y=128
 		width=180
 		height=20
 	}
@@ -167,7 +138,7 @@ text {
 "text entry" {
 	object {
 		x=220
-		y=100
+		y=128
 		width=225
 		height=20
 	}
@@ -183,7 +154,7 @@ text {
 "text entry" {
 	object {
 		x=220
-		y=125
+		y=153
 		width=225
 		height=20
 	}
@@ -199,7 +170,7 @@ text {
 text {
 	object {
 		x=100
-		y=125
+		y=153
 		width=110
 		height=20
 	}
@@ -219,7 +190,7 @@ text {
 	"basic attribute" {
 		clr=14
 	}
-	textix="Image PVA prefix"
+	textix="Image DataType PV"
 	align="horiz. right"
 }
 "text entry" {
@@ -230,7 +201,7 @@ text {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)ImagePVAPName"
+		chan="$(P)$(R)DataTypePVName"
 		clr=14
 		bclr=51
 	}
@@ -241,7 +212,7 @@ text {
 "text entry" {
 	object {
 		x=220
-		y=175
+		y=203
 		width=225
 		height=20
 	}
@@ -257,7 +228,7 @@ text {
 text {
 	object {
 		x=100
-		y=175
+		y=203
 		width=110
 		height=20
 	}
@@ -270,7 +241,7 @@ text {
 text {
 	object {
 		x=101
-		y=150
+		y=178
 		width=110
 		height=20
 	}
@@ -283,7 +254,7 @@ text {
 "text entry" {
 	object {
 		x=220
-		y=150
+		y=178
 		width=225
 		height=20
 	}
@@ -295,4 +266,62 @@ text {
 	format="string"
 	limits {
 	}
+}
+text {
+	object {
+		x=100
+		y=50
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Image PVA prefix"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=220
+		y=50
+		width=225
+		height=20
+	}
+	control {
+		chan="$(P)$(R)ImagePVAPName"
+		clr=14
+		bclr=51
+	}
+	format="string"
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=220
+		y=103
+		width=225
+		height=20
+	}
+	control {
+		chan="$(P)$(R)FrameTypePVName"
+		clr=14
+		bclr=51
+	}
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=100
+		y=103
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="FrameType PV"
+	align="horiz. right"
 }

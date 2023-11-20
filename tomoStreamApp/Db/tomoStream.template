@@ -1,16 +1,6 @@
 # Database for EPICS PVS for tomography data streaming software
 # This database contains all of the PVs used by the tomostream base class.
 
-########################
-# tomoStream PV Prefixes
-########################
-
-record(stringout, "$(P)$(R)TomoScanPVPrefix")
-{
-   field(VAL,  "$(TOMO_SCAN)")
-}
-
-
 #######################
 # tomoStream  PVA names
 #######################
@@ -38,6 +28,20 @@ record(stringout, "$(P)$(R)ThetaPVAName")
 record(stringout, "$(P)$(R)ReconPVAName")
 {
    field(VAL,  "$(RECON_PVA)")
+}
+
+#####################
+# tomoStream PV names
+#####################
+
+record(stringout, "$(P)$(R)DataTypePVName")
+{
+   field(VAL,  "$(DATATYPE_P)")
+}
+
+record(stringout, "$(P)$(R)FrameTypePVName")
+{
+   field(VAL,  "$(FRAMETYPE_P)")
 }
 
 ############################

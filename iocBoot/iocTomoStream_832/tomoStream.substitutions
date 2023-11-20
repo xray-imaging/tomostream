@@ -1,0 +1,13 @@
+file "$(TOP)/db/tomoStream.template"
+{
+pattern
+{  P,      R, IMAGE_P, DARK_PVA, FLAT_PVA, RECON_PVA, THETA_PVA, DATATYPE_P, FRAMETYPE_P}
+{ALS832:, TomoStream:, tomostreamdata:proj:, tomostreamdata:dark, tomostreamdata:white, ALS832:TomoStream:Recon, 7bmtomo:TomoStream:StreamRecon, tomostreamdata:theta, ALS832:TomoStream:DataType, ALS832:TomoStream:FrameType }
+}
+
+file "$(TOP)/db/tomoStream_832.template"
+{
+pattern
+{ P,    R}         
+{ALS832:, TomoStream:}
+}

@@ -1,0 +1,1 @@
+medm -x -macro "P=ALS832:,R=TomoStream:,BEAMLINE=ALS832" ../../tomoStreamApp/op/adl/tomoStream.adl &
