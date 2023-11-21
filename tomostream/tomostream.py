@@ -341,9 +341,7 @@ class TomoStream():
                 item = self.data_queue.get()
                 # reinit if data sizes were updated (e.g. after data binning by ROI1)
                 if (len(item['projection']) != self.width*self.height) or (self.update_theta):
-                    # time.sleep(2)
                     self.reinit_monitors()
-                    # time.sleep(2)
                     nitem = 0
                     break
 
