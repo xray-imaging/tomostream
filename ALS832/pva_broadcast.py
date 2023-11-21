@@ -17,6 +17,7 @@ broadcast_theta_pv = 'tomostreamdata:theta'
 tomostream_prefix = 'ALS832:TomoStream:'
 frame_type_pv = tomostream_prefix + 'FrameType'
 data_type_pv = tomostream_prefix + 'DataType'
+
 bin_level = 1  # data binning before broadcasting
 
 
@@ -27,7 +28,7 @@ class PVABroadcast:
         # setup server for data using ntnda arrays
         self.pva_server = pvaccess.PvaServer()
         self.pva_server.addRecord(broadcast_proj_pv, pvaccess.NtNdArray())
-                
+
         # setup servers for dark,flat, and theta
         self.pva_stream_dark = pvaccess.PvObject({'value': [pvaccess.pvaccess.ScalarType.FLOAT],
                                                   'sizex': pvaccess.pvaccess.ScalarType.INT,
@@ -100,23 +101,28 @@ class PVABroadcast:
         # frame_data[frame_data.shape[0]//2-1:frame_data.shape[0]//2+1,:] = 0
         # frame_data[:,frame_data.shape[1]//2-1:frame_data.shape[1]//2+1] = 0
         self.pva_server.update(
-            broadcast_proj_pv, self.generateNtNdArray2D(frame_id+1, frame_data))# note we start from 1 in tomostream
+            broadcast_proj_pv, self.generateNtNdArray2D(frame_id+1, frame_data))  # note we start from 1 in tomostream
 
     def zmq_monitor_loop(self):
         '''Endless loop to monitor ZeroMQ stream.
         '''
         frame_data, frame_id, frame_key, param_dict = self.zmq_stream.read_from_zmq()
-        self.update_ancillary_pvs(param_dict)
-                
+
         # temporal solution for flat and dark fields
         # angles for reconstruction in tomostream are taken as theta[frame_id], however we also get frame_ids for flat and dark fields.
         # therefore we subtract the number of flat and dark frames from frame_id before broadcasting.
         # variable subtract_id counts the number to be subtracted
         # if previous frame_id is bigger than current frame_id (new scan started with frame_id=0) then we zero subtract_id
-        subtract_id = 0      
-        frame_id_s = frame_id  
+        frame_id_s = frame_id
+
         while True:
             # there is always a new frame_data for broadcasting at this point
+            if frame_id_s >= frame_id:
+                # new scan started
+                subtract_id = 0
+                frame_id_s = frame_id
+                self.update_ancillary_pvs(param_dict)
+
             if frame_key == 0:
                 # bin and broadcast projection
                 self.broadcast_proj(
@@ -132,22 +138,20 @@ class PVABroadcast:
                     nwhite += 1
                     log.info(f'collecting white fields {nwhite}')
                     frame_data, frame_id, frame_key, param_dict = self.zmq_stream.read_from_zmq()
-                    
+
                 # normalize and broadcast white fields
                 frame_data_s /= nwhite
                 # add to subtraction
                 subtract_id += nwhite
                 self.broadcast_white(utils.binning(frame_data_s, bin_level))
-                self.update_ancillary_pvs(param_dict)           
-        
-                
+
             elif frame_key == 2:
                 ndark = 0
                 # start collecting dark fields
                 frame_data_s = np.zeros(frame_data.shape, dtype='float32')
                 while frame_key == 2:
                     frame_data_s += frame_data
-                    ndark += 1                    
+                    ndark += 1
                     log.info(f'collecting dark fields {ndark}')
                     frame_data, frame_id, frame_key, param_dict = self.zmq_stream.read_from_zmq()
                 # normalize and broadcast dark fields
@@ -155,11 +159,7 @@ class PVABroadcast:
                 # add to subtraction
                 subtract_id += ndark
                 self.broadcast_dark(utils.binning(frame_data_s, bin_level))
-                
-            if frame_id_s>=frame_id:
-                # new scan started
-                subtract_id = 0
-            frame_id_s = frame_id
+
 
 if __name__ == "__main__":
     tpva = PVABroadcast()
