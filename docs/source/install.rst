@@ -43,15 +43,11 @@ To build a minimal synApp::
 
 - Clone the tomostream module into synApps/support::
     
-    $ git clone https://github.com/tomography/tomostream.git
-
-- Clone the tomostream module into synApps/support::
-    
     $ git clone https://github.com/xray-imaging/tomostream.git
 
     developer branch:
     
-    $ git clone -n dev https://github.com/xray-imaging/tomostream.git
+    $ git clone -b dev https://github.com/xray-imaging/tomostream.git
 
 - Edit configure/RELEASE add this line to the end::
     
