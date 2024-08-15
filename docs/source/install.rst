@@ -35,27 +35,25 @@ To build a minimal synApp::
 
     $ cd synApps/support/
 
+.. warning:: If building for RedHat8 uncomment **TIRPC=YES** in asyn-RX-YY/configure/CONFIG_SITE
+
 - Edit  busy-R1-7-2/configure/RELEASE to comment out this line::
     
     ASYN=$(SUPPORT)/asyn-4-32).
 
 - Clone the tomostream module into synApps/support::
     
-    $ git clone https://github.com/tomography/tomostream.git
+    $ git clone https://github.com/xray-imaging/tomostream.git
 
-- Edit tomostream/configure/RELEASE to comment out this line::
+    developer branch:
     
-    ASYN=$(SUPPORT)/asyn-4-38
-
-- Edit tomostream/tomoStreamApp/src/Makefile to comment out this line::
-    
-    tomoStreamApp_LIBS += asyn
+    $ git clone -b dev https://github.com/xray-imaging/tomostream.git
 
 - Edit configure/RELEASE add this line to the end::
     
     TOMOSTREAM=$(SUPPORT)/tomostream
 
-- Edit Makefile add this line to the end of the MODULE_LIST::
+- Edit Makefile add this line to the end of the MODULE_LIST (or before REFERENCE_LIST)::
     
     MODULE_LIST += TOMOSTREAM
 
@@ -84,8 +82,7 @@ tomostream python tools
 ::
 
     $ cd ~/epics/synApps/support/tomostream/
-    $ python setup.py install
-
+    $ pip install .
 Testing the installation
 ------------------------
 
