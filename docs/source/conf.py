@@ -140,7 +140,14 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # further.  For a list of options available for each theme, see the
 # documentation.
 #html_theme_options = {}
-html_theme_options = {'includehidden': False}
+html_theme_options = {
+    'style_nav_header_background': '#4f8fb8ff',
+    'collapse_navigation': False,
+    'logo_only': True,
+}
+
+html_logo = 'img/tomostream-logo-mono.png'
+html_favicon = 'img/tomostream-logo-mono.png'
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
