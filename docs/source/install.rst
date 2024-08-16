@@ -83,6 +83,7 @@ tomostream python tools
 
     $ cd ~/epics/synApps/support/tomostream/
     $ pip install .
+
 Testing the installation
 ------------------------
 
