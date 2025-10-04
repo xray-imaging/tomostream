@@ -48,7 +48,7 @@ You can comment out all of the other modules (ALLENBRADLEY, ALIVE, etc.)
 - Run::
 
     $ cd ~/epics
-    $ ./assemble_synApps.sh --dir=synApps --base=/home/beams/FAST/epics/epics-base
+    $ ./assemble_synApps.sh --dir=synApps --base=/home/beams/2BMB/epics/epics-base
 
 - This will create a synApps/support directory::
 
@@ -68,10 +68,10 @@ You can comment out all of the other modules (ALLENBRADLEY, ALIVE, etc.)
     
     TOMOSTREAM=$(SUPPORT)/tomostream
 
-- Verify that synApps/support/tomostream/configure/RELEASE::
+- Verify that in synApps/support/tomostream/configure/RELEASE EPICS_BASE and SUPPORT point to the correct directories, i.e.::
 
-    EPICS_BASE=/home/beams/FAST/epics/epics-base
-    SUPPORT=/home/beams/FAST/epics/synApps/support
+    EPICS_BASE=/home/beams/2BMB/epics/epics-base
+    SUPPORT=/home/beams/2BMB/epics/synApps/support
 
 are set to the correct EPICS_BASE and SUPPORT directories and that::
 
