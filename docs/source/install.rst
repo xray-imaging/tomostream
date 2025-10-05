@@ -92,9 +92,9 @@ Testing the installation
 
 - Start the epics ioc and associated medm screen with::
 
-    $ cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BMB
-    $ start_IOC
-    $ start_medm
+    $ cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM
+    $ ./start_medm
+    $ ./start_IOC
 
 
 Python server
@@ -111,6 +111,6 @@ and install all packages listed in the `requirements <https://github.com/xray-im
 
     $ cd ~/epics/synApps/support/tomostream
     $ pip install .
-    $ cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BMB/
+    $ cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
     $ python -i start_tomostream.py
 
