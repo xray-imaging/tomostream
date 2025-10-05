@@ -56,19 +56,19 @@ Run tomoStream
 
 - start tomoStream IOC, e.g.::
 
-    tomo@handyn $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
-    tomo@handyn $  ./start_IOC
+    2bmb@tomo1 $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
+    2bmb@tomo1 $  ./start_IOC
 
 - start the tomostream.py supporting streaming reconstruction, e.g.::
 
-    tomo@handyn $  conda activate tomostream
-    tomo@handyn $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
-    tomo@handyn $ python -i start_tomostream.py
+    2bmb@tomo1 $  conda activate tomostream
+    2bmb@tomo1 $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
+    2bmb@tomo1 $ python -i start_tomostream.py
 
 - start tomoStream user interface, e.g.::
 
-    tomo@handyn $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
-    tomo@handyn$ ./start_medm
+    2bmb@tomo1 $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
+    2bmb@tomo1$ ./start_medm
 
 .. image:: img/tomoStream.png
     :width: 60%
