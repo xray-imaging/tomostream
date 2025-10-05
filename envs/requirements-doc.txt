@@ -1,6 +1,5 @@
-sphinx >=2
+sphinx
 sphinx_rtd_theme
 sphinxcontrib-bibtex
 nbsphinx
-pandoc
-jupyter
+pybtex
