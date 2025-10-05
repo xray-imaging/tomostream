@@ -1,6 +1,6 @@
 
 file {
-	name="/home/beams8/TOMO/epics/synApps/support/tomostream/tomoStreamApp/op/adl/tomoStream.adl"
+	name="/home/beams8/TOMO/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/../../tomoStreamApp/op/adl/tomoStream.adl"
 	version=030111
 }
 display {
@@ -1099,8 +1099,8 @@ text {
 	}
 	display[0] {
 		label="Beamline-specific display"
-		name="$(BEAMLINE).adl"
-		args="P=$(P), R=$(R), BEAMLINE=$(BEAMLINE)"
+		name="tomoStream_2BM.adl"
+		args="P=$(P),R=$(R),BEAMLINE1=$(BEAMLINE)"
 	}
 	clr=14
 	bclr=51
