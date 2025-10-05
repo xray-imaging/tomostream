@@ -45,7 +45,11 @@ Once `tomoScan`_ is installed on the computer connected to the detector:
     2bmb@tomdet $  cd ~/epics/synApps/support/tomoscan/iocBoot/iocTomoScanStream_2BMB/
     2bmb@tomdet $  ./start_medm
 
-.. image:: img/tomoScanStream.png
+.. image:: img/tomoScanStream_01.png
+    :width: 60%
+    :align: center
+
+.. image:: img/tomoScanStream_02.png
     :width: 60%
     :align: center
 
@@ -70,15 +74,16 @@ Run tomoStream
     2bmb@tomo1 $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
     2bmb@tomo1$ ./start_medm
 
-.. image:: img/tomoStream.png
+.. image:: img/tomoStream_01.png
     :width: 60%
     :align: center
 
 Open the EPICS PV names configuration screen:
 
-.. image:: img/tomoStreamEPICS_PVs.png
-    :width: 50%
+.. image:: img/tomoStream_02.png
+    :width: 60%
     :align: center
+
 
 to set the TomoScan prefix and the PVAccess names provided by `tomoScan`_ for projection (Image), dark and flat image broadcast. Here also set the Recon PVAccess name where the streaming reconstruction will served. Use the Recon PVAccess name to view the live reconstriction using the `EPICS_NTNDA_Viewer`_ ImageJ plug-in:
 
