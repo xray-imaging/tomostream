@@ -26,22 +26,24 @@ Once `tomoScan`_ is installed on the computer connected to the detector:
 
 - start area detector, e.g.::
 
-    user2bmb@lyra$  2bmbPG1 start
+    2bmb@tomdet $ cd /net/s2dserv/xorApps/epics/synApps_6_3/ioc/2bmSpinnaker/iocBoot/ioc2bmSP2/softioc/
+    2bmb@tomdet $ ./2bmSP2.pl run
 
-- start tomoScan IOC, e.g.::
+- start tomoScanStream IOC, e.g.::
 
-    user2bmb@lyra$  cd /local/user2bmb/epics/synApps/support/tomoscan/iocBoot/iocTomoScan_2BM/
-    user2bmb@lyra$  ./start_IOC
+    2bmb@tomdet $  cd ~/epics/synApps/support/tomoscan/iocBoot/iocTomoScanStream_2BMB/
+    2bmb@tomdet $  ./start_IOC
 
-- start the instance of tomoscan.py supporting tomostream tasks at your beamline, e.g.::
+- start the instance of tomoScanStream python server, e.g.::
 
-    user2bmb@lyra$  cd /local/user2bmb/epics/synApps/support/tomoscan/iocBoot/iocTomoScan_2BM/
-    user2bmb@lyra$  python -i start_tomoscan_stream.py
+    2bmb@tomdet $  conda activate tomoscan
+    2bmb@tomdet $  cd ~/epics/synApps/support/tomoscan/iocBoot/iocTomoScanStream_2BMB/
+    2bmb@tomdet $  python -i start_tomoscan.py
 
-- start tomoScan user interface, e.g.::
+- start tomoScanStream user interface, e.g.::
 
-    user2bmb@lyra$  cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
-    user2bmb@lyra$  ./start_medm
+    2bmb@tomdet $  cd ~/epics/synApps/support/tomoscan/iocBoot/iocTomoScanStream_2BMB/
+    2bmb@tomdet $  ./start_medm
 
 .. image:: img/tomoScanStream.png
     :width: 60%
@@ -54,17 +56,18 @@ Run tomoStream
 
 - start tomoStream IOC, e.g.::
 
-    tomo@handyn$  cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
-    tomo@handyn$  ./start_IOC
+    tomo@handyn $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
+    tomo@handyn $  ./start_IOC
 
 - start the tomostream.py supporting streaming reconstruction, e.g.::
 
-    tomo@handyn$ cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
-    tomo@handyn$ python -i start_tomostream.py
+    tomo@handyn $  conda activate tomostream
+    tomo@handyn $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
+    tomo@handyn $ python -i start_tomostream.py
 
 - start tomoStream user interface, e.g.::
 
-    tomo@handyn$ cd /local/tomo/epics/synApps/support/tomostream/iocBoot/iocTomoStream/
+    tomo@handyn $  cd ~/epics/synApps/support/tomostream/iocBoot/iocTomoStream_2BM/
     tomo@handyn$ ./start_medm
 
 .. image:: img/tomoStream.png
