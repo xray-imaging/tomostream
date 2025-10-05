@@ -15,7 +15,7 @@ Using the tomoStream
 Pre-requisites
 ^^^^^^^^^^^^^^
 
-Before running **tomostream** you need to install and run `tomoscan_stream_2bm`_ (see `tomoScan`_ for details) to provide:
+Before running **tomostream** you need to install `tomoScan`_  and run the tomoScanStream IOC and the associated python server for your beamline (see `tomoScan`_ for details). This provides:
 
 - Tomography instrument control
 - Projection, dark and flat image broadcast as PV access variables
