@@ -49,6 +49,8 @@ Once `tomoScan`_ is installed on the computer connected to the detector:
     :width: 60%
     :align: center
 
+Open the EPICS PV names configuration screen:
+
 .. image:: img/tomoScanStream_02.png
     :width: 60%
     :align: center
