@@ -156,7 +156,7 @@ tomoStream.adl
 The following is the MEDM screen :download:`tomoStream.adl <../../tomoStreamApp/op/adl/tomoStream.adl>`.  
 This screen contains the PVs to control tomoStream.
 
-.. image:: img/tomoStream.png
+.. image:: img/tomoStream_01.png
     :width: 75%
     :align: center
 
@@ -165,6 +165,6 @@ tomoStreamEPICS_PVs.adl
 
 The EPICS PV names screen is below:
 
-.. image:: img/tomoStreamEPICS_PVs.png
+.. image:: img/tomoStream_02.png
     :width: 60%
     :align: center

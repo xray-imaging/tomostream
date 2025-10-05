@@ -15,7 +15,7 @@ About
 
 All **tomostream** functionalies can be controlled from the tomoStream user interface:
 
-.. image:: img/tomoStream.png
+.. image:: img/tomoStream_01.png
     :width: 60%
     :align: center
 
@@ -30,7 +30,7 @@ All **tomostream** functionalies can be controlled from the tomoStream user inte
 
 All `tomoscan_stream_2bm`_ functionalies supporting **tomostream** can be controlled from the tomoScanStream user interface marked in yellow:
 
-.. image:: img/tomoScanStream.png
+.. image:: img/tomoScanStream_01.png
     :width: 60%
     :align: center
 
