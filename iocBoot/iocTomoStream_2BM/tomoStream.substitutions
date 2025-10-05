@@ -7,7 +7,6 @@ pattern
 
 file "$(TOP)/db/tomoStream_2BM.template"
 {
-pattern
-{ P,    R,           MCT_OPTICS,     TOMO_0_DEG, TOMO_90_DEG, SAMPLE_Y, ROI_PLUGIN}
-{2bmb:, TomoStream:, 2bm:MCTOptics:, 2bmS1:m2,   2bmS1:m1,    2bmb:m25, 2bmbSP2:ROI1:}
+{ P,    R,           MCT_OPTICS,     TOMO_0_DEG, TOMO_90_DEG, SAMPLE_Y,  ROI_PLUGIN}
+{2bmb:, TomoStream:, 2bm:MCTOptics:, 2bmb:m17,   2bmb:m18,    2bmHXP:m3, 2bmSP2:ROI1:}
 }
